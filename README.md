@@ -8,13 +8,16 @@ Thị trường: Ở Việt Nam hầu hết các ứng dụng chăm sóc thú c�
 Do đó ứng dụng này sẽ giúp những cá nhân chăm nuôi thú cưng sẽ dễ dàng theo dõi, ghi chú, tìm kiếm cơ sở thú ý gần nhất.
 # Các chức năng cơ bản của ứng dụng:
 <img width="195" height="422" alt="1_Onboarding" src="https://github.com/user-attachments/assets/e8c3e29d-800f-4009-a311-28d7874e6032" />
+<img width="195" height="422" alt="2_Login" src="https://github.com/user-attachments/assets/d8bf8313-24f9-40a0-87ae-ae0ca0042dc6" />
 <img width="195" height="422" alt="7_Home" src="https://github.com/user-attachments/assets/7f9965ce-b61e-4bce-9e06-a1208b05fd15" />
 <img width="195" height="422" alt="Option_Add_Pet" src="https://github.com/user-attachments/assets/56599c8d-fe34-4685-8757-5fc0e65d5fe9" />
+<img width="195" height="422" alt="Option_Add_Pet (2)" src="https://github.com/user-attachments/assets/c8f1c179-fa0a-42ca-b906-90008366daf2" />
 <img width="195" height="422" alt="11_Pet_Detail" src="https://github.com/user-attachments/assets/b738abd9-b264-4503-b260-de985dee8bef" />
 <img width="195" height="422" alt="15_Health" src="https://github.com/user-attachments/assets/7c06cebd-6066-4aa1-a1f7-6a468e0ca263" />
 <img width="195" height="422" alt="21_Calendar" src="https://github.com/user-attachments/assets/a5c3cc09-baa4-4876-85e5-13177335eedc" />
 <img width="195" height="422" alt="23_Map" src="https://github.com/user-attachments/assets/2e8a064f-2b9a-4d62-85fc-7376d08c927e" />
 <img width="195" height="422" alt="26_Profile" src="https://github.com/user-attachments/assets/0ea66e80-77c0-4d2b-8be6-801963bdd372" />
+
 
 - Quản lí số lượng thú cưng
 - Hồ sơ thú cưng
