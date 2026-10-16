@@ -9,10 +9,12 @@ Do đó ứng dụng này sẽ giúp những cá nhân chăm nuôi thú cưng s�
 # Các chức năng cơ bản của ứng dụng:
 <img width="195" height="422" alt="1_Onboarding" src="https://github.com/user-attachments/assets/e8c3e29d-800f-4009-a311-28d7874e6032" />
 <img width="195" height="422" alt="2_Login" src="https://github.com/user-attachments/assets/d8bf8313-24f9-40a0-87ae-ae0ca0042dc6" />
+<img width="195" height="422" alt="3_Register" src="https://github.com/user-attachments/assets/6ecf6cbc-5d56-42d0-8353-d273710795a1" />
 <img width="195" height="422" alt="7_Home" src="https://github.com/user-attachments/assets/7f9965ce-b61e-4bce-9e06-a1208b05fd15" />
 <img width="195" height="422" alt="Group 93" src="https://github.com/user-attachments/assets/49306f00-d63c-4cab-b51b-a5a7f7a267ed" />
 <img width="195" height="422" alt="Option_Add_Pet (2)" src="https://github.com/user-attachments/assets/c8f1c179-fa0a-42ca-b906-90008366daf2" />
 <img width="195" height="422" alt="11_Pet_Detail" src="https://github.com/user-attachments/assets/b738abd9-b264-4503-b260-de985dee8bef" />
+<img width="195" height="422" alt="12_List_Pet" src="https://github.com/user-attachments/assets/f6b8df41-470d-4338-a11e-11eb325127f8" />
 <img width="195" height="422" alt="15_Health" src="https://github.com/user-attachments/assets/7c06cebd-6066-4aa1-a1f7-6a468e0ca263" />
 <img width="195" height="422" alt="21_Calendar" src="https://github.com/user-attachments/assets/a5c3cc09-baa4-4876-85e5-13177335eedc" />
 <img width="195" height="422" alt="23_Map" src="https://github.com/user-attachments/assets/2e8a064f-2b9a-4d62-85fc-7376d08c927e" />
