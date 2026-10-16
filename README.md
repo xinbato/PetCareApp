@@ -31,4 +31,5 @@ Do đó ứng dụng này sẽ giúp những cá nhân chăm nuôi thú cưng s�
 Trong tương lai ứng dụng sẽ được hỗ trợ thêm chức năng cộng động, nơi mà mọi người sẽ được đăng bài, tương tác trên các bài viết do người dùng chia sẻ về thú cưng/ các cơ sở thú cưng mà họ đã ghé quá. Giúp người dùng có thể giao lưu, trao đổi kinh nghiệm và cơ sở thú y uy tín dựa trên đánh giá của người dùng thật.
 
 
-Link docs: https://drive.google.com/drive/folders/1wcRTgqLvmZi_81qW7rh2vKxhA9hpH9A_?usp=sharing
+[Xem docs tại đây](https://drive.google.com/drive/folders/1wcRTgqLvmZi_81qW7rh2vKxhA9hpH9A_?usp=sharing)
+[Xem Figma](https://www.figma.com/design/Z2uIUNwtcVolPcncqI0Ar9/PETCARE?node-id=8-2131&t=43AdxWX2wb4ye65x-0)
