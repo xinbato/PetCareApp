@@ -1,5 +1,7 @@
 package com.example.petcare.ui.screens
 
+import android.content.res.Configuration
+import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -22,7 +25,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,6 +44,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.petcare.R
+import com.example.petcare.ui.components.PetCareTopAppBar
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
 import com.example.petcare.ui.theme.GreenPrimary
@@ -80,36 +85,11 @@ fun OtpVerificationScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
-        // Top Back Button
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.padding(start = 0.dp),
-        ) {
-            Text(
-                text = "‹",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Normal,
-                color = TextPrimary,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Title and Subtitle
-        Text(
-            text = "Xác thực OTP",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary,
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = "Mã xác thực gồm 4 chữ số đã được gửi tới:\n$targetDestination",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Normal,
-            color = TextSecondary,
+        // Top Back Button & Header
+        PetCareTopAppBar(
+            onBackClick = onBackClick,
+            title = stringResource(R.string.otp_title),
+            subtitle = stringResource(R.string.otp_subtitle_format, targetDestination),
         )
 
         Spacer(modifier = Modifier.height(36.dp))
@@ -171,10 +151,11 @@ fun OtpVerificationScreen(
         ) {
             if (countdown > 0) {
                 Text(
-                    text = "Gửi lại mã sau ",
+                    text = stringResource(R.string.otp_resend_prefix),
                     fontSize = 13.sp,
                     color = TextSecondary,
                 )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "00:${countdown.toString().padStart(2, '0')}",
                     fontSize = 13.sp,
@@ -183,12 +164,13 @@ fun OtpVerificationScreen(
                 )
             } else {
                 Text(
-                    text = "Chưa nhận được mã? ",
+                    text = stringResource(R.string.otp_did_not_receive),
                     fontSize = 13.sp,
                     color = TextSecondary,
                 )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Gửi lại mã OTP",
+                    text = stringResource(R.string.btn_resend_otp),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = GreenPrimary,
@@ -219,7 +201,7 @@ fun OtpVerificationScreen(
             ),
         ) {
             Text(
-                text = "Xác nhận",
+                text = stringResource(R.string.btn_confirm),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -231,6 +213,14 @@ fun OtpVerificationScreen(
 @Composable
 fun OtpVerificationScreenPreview() {
     PetCareTheme {
+        OtpVerificationScreen()
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun OtpVerificationScreenDarkPreview() {
+    PetCareTheme(darkTheme = true) {
         OtpVerificationScreen()
     }
 }

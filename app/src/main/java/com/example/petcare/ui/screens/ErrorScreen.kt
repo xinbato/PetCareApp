@@ -1,5 +1,6 @@
 package com.example.petcare.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,27 +27,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.petcare.R
+import com.example.petcare.ui.components.PetCareTopAppBar
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
+import com.example.petcare.ui.theme.RedError
+import com.example.petcare.ui.theme.RedErrorLight
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
-
-private val RedError = Color(0xFFE53935)
-private val RedErrorLight = Color(0xFFFFEBEE)
 
 @Composable
 fun ErrorScreen(
     modifier: Modifier = Modifier,
-    title: String = "Đã xảy ra lỗi!",
-    message: String = "Thao tác không thể hoàn tất. Vui lòng kiểm tra lại kết nối hoặc thông tin đã nhập và thử lại.",
-    buttonText: String = "Thử lại",
+    title: String = stringResource(R.string.error_default_title),
+    message: String = stringResource(R.string.error_default_message),
+    buttonText: String = stringResource(R.string.btn_retry),
     onRetryClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
 ) {
@@ -62,23 +64,10 @@ fun ErrorScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        // Top Back Button
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier.padding(start = 0.dp),
-            ) {
-                Text(
-                    text = "‹",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = TextPrimary,
-                )
-            }
-        }
+        // Top Back Button & Header
+        PetCareTopAppBar(
+            onBackClick = onBackClick,
+        )
 
         // Center Error Illustration & Text
         Column(
@@ -169,7 +158,7 @@ fun ErrorScreen(
                 ),
             ) {
                 Text(
-                    text = "Quay lại",
+                    text = stringResource(R.string.btn_back),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = GreenPrimary,
@@ -183,6 +172,14 @@ fun ErrorScreen(
 @Composable
 fun ErrorScreenPreview() {
     PetCareTheme {
+        ErrorScreen()
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun ErrorScreenDarkPreview() {
+    PetCareTheme(darkTheme = true) {
         ErrorScreen()
     }
 }

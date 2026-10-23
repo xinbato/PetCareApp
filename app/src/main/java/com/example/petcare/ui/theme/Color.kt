@@ -10,6 +10,10 @@ val TextPrimary = Color(0xFF1A2621)
 val TextSecondary = Color(0xFF6E7A73)
 val BorderLight = Color(0xFFDEE5DB)
 
+val RedError = Color(0xFFE53935)
+val RedErrorLight = Color(0xFFFFEBEE)
+val DoctorLinkBlue = Color(0xFF00C0E8)
+
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)

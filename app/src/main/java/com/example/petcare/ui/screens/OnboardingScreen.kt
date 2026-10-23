@@ -1,5 +1,6 @@
 package com.example.petcare.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,22 +64,22 @@ fun OnboardingScreen(
         // Top Titles
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp),
         ) {
             Text(
-                text = "Chào mừng đến PetCare",
+                text = stringResource(R.string.onboarding_welcome_title),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Chăm sóc trọn vẹn cho bé yêu",
+                text = stringResource(R.string.onboarding_welcome_subtitle),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
                 color = TextSecondary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
 
@@ -89,13 +91,13 @@ fun OnboardingScreen(
                 .size(width = 297.dp, height = 245.dp)
                 .clip(RoundedCornerShape(28.dp))
                 .background(GreenLight),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(id = R.drawable.img),
-                contentDescription = "Onboarding Pet Image",
+                contentDescription = stringResource(R.string.onboarding_hero_content_description),
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -103,22 +105,22 @@ fun OnboardingScreen(
 
         // Headline and Body
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Chăm sóc bé yêu dễ dàng hơn",
+                text = stringResource(R.string.onboarding_headline),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Lịch nhắc • sức khỏe • nhật ký • bác sĩ thú y",
+                text = stringResource(R.string.onboarding_body),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
                 color = TextSecondary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
 
@@ -127,7 +129,7 @@ fun OnboardingScreen(
         // Buttons
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Button(
                 onClick = onGetStartedClick,
@@ -137,13 +139,13 @@ fun OnboardingScreen(
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = GreenPrimary,
-                    contentColor = Color.White
-                )
+                    contentColor = Color.White,
+                ),
             ) {
                 Text(
-                    text = "Bắt đầu",
+                    text = stringResource(R.string.btn_get_started),
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
                 )
             }
 
@@ -156,14 +158,14 @@ fun OnboardingScreen(
                 border = BorderStroke(1.dp, BorderLight),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = Color.White,
-                    contentColor = GreenPrimary
-                )
+                    contentColor = GreenPrimary,
+                ),
             ) {
                 Text(
-                    text = "Tôi đã có tài khoản",
+                    text = stringResource(R.string.btn_has_account),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = GreenPrimary
+                    color = GreenPrimary,
                 )
             }
         }
@@ -174,6 +176,14 @@ fun OnboardingScreen(
 @Composable
 fun OnboardingScreenPreview() {
     PetCareTheme {
+        OnboardingScreen()
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun OnboardingScreenDarkPreview() {
+    PetCareTheme(darkTheme = true) {
         OnboardingScreen()
     }
 }

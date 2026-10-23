@@ -1,11 +1,10 @@
 package com.example.petcare.ui.screens
 
-import androidx.compose.foundation.BorderStroke
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,8 +18,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -40,12 +38,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
+import com.example.petcare.ui.components.PetCareTopAppBar
+import com.example.petcare.ui.components.SocialLoginSection
 import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
+import com.example.petcare.ui.theme.DoctorLinkBlue
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
+import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.utils.InputType
 import com.example.petcare.utils.InputTypeUtils
@@ -68,11 +69,11 @@ fun RegisterScreen(
     val isUsernameValid = remember(username) { InputTypeUtils.isUsername(username) }
     val usernameHelperText = when {
         username.isBlank() -> null
-        isUsernameValid -> "✓ Tên hợp lệ"
-        else -> "Ít nhất 3 ký tự"
+        isUsernameValid -> stringResource(R.string.helper_username_valid)
+        else -> stringResource(R.string.helper_username_min)
     }
     val usernameHelperColor = if (!isUsernameValid && username.isNotBlank()) {
-        Color(0xFFE53935)
+        RedError
     } else {
         GreenPrimary
     }
@@ -82,12 +83,12 @@ fun RegisterScreen(
     }
     val emailOrPhoneHelperText = when {
         emailOrPhone.isBlank() -> null
-        emailOrPhoneType == InputType.EMAIL -> "✓ Loại: Email"
-        emailOrPhoneType == InputType.PHONE -> "✓ Loại: Số điện thoại"
-        else -> "Nhập Email hoặc SĐT"
+        emailOrPhoneType == InputType.EMAIL -> stringResource(R.string.helper_type_email)
+        emailOrPhoneType == InputType.PHONE -> stringResource(R.string.helper_type_phone)
+        else -> stringResource(R.string.helper_enter_email_phone)
     }
     val emailOrPhoneHelperColor = if (emailOrPhoneType == InputType.UNKNOWN && emailOrPhone.isNotBlank()) {
-        Color(0xFFE53935)
+        RedError
     } else {
         GreenPrimary
     }
@@ -101,36 +102,11 @@ fun RegisterScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
-        // Top Back Button
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.padding(start = 0.dp),
-        ) {
-            Text(
-                text = "‹",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Normal,
-                color = TextPrimary,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Title and Subtitle
-        Text(
-            text = "Tạo tài khoản",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary,
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = "Bắt đầu hành trình chăm sóc thú cưng",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Normal,
-            color = TextSecondary,
+        // Top Back Button & Header
+        PetCareTopAppBar(
+            onBackClick = onBackClick,
+            title = stringResource(R.string.register_title),
+            subtitle = stringResource(R.string.register_subtitle),
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -142,8 +118,8 @@ fun RegisterScreen(
             PetCareTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = "Tên đăng nhập",
-                placeholder = "Nhập tên đăng nhập",
+                label = stringResource(R.string.label_username),
+                placeholder = stringResource(R.string.placeholder_username),
                 helperText = usernameHelperText,
                 helperColor = usernameHelperColor,
                 keyboardOptions = KeyboardOptions(
@@ -155,8 +131,8 @@ fun RegisterScreen(
             PetCareTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
-                label = "Tên người dùng",
-                placeholder = "Nhập tên người dùng",
+                label = stringResource(R.string.label_fullname),
+                placeholder = stringResource(R.string.placeholder_fullname),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next,
@@ -166,8 +142,8 @@ fun RegisterScreen(
             PetCareTextField(
                 value = emailOrPhone,
                 onValueChange = { emailOrPhone = it },
-                label = "Email / số điện thoại",
-                placeholder = "Nhập email hoặc số điện thoại",
+                label = stringResource(R.string.label_email_phone),
+                placeholder = stringResource(R.string.placeholder_email_phone),
                 helperText = emailOrPhoneHelperText,
                 helperColor = emailOrPhoneHelperColor,
                 keyboardOptions = KeyboardOptions(
@@ -179,12 +155,16 @@ fun RegisterScreen(
             PetCareTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = "Mật khẩu",
-                placeholder = "Tạo mật khẩu",
+                label = stringResource(R.string.label_password),
+                placeholder = stringResource(R.string.placeholder_create_password),
                 visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     Text(
-                        text = if (isPasswordVisible) "Ẩn" else "Hiện",
+                        text = if (isPasswordVisible) {
+                            stringResource(R.string.action_hide_password)
+                        } else {
+                            stringResource(R.string.action_show_password)
+                        },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = GreenPrimary,
@@ -204,7 +184,7 @@ fun RegisterScreen(
 
         // Terms and Conditions Note
         Text(
-            text = "Bằng việc đăng ký, bạn đồng ý với Điều khoản & Quyền riêng tư.",
+            text = stringResource(R.string.terms_note),
             fontSize = 11.sp,
             fontWeight = FontWeight.Normal,
             color = TextSecondary,
@@ -232,7 +212,7 @@ fun RegisterScreen(
             ),
         ) {
             Text(
-                text = "Tạo tài khoản",
+                text = stringResource(R.string.btn_create_account),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -240,76 +220,17 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Social Login Divider
-        Text(
-            text = "Hoặc",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Normal,
-            color = TextSecondary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Social Login Buttons (Google and Yahoo - disabled temporarily)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            OutlinedButton(
-                onClick = { /* Temporarily disabled */ },
-                enabled = false,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, BorderLight),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    disabledContainerColor = Color.White.copy(alpha = 0.6f),
-                    contentColor = TextPrimary,
-                    disabledContentColor = TextPrimary.copy(alpha = 0.5f),
-                ),
-            ) {
-                Text(
-                    text = "Google",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-
-            OutlinedButton(
-                onClick = { /* Temporarily disabled */ },
-                enabled = false,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, BorderLight),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    disabledContainerColor = Color.White.copy(alpha = 0.6f),
-                    contentColor = TextPrimary,
-                    disabledContentColor = TextPrimary.copy(alpha = 0.5f),
-                ),
-            ) {
-                Text(
-                    text = "yahoo",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        }
+        // Social Login Section
+        SocialLoginSection()
 
         Spacer(modifier = Modifier.height(32.dp))
 
         // Doctor Register Link
         Text(
-            text = "Đăng ký tư cách bác sĩ",
+            text = stringResource(R.string.btn_doctor_register),
             fontSize = 11.sp,
             fontStyle = FontStyle.Italic,
-            color = Color(0xFF00C0E8),
+            color = DoctorLinkBlue,
             textDecoration = TextDecoration.Underline,
             textAlign = TextAlign.Center,
             modifier = Modifier
@@ -324,6 +245,14 @@ fun RegisterScreen(
 @Composable
 fun RegisterScreenPreview() {
     PetCareTheme {
+        RegisterScreen()
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun RegisterScreenDarkPreview() {
+    PetCareTheme(darkTheme = true) {
         RegisterScreen()
     }
 }

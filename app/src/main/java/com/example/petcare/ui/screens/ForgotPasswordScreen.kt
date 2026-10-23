@@ -1,8 +1,8 @@
 package com.example.petcare.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,16 +17,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,12 +33,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
+import com.example.petcare.ui.components.PetCareTopAppBar
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.theme.RedError
 import com.example.petcare.utils.InputType
 import com.example.petcare.utils.InputTypeUtils
 
@@ -58,13 +58,13 @@ fun ForgotPasswordScreen(
 
     val helperText = when {
         emailOrPhone.isBlank() -> null
-        emailOrPhoneType == InputType.EMAIL -> "✓ Loại: Email"
-        emailOrPhoneType == InputType.PHONE -> "✓ Loại: Số điện thoại"
-        else -> "Nhập Email hoặc SĐT hợp lệ"
+        emailOrPhoneType == InputType.EMAIL -> stringResource(R.string.helper_type_email)
+        emailOrPhoneType == InputType.PHONE -> stringResource(R.string.helper_type_phone)
+        else -> stringResource(R.string.helper_valid_email_phone)
     }
 
     val helperColor = if (emailOrPhoneType == InputType.UNKNOWN && emailOrPhone.isNotBlank()) {
-        Color(0xFFE53935)
+        RedError
     } else {
         GreenPrimary
     }
@@ -78,36 +78,11 @@ fun ForgotPasswordScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
-        // Top Back Button
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.padding(start = 0.dp),
-        ) {
-            Text(
-                text = "‹",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Normal,
-                color = TextPrimary,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Title and Subtitle
-        Text(
-            text = "Quên mật khẩu",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary,
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = "Nhập email hoặc số điện thoại của bạn để nhận mã xác thực OTP khôi phục mật khẩu.",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Normal,
-            color = TextSecondary,
+        // Top Back Button & Header
+        PetCareTopAppBar(
+            onBackClick = onBackClick,
+            title = stringResource(R.string.forgot_password_title),
+            subtitle = stringResource(R.string.forgot_password_subtitle),
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -116,8 +91,8 @@ fun ForgotPasswordScreen(
         PetCareTextField(
             value = emailOrPhone,
             onValueChange = { emailOrPhone = it },
-            label = "Email / Số điện thoại",
-            placeholder = "Nhập email hoặc số điện thoại",
+            label = stringResource(R.string.label_email_or_phone),
+            placeholder = stringResource(R.string.placeholder_email_or_phone),
             helperText = helperText,
             helperColor = helperColor,
             keyboardOptions = KeyboardOptions(
@@ -144,7 +119,7 @@ fun ForgotPasswordScreen(
             ),
         ) {
             Text(
-                text = "Gửi mã OTP",
+                text = stringResource(R.string.btn_send_otp),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -154,7 +129,7 @@ fun ForgotPasswordScreen(
 
         // Back to Login Link
         Text(
-            text = "Quay lại đăng nhập",
+            text = stringResource(R.string.btn_back_to_login),
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = GreenPrimary,
@@ -171,6 +146,14 @@ fun ForgotPasswordScreen(
 @Composable
 fun ForgotPasswordScreenPreview() {
     PetCareTheme {
+        ForgotPasswordScreen()
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun ForgotPasswordScreenDarkPreview() {
+    PetCareTheme(darkTheme = true) {
         ForgotPasswordScreen()
     }
 }

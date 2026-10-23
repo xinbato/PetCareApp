@@ -1,3 +1,93 @@
 <resources>
     <string name="app_name">PetCare</string>
+
+    <!-- Navigation / Common -->
+    <string name="cd_back_button">Quay lại</string>
+    <string name="or_divider">Hoặc</string>
+    <string name="btn_google">Google</string>
+    <string name="btn_yahoo">yahoo</string>
+
+    <!-- Onboarding Screen -->
+    <string name="onboarding_welcome_title">Chào mừng đến PetCare</string>
+    <string name="onboarding_welcome_subtitle">Chăm sóc trọn vẹn cho bé yêu</string>
+    <string name="onboarding_hero_content_description">Ảnh thú cưng màn hình chào mừng</string>
+    <string name="onboarding_headline">Chăm sóc bé yêu dễ dàng hơn</string>
+    <string name="onboarding_body">Lịch nhắc • sức khỏe • nhật ký • bác sĩ thú y</string>
+    <string name="btn_get_started">Bắt đầu</string>
+    <string name="btn_has_account">Tôi đã có tài khoản</string>
+
+    <!-- Login Screen -->
+    <string name="login_title">Đăng nhập</string>
+    <string name="login_subtitle">Theo dõi sức khỏe và lịch chăm sóc</string>
+    <string name="label_login_input">Email/ Số điện thoại/ Tên đăng nhập</string>
+    <string name="placeholder_login_input">Nhập email, số điện thoại hoặc tên đăng nhập</string>
+    <string name="label_password">Mật khẩu</string>
+    <string name="placeholder_password">Nhập mật khẩu</string>
+    <string name="action_show_password">Hiện</string>
+    <string name="action_hide_password">Ẩn</string>
+    <string name="helper_type_email">✓ Loại: Email</string>
+    <string name="helper_type_phone">✓ Loại: Số điện thoại</string>
+    <string name="helper_type_username">✓ Loại: Tên đăng nhập</string>
+    <string name="helper_invalid_format">Định dạng chưa đúng</string>
+    <string name="btn_forgot_password">Quên mật khẩu?</string>
+    <string name="btn_login">Đăng nhập</string>
+    <string name="btn_create_account">Tạo tài khoản</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Tạo tài khoản</string>
+    <string name="register_subtitle">Bắt đầu hành trình chăm sóc thú cưng</string>
+    <string name="label_username">Tên đăng nhập</string>
+    <string name="placeholder_username">Nhập tên đăng nhập</string>
+    <string name="helper_username_valid">✓ Tên hợp lệ</string>
+    <string name="helper_username_min">Ít nhất 3 ký tự</string>
+    <string name="label_fullname">Tên người dùng</string>
+    <string name="placeholder_fullname">Nhập tên người dùng</string>
+    <string name="label_email_phone">Email / số điện thoại</string>
+    <string name="placeholder_email_phone">Nhập email hoặc số điện thoại</string>
+    <string name="helper_enter_email_phone">Nhập Email hoặc SĐT</string>
+    <string name="placeholder_create_password">Tạo mật khẩu</string>
+    <string name="terms_note">Bằng việc đăng ký, bạn đồng ý với Điều khoản &amp; Quyền riêng tư.</string>
+    <string name="btn_doctor_register">Đăng ký tư cách bác sĩ</string>
+
+    <!-- Forgot Password Screen -->
+    <string name="forgot_password_title">Quên mật khẩu</string>
+    <string name="forgot_password_subtitle">Nhập email hoặc số điện thoại của bạn để nhận mã xác thực OTP khôi phục mật khẩu.</string>
+    <string name="label_email_or_phone">Email / Số điện thoại</string>
+    <string name="placeholder_email_or_phone">Nhập email hoặc số điện thoại</string>
+    <string name="helper_valid_email_phone">Nhập Email hoặc SĐT hợp lệ</string>
+    <string name="btn_send_otp">Gửi mã OTP</string>
+    <string name="btn_back_to_login">Quay lại đăng nhập</string>
+
+    <!-- OTP Verification Screen -->
+    <string name="otp_title">Xác thực OTP</string>
+    <string name="otp_subtitle_format">Mã xác thực gồm 4 chữ số đã được gửi tới:\n%1$s</string>
+    <string name="otp_resend_prefix">Gửi lại mã sau </string>
+    <string name="otp_did_not_receive">Chưa nhận được mã? </string>
+    <string name="btn_resend_otp">Gửi lại mã OTP</string>
+    <string name="btn_confirm">Xác nhận</string>
+
+    <!-- Reset Password Screen -->
+    <string name="reset_password_title">Đặt lại mật khẩu</string>
+    <string name="reset_password_subtitle">Tạo mật khẩu mới cho tài khoản của bạn.</string>
+    <string name="label_new_password">Mật khẩu mới</string>
+    <string name="placeholder_new_password">Tạo mật khẩu mới</string>
+    <string name="label_confirm_password">Xác nhận mật khẩu</string>
+    <string name="placeholder_confirm_password">Nhập lại mật khẩu mới</string>
+    <string name="helper_password_valid">✓ Mật khẩu hợp lệ</string>
+    <string name="helper_password_min">Tối thiểu 6 ký tự</string>
+    <string name="helper_password_match">✓ Mật khẩu trùng khớp</string>
+    <string name="helper_password_mismatch">Mật khẩu không trùng khớp</string>
+    <string name="btn_save_password">Lưu mật khẩu</string>
+
+    <!-- Success Screen -->
+    <string name="success_default_title">Thao tác thành công!</string>
+    <string name="success_default_message">Yêu cầu của bạn đã được thực hiện thành công. Cảm ơn bạn đã tin tưởng sử dụng dịch vụ PetCare.</string>
+    <string name="btn_done">Hoàn tất</string>
+    <string name="btn_back_to_home">Quay lại trang chủ</string>
+
+    <!-- Error Screen -->
+    <string name="error_default_title">Đã xảy ra lỗi!</string>
+    <string name="error_default_message">Thao tác không thể hoàn tất. Vui lòng kiểm tra lại thông tin và thử lại.</string>
+    <string name="btn_retry">Thử lại</string>
+    <string name="btn_back">Quay lại</string>
 </resources>

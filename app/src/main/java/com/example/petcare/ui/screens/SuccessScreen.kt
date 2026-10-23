@@ -1,5 +1,6 @@
 package com.example.petcare.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,11 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.petcare.R
+import com.example.petcare.ui.components.PetCareTopAppBar
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
 import com.example.petcare.ui.theme.GreenLight
@@ -43,9 +46,9 @@ import com.example.petcare.ui.theme.TextSecondary
 @Composable
 fun SuccessScreen(
     modifier: Modifier = Modifier,
-    title: String = "Thao tác thành công!",
-    message: String = "Yêu cầu của bạn đã được thực hiện thành công. Cảm ơn bạn đã tin tưởng sử dụng dịch vụ PetCare.",
-    buttonText: String = "Hoàn tất",
+    title: String = stringResource(R.string.success_default_title),
+    message: String = stringResource(R.string.success_default_message),
+    buttonText: String = stringResource(R.string.btn_done),
     onDoneClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
 ) {
@@ -60,23 +63,10 @@ fun SuccessScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        // Top Back Button
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier.padding(start = 0.dp),
-            ) {
-                Text(
-                    text = "‹",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = TextPrimary,
-                )
-            }
-        }
+        // Top Back Button & Header
+        PetCareTopAppBar(
+            onBackClick = onBackClick,
+        )
 
         // Center Success Illustration & Text
         Column(
@@ -167,7 +157,7 @@ fun SuccessScreen(
                 ),
             ) {
                 Text(
-                    text = "Quay lại trang chủ",
+                    text = stringResource(R.string.btn_back_to_home),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = GreenPrimary,
@@ -181,6 +171,14 @@ fun SuccessScreen(
 @Composable
 fun SuccessScreenPreview() {
     PetCareTheme {
+        SuccessScreen()
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun SuccessScreenDarkPreview() {
+    PetCareTheme(darkTheme = true) {
         SuccessScreen()
     }
 }
