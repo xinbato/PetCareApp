@@ -537,7 +537,7 @@ fun HomeScreen(
             }
 
             is HomeUiIntent.ClickService -> {
-                if (intent,serviceId == "srv2"){
+                if (intent.serviceId == "srv2"){
                     onHealthTabClick()
                 }
             }
