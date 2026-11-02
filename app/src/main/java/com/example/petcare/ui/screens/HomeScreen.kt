@@ -509,6 +509,8 @@ fun HomeScreen(
     userName: String = "Nguyễn Văn A",
     onAddPetClick: () -> Unit = {},
     onPetDetailClick: (String) -> Unit = {},
+    onViewAllPetsClick: () -> Unit = {},
+    onHealthTabClick: () -> Unit = {}
 ) {
     var uiState by remember(userName) { mutableStateOf(HomeUiState(userName = userName)) }
     var selectedBottomTab by remember { mutableIntStateOf(0) }
@@ -529,10 +531,15 @@ fun HomeScreen(
 
             is HomeUiIntent.SelectBottomTab -> {
                 selectedBottomTab = intent.tabIndex
+                    if (intent.tabIndex == 1) {
+                        onHealthTabClick()
+                    }
             }
 
             is HomeUiIntent.ClickService -> {
-                /* Action on service click */
+                if (intent,serviceId == "srv2"){
+                    onHealthTabClick()
+                }
             }
 
             is HomeUiIntent.ClickNotification -> {
@@ -571,6 +578,7 @@ fun HomeScreen(
                         processIntent(HomeUiIntent.SelectPet(petId))
                     },
                     onAddPetClick = onAddPetClick,
+                    onViewAllPetsClick = onViewAllPetsClick
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -690,6 +698,7 @@ private fun MyPetsSection(
     selectedPetId: String,
     onPetSelected: (String) -> Unit,
     onAddPetClick: () -> Unit,
+    onViewAllPetsClick: () -> Unit = {}
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -699,19 +708,24 @@ private fun MyPetsSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "Thú cưng của tôi",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary,
-            )
-            Text(
-                text = "+ Thêm bé mới",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = GreenPrimary,
-                modifier = Modifier.clickable { onAddPetClick() },
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onViewAllPetsClick() }
+            ) {
+                Text(
+                    text = "Thú cưng của tôi",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                )
+                Text(
+                    text = "+ Thêm bé mới",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = GreenPrimary,
+                    modifier = Modifier.clickable { onAddPetClick() },
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
