@@ -5,24 +5,38 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.petcare.data.repository.PetRepository
+import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.navigation.AppScreen
-/*import com.example.petcare.ui.screens.AddPetCameraScreen
+import com.example.petcare.ui.screens.AddNewMedicationScreen
+import com.example.petcare.ui.screens.AddNewMedicalRecordBookScreen
+import com.example.petcare.ui.screens.AddNewVaccinationScreen
+import com.example.petcare.ui.screens.AddPetCameraScreen
 import com.example.petcare.ui.screens.AddPetHandmadeScreen
-import com.example.petcare.ui.screens.AddPetOptionScreen*/
+import com.example.petcare.ui.screens.AddPetOptionScreen
+import com.example.petcare.ui.screens.EditPetScreen
 import com.example.petcare.ui.screens.ErrorScreen
 import com.example.petcare.ui.screens.ForgotPasswordScreen
+import com.example.petcare.ui.screens.HealthDetailScreen
 import com.example.petcare.ui.screens.HomeScreen
+import com.example.petcare.ui.screens.ListPetScreen
 import com.example.petcare.ui.screens.LoginScreen
+import com.example.petcare.ui.screens.MedicalRecordBookScreen
+import com.example.petcare.ui.screens.MedicationScreen
 import com.example.petcare.ui.screens.OnboardingScreen
 import com.example.petcare.ui.screens.OtpVerificationScreen
 import com.example.petcare.ui.screens.RegisterScreen
 import com.example.petcare.ui.screens.ResetPasswordScreen
+import com.example.petcare.ui.screens.SelectPetToEditScreen
 import com.example.petcare.ui.screens.SuccessScreen
+import com.example.petcare.ui.screens.VaccinationScreen
 import com.example.petcare.ui.theme.PetCareTheme
 
 class MainActivity : ComponentActivity() {
@@ -35,6 +49,8 @@ class MainActivity : ComponentActivity() {
                 var loggedInUserName by remember { mutableStateOf("Nguyễn Văn A") }
                 var otpTargetDestination by remember { mutableStateOf("dat@example.com") }
                 var scannedPetBreed by remember { mutableStateOf("") }
+                var selectedPetId by remember { mutableStateOf("1") }
+                var listPetTab by remember { mutableStateOf(PetCareTab.HOME) }
 
                 when (currentScreen) {
                     AppScreen.ONBOARDING -> {
@@ -145,13 +161,258 @@ class MainActivity : ComponentActivity() {
                             onAddPetClick = {
                                 currentScreen = AppScreen.ADD_PET_OPTION
                             },
-                            onPetDetailClick = { _ ->
-                                // Navigates to pet details
+                            onPetDetailClick = { petId ->
+                                selectedPetId = petId
+                                PetRepository.currentSelectedPetId.value = petId
+                                currentScreen = AppScreen.HEALTH_DETAIL
+                            },
+                            onViewAllPetsClick = {
+                                listPetTab = PetCareTab.HOME
+                                currentScreen = AppScreen.LIST_PET
+                            },
+                            onHealthTabClick = {
+                                listPetTab = PetCareTab.HEALTH
+                                currentScreen = AppScreen.LIST_PET
                             },
                         )
                     }
 
+                    AppScreen.ADD_PET_OPTION -> {
+                        AddPetOptionScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.HOME
+                            },
+                            onHandmadeClick = {
+                                currentScreen = AppScreen.ADD_PET_HANDMADE
+                            },
+                            onCameraClick = {
+                                currentScreen = AppScreen.ADD_PET_CAMERA
+                            },
+                        )
+                    }
 
+                    AppScreen.ADD_PET_CAMERA -> {
+                        AddPetCameraScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.ADD_PET_OPTION
+                            },
+                            onScannedProceed = { breed ->
+                                scannedPetBreed = breed
+                                currentScreen = AppScreen.ADD_PET_HANDMADE
+                            },
+                        )
+                    }
+
+                    AppScreen.ADD_PET_HANDMADE -> {
+                        AddPetHandmadeScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.ADD_PET_OPTION
+                            },
+                            onPetAdded = {
+                                currentScreen = AppScreen.LIST_PET
+                            },
+                        )
+                    }
+
+                    AppScreen.LIST_PET -> {
+                        ListPetScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            currentTab = listPetTab,
+                            onBackClick = {
+                                currentScreen = AppScreen.HOME
+                            },
+                            onPetClick = { pet ->
+                                selectedPetId = pet.id
+                                PetRepository.currentSelectedPetId.value = pet.id
+                                currentScreen = AppScreen.HEALTH_DETAIL
+                            },
+                            onEditPetClick = {
+                                currentScreen = AppScreen.SELECT_PET_TO_EDIT
+                            },
+                            onAddPetClick = {
+                                currentScreen = AppScreen.ADD_PET_HANDMADE
+                            },
+                            onTabSelected = { tab ->
+                                when (tab) {
+                                    PetCareTab.HOME -> {
+                                        listPetTab = PetCareTab.HOME
+                                        currentScreen = AppScreen.HOME
+                                    }
+                                    PetCareTab.HEALTH -> {
+                                        listPetTab = PetCareTab.HEALTH
+                                        currentScreen = AppScreen.LIST_PET
+                                    }
+                                    else -> {}
+                                }
+                            },
+                        )
+                    }
+
+                    AppScreen.SELECT_PET_TO_EDIT -> {
+                        SelectPetToEditScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.LIST_PET
+                            },
+                            onPetSelected = { petId ->
+                                selectedPetId = petId
+                                PetRepository.currentSelectedPetId.value = petId
+                                currentScreen = AppScreen.EDIT_PET
+                            },
+                        )
+                    }
+
+                    AppScreen.EDIT_PET -> {
+                        EditPetScreen(
+                            petId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.SELECT_PET_TO_EDIT
+                            },
+                            onSaved = {
+                                currentScreen = AppScreen.LIST_PET
+                            },
+                            onDeleted = {
+                                currentScreen = AppScreen.LIST_PET
+                            },
+                        )
+                    }
+
+                    AppScreen.HEALTH_DETAIL -> {
+                        HealthDetailScreen(
+                            petId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.LIST_PET
+                            },
+                            onVaccinationClick = { petId ->
+                                selectedPetId = petId
+                                currentScreen = AppScreen.VACCINATION
+                            },
+                            onMedicationClick = { petId ->
+                                selectedPetId = petId
+                                currentScreen = AppScreen.MEDICATION
+                            },
+                            onMedicalRecordBookClick = { petId ->
+                                selectedPetId = petId
+                                currentScreen = AppScreen.MEDICATION_RECORD_BOOK
+                            },
+                            onEditPetClick = { petId ->
+                                selectedPetId = petId
+                                currentScreen = AppScreen.EDIT_PET
+                            },
+                            onTabSelected = { tab ->
+                                when (tab) {
+                                    PetCareTab.HOME -> {
+                                        listPetTab = PetCareTab.HOME
+                                        currentScreen = AppScreen.HOME
+                                    }
+                                    PetCareTab.HEALTH -> {
+                                        listPetTab = PetCareTab.HEALTH
+                                        currentScreen = AppScreen.LIST_PET
+                                    }
+                                    else -> {}
+                                }
+                            },
+                        )
+                    }
+
+                    AppScreen.VACCINATION -> {
+                        VaccinationScreen(
+                            petId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.HEALTH_DETAIL
+                            },
+                            onAddVaccinationClick = {
+                                currentScreen = AppScreen.ADD_NEW_VACCINATION
+                            },
+                        )
+                    }
+
+                    AppScreen.ADD_NEW_VACCINATION -> {
+                        AddNewVaccinationScreen(
+                            petId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.VACCINATION
+                            },
+                            onSaved = {
+                                currentScreen = AppScreen.VACCINATION
+                            },
+                        )
+                    }
+
+                    AppScreen.MEDICATION -> {
+                        MedicationScreen(
+                            petId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.HEALTH_DETAIL
+                            },
+                            onAddMedicationClick = {
+                                currentScreen = AppScreen.ADD_NEW_MEDICATION
+                            },
+                            onViewInCalendarClick = {
+                                // Calendar view
+                            },
+                        )
+                    }
+
+                    AppScreen.ADD_NEW_MEDICATION -> {
+                        AddNewMedicationScreen(
+                            petId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.MEDICATION
+                            },
+                            onSaved = {
+                                currentScreen = AppScreen.MEDICATION
+                            },
+                        )
+                    }
+
+                    AppScreen.MEDICATION_RECORD_BOOK -> {
+                        MedicalRecordBookScreen(
+                            petId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.HEALTH_DETAIL
+                            },
+                            onAddNewRecordClick = {
+                                currentScreen = AppScreen.ADD_NEW_MEDICATION_RECORD_BOOK
+                            },
+                            onTabSelected = { tab ->
+                                when (tab) {
+                                    PetCareTab.HOME -> {
+                                        listPetTab = PetCareTab.HOME
+                                        currentScreen = AppScreen.HOME
+                                    }
+                                    PetCareTab.HEALTH -> {
+                                        listPetTab = PetCareTab.HEALTH
+                                        currentScreen = AppScreen.LIST_PET
+                                    }
+                                    else -> {}
+                                }
+                            },
+                        )
+                    }
+
+                    AppScreen.ADD_NEW_MEDICATION_RECORD_BOOK -> {
+                        AddNewMedicalRecordBookScreen(
+                            initialPetId = selectedPetId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.MEDICATION_RECORD_BOOK
+                            },
+                            onSaved = {
+                                currentScreen = AppScreen.MEDICATION_RECORD_BOOK
+                            },
+                        )
+                    }
 
                     AppScreen.SUCCESS -> {
                         SuccessScreen(
@@ -180,12 +441,15 @@ class MainActivity : ComponentActivity() {
                             },
                         )
                     }
-
-                    else -> {
-                        // Placeholders for other screens
-                    }
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AppPreview() {
+    PetCareTheme {
     }
 }
