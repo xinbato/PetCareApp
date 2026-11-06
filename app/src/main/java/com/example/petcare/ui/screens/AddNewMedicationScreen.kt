@@ -50,21 +50,10 @@ import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
 import java.util.UUID
-
-/**
- * Screen matching Figma frame # 20_Add_New_Medication
- * Header: "< Thêm mới"
- * 4 Enclosed input cards:
- * 1. "Loại thuốc"
- * 2. "Ngày & giờ"
- * 3. "số lượng"
- * 4. "Trạng thái"
- * Bottom CTA: "Lưu"
- */
 @Composable
 fun AddNewMedicationScreen(
-    petId: String = "1",
     modifier: Modifier = Modifier,
+    petId: String = "1",
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
@@ -115,7 +104,7 @@ fun AddNewMedicationScreen(
                 )
             }
 
-            // Scrollable Form matching Figma 20_Add_New_Medication
+            // Scrollable
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -205,7 +194,7 @@ fun AddNewMedicationScreen(
                     }
                 }
 
-                // Field 3: "số lượng" (exact lowercase 's' matching Figma)
+                // Field 3: "số lượng"
                 Column(modifier = Modifier.fillMaxWidth()) {
                     FigmaCardTextField(
                         value = quantity,
@@ -288,7 +277,7 @@ fun AddNewMedicationScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Bottom CTA: "Lưu" (matching Figma 20_Add_New_Medication)
+            // Bottom CTA: "Lưu"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -333,10 +322,6 @@ fun AddNewMedicationScreen(
     }
 }
 
-/**
- * Pure Figma style input card
- * Clean white background, 16dp rounded corners, 1dp border, centered placeholder
- */
 @Composable
 fun FigmaCardTextField(
     value: String,

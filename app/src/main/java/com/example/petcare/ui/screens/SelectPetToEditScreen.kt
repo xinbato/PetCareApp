@@ -41,11 +41,6 @@ import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
 
-/**
- * Screen showing a simplified list of pets (names only) for the user to choose
- * which pet to edit, matching the requirement:
- * "bấm vào sẽ hiện danh sách xong mới bấm vào con muốn chỉnh sửa để chỉnh sửa nhưng mà chỉ hiện list tên chứ không đầy đủ như list pet"
- */
 @Composable
 fun SelectPetToEditScreen(
     modifier: Modifier = Modifier,

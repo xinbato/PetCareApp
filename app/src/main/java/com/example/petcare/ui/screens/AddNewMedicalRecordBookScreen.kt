@@ -41,29 +41,15 @@ import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
 import java.util.UUID
-
-/**
- * Screen matching Figma frame # 20_Add_New
- * Header: "< Thêm mới"
- * 6 Enclosed input cards:
- * 1. "Chọn thú cưng"
- * 2. "Ngày & giờ"
- * 3. "Loại hoạt động"
- * 4. "Mô tả"
- * 5. "Ảnh / video"
- * 6. "Cảm xúc"
- * Bottom CTA: "Lưu"
- */
 @Composable
 fun AddNewMedicalRecordBookScreen(
-    initialPetId: String = "1",
     modifier: Modifier = Modifier,
+    initialPetId: String = "1",
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
@@ -115,7 +101,7 @@ fun AddNewMedicalRecordBookScreen(
                 )
             }
 
-            // Scrollable Form matching Figma 20_Add_New
+            // Scrollable
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -194,7 +180,7 @@ fun AddNewMedicalRecordBookScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Bottom CTA: "Lưu" (matching Figma 20_Add_New)
+            // Bottom CTA: "Lưu"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

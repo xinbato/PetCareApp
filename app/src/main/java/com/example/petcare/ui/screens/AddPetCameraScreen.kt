@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
 import com.example.petcare.ui.theme.GreenLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme

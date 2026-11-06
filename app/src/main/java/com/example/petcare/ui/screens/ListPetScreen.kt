@@ -249,9 +249,8 @@ fun PetListItemCard(
                 Spacer(modifier = Modifier.width(14.dp))
 
                 Column {
-                    val prefix = if (pet.species.contains("Mèo", ignoreCase = true)) "🐱 " else "🐶 "
                     Text(
-                        text = "$prefix${pet.name}",
+                        text = pet.name,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary

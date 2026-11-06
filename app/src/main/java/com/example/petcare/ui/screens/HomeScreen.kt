@@ -510,7 +510,7 @@ fun HomeScreen(
     onAddPetClick: () -> Unit = {},
     onPetDetailClick: (String) -> Unit = {},
     onViewAllPetsClick: () -> Unit = {},
-    onHealthTabClick: () -> Unit = {}
+    onHealthTabClick: () -> Unit = {},
 ) {
     var uiState by remember(userName) { mutableStateOf(HomeUiState(userName = userName)) }
     var selectedBottomTab by remember { mutableIntStateOf(0) }
@@ -531,13 +531,13 @@ fun HomeScreen(
 
             is HomeUiIntent.SelectBottomTab -> {
                 selectedBottomTab = intent.tabIndex
-                    if (intent.tabIndex == 1) {
-                        onHealthTabClick()
-                    }
+                if (intent.tabIndex == 1) {
+                    onHealthTabClick()
+                }
             }
 
             is HomeUiIntent.ClickService -> {
-                if (intent.serviceId == "srv2"){
+                if (intent.serviceId == "srv2") {
                     onHealthTabClick()
                 }
             }
@@ -578,7 +578,7 @@ fun HomeScreen(
                         processIntent(HomeUiIntent.SelectPet(petId))
                     },
                     onAddPetClick = onAddPetClick,
-                    onViewAllPetsClick = onViewAllPetsClick
+                    onViewAllPetsClick = onViewAllPetsClick,
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -698,7 +698,7 @@ private fun MyPetsSection(
     selectedPetId: String,
     onPetSelected: (String) -> Unit,
     onAddPetClick: () -> Unit,
-    onViewAllPetsClick: () -> Unit = {}
+    onViewAllPetsClick: () -> Unit = {},
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -718,14 +718,21 @@ private fun MyPetsSection(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                 )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "+ Thêm bé mới",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "(Xem tất cả)",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
                     color = GreenPrimary,
-                    modifier = Modifier.clickable { onAddPetClick() },
                 )
             }
+            Text(
+                text = "+ Thêm bé mới",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = GreenPrimary,
+                modifier = Modifier.clickable { onAddPetClick() },
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))

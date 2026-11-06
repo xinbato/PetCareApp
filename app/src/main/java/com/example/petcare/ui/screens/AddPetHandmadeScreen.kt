@@ -44,7 +44,6 @@ import com.example.petcare.R
 import com.example.petcare.data.model.PetModel
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
-import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight

@@ -1,6 +1,5 @@
 package com.example.petcare.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -25,11 +23,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,24 +35,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.petcare.R
-import com.example.petcare.data.model.PetModel
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
-import com.example.petcare.ui.theme.RedErrorLight
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
 
@@ -76,7 +69,7 @@ fun EditPetScreen(
     var dateOfBirth by remember { mutableStateOf(initialPet.dateOfBirth) }
     var weight by remember { mutableStateOf(initialPet.weight) }
     var gender by remember { mutableStateOf(initialPet.gender) }
-    var iconRes by remember { mutableStateOf(initialPet.iconRes) }
+    var iconRes by remember { mutableIntStateOf(initialPet.iconRes) }
 
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
@@ -124,7 +117,7 @@ fun EditPetScreen(
                 }
             }
 
-            // Scrollable Form
+            // Scrollable
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -214,7 +207,7 @@ fun EditPetScreen(
                     )
                 }
 
-                // Secondary Button: Xóa thú cưng (matching Figma 13.1)
+                // Secondary Button: Xóa thú cưng
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

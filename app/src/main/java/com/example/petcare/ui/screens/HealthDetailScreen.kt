@@ -50,8 +50,8 @@ import com.example.petcare.ui.theme.TextSecondary
 
 @Composable
 fun HealthDetailScreen(
-    petId: String = "1",
     modifier: Modifier = Modifier,
+    petId: String = "1",
     onBackClick: () -> Unit = {},
     onVaccinationClick: (String) -> Unit = {},
     onMedicationClick: (String) -> Unit = {},
@@ -146,9 +146,8 @@ fun HealthDetailScreen(
                             }
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
-                                val prefix = if (pet.species.contains("Mèo", ignoreCase = true)) "🐱 " else "🐶 "
                                 Text(
-                                    text = "$prefix${pet.name} • ${pet.statusText}",
+                                    text = "${pet.name} • ${pet.statusText}",
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
@@ -283,6 +282,13 @@ fun HealthDetailScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
+
+            // Bottom Navigation Bar docked
+            PetCareTabBar(
+                currentTab = PetCareTab.HEALTH,
+                onTabSelected = onTabSelected,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

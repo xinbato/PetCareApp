@@ -47,8 +47,8 @@ import com.example.petcare.ui.theme.TextSecondary
 
 @Composable
 fun MedicalRecordBookScreen(
-    petId: String = "1",
     modifier: Modifier = Modifier,
+    petId: String = "1",
     onBackClick: () -> Unit = {},
     onAddNewRecordClick: (String) -> Unit = {},
     onTabSelected: (PetCareTab) -> Unit = {},

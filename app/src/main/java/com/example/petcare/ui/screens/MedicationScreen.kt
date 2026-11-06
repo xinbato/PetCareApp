@@ -39,7 +39,6 @@ import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
@@ -47,8 +46,8 @@ import com.example.petcare.ui.theme.TextSecondary
 
 @Composable
 fun MedicationScreen(
-    petId: String = "1",
     modifier: Modifier = Modifier,
+    petId: String = "1",
     onBackClick: () -> Unit = {},
     onAddMedicationClick: (String) -> Unit = {},
     onViewInCalendarClick: () -> Unit = {},

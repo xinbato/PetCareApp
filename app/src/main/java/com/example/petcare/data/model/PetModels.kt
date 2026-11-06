@@ -47,3 +47,24 @@ data class MedicalRecordEntryModel(
     val photoUri: String? = null,
     val emotion: String = "Bình thường",
 )
+
+data class WeightRecordModel(
+    val id: String,
+    val petId: String,
+    val petName: String,
+    val weight: String,
+    val dateTime: String,
+    val status: String = "Ổn định",
+)
+
+data class CheckupRecordModel(
+    val id: String,
+    val petId: String,
+    val petName: String,
+    val title: String,
+    val doctorOrClinic: String = "Phòng khám thú y PetCare",
+    val dateTime: String,
+    val result: String = "Bình thường",
+    val status: String = "Hoàn thành",
+)
+

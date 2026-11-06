@@ -1,7 +1,6 @@
 package com.example.petcare.ui.screens
 
 import android.content.res.Configuration
-import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

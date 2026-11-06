@@ -46,22 +46,11 @@ import com.example.petcare.ui.theme.GreenLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import java.util.UUID
-
-/**
- * Screen matching Figma frame # 20_Add_New_Vaccination
- * Header: "< Thêm mới"
- * 3 Enclosed input cards:
- * 1. "Nội dung tiêm"
- * 2. "Ngày & giờ"
- * 3. "Trạng thái"
- * Bottom CTA: "Lưu"
- */
 @Composable
 fun AddNewVaccinationScreen(
-    petId: String = "1",
     modifier: Modifier = Modifier,
+    petId: String = "1",
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
@@ -110,7 +99,7 @@ fun AddNewVaccinationScreen(
                 )
             }
 
-            // Scrollable Form matching Figma 20_Add_New_Vaccination
+            // Scrollable
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -243,7 +232,7 @@ fun AddNewVaccinationScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Bottom CTA: "Lưu" (matching Figma 20_Add_New_Vaccination)
+            // Bottom CTA: "Lưu"
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

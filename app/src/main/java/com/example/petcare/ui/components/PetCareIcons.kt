@@ -91,7 +91,6 @@ object PetCareIcons {
         }.build()
     }
 
-    // Pill / Capsule (Medication) 💊
     val Pill: ImageVector by lazy {
         ImageVector.Builder("Pill", 24.dp, 24.dp, 24f, 24f).apply {
             path(fill = SolidColor(Color(0xFF338C63))) {
@@ -115,7 +114,6 @@ object PetCareIcons {
         }.build()
     }
 
-    // Calendar 📅
     val Calendar: ImageVector by lazy {
         ImageVector.Builder("Calendar", 24.dp, 24.dp, 24f, 24f).apply {
             path(fill = SolidColor(Color(0xFF338C63))) {
@@ -147,7 +145,6 @@ object PetCareIcons {
         }.build()
     }
 
-    // Camera 📷
     val Camera: ImageVector by lazy {
         ImageVector.Builder("Camera", 24.dp, 24.dp, 24f, 24f).apply {
             path(fill = SolidColor(Color(0xFF338C63))) {
@@ -181,7 +178,6 @@ object PetCareIcons {
         }.build()
     }
 
-    // Trash / Delete 🗑️
     val Delete: ImageVector by lazy {
         ImageVector.Builder("Delete", 24.dp, 24.dp, 24f, 24f).apply {
             path(fill = SolidColor(Color(0xFFE53935))) {
@@ -207,7 +203,6 @@ object PetCareIcons {
         }.build()
     }
 
-    // Edit Pencil ✏️
     val Edit: ImageVector by lazy {
         ImageVector.Builder("Edit", 24.dp, 24.dp, 24f, 24f).apply {
             path(fill = SolidColor(Color(0xFF338C63))) {
@@ -230,7 +225,6 @@ object PetCareIcons {
         }.build()
     }
 
-    // Checkmark ✓
     val Check: ImageVector by lazy {
         ImageVector.Builder("Check", 24.dp, 24.dp, 24f, 24f).apply {
             path(fill = SolidColor(Color(0xFF338C63))) {
@@ -245,7 +239,6 @@ object PetCareIcons {
         }.build()
     }
 
-    // Heart Pulse / Activity 🩺
     val Activity: ImageVector by lazy {
         ImageVector.Builder("Activity", 24.dp, 24.dp, 24f, 24f).apply {
             path(stroke = SolidColor(Color(0xFF338C63)), strokeLineWidth = 2f) {
@@ -258,4 +251,54 @@ object PetCareIcons {
             }
         }.build()
     }
+
+    val WeightScale: ImageVector by lazy {
+        ImageVector.Builder("WeightScale", 24.dp, 24.dp, 24f, 24f).apply {
+            path(stroke = SolidColor(Color(0xFF338C63)), strokeLineWidth = 1.8f) {
+                moveTo(12f, 3f)
+                verticalLineToRelative(17f)
+                moveTo(8f, 21f)
+                horizontalLineToRelative(8f)
+                moveTo(5f, 7f)
+                horizontalLineToRelative(14f)
+                moveTo(5f, 7f)
+                lineTo(2f, 13f)
+                curveToRelative(0f, 1.66f, 1.34f, 3f, 3f, 3f)
+                reflectiveCurveToRelative(3f, -1.34f, 3f, -3f)
+                lineTo(5f, 7f)
+                close()
+                moveTo(19f, 7f)
+                lineTo(16f, 13f)
+                curveToRelative(0f, 1.66f, 1.34f, 3f, 3f, 3f)
+                reflectiveCurveToRelative(3f, -1.34f, 3f, -3f)
+                lineTo(19f, 7f)
+                close()
+            }
+        }.build()
+    }
+
+    val Stethoscope: ImageVector by lazy {
+        ImageVector.Builder("Stethoscope", 24.dp, 24.dp, 24f, 24f).apply {
+            path(stroke = SolidColor(Color(0xFF338C63)), strokeLineWidth = 1.8f) {
+                moveTo(6f, 4f)
+                verticalLineToRelative(6f)
+                curveToRelative(0f, 3.31f, 2.69f, 6f, 6f, 6f)
+                reflectiveCurveToRelative(6f, -2.69f, 6f, -6f)
+                verticalLineTo(4f)
+                moveTo(6f, 4f)
+                horizontalLineTo(4f)
+                moveTo(18f, 4f)
+                horizontalLineToRelative(2f)
+                moveTo(12f, 16f)
+                verticalLineToRelative(3f)
+                curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
+                horizontalLineToRelative(2f)
+                curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
+                verticalLineToRelative(-1f)
+                moveTo(18f, 18f)
+                arcToRelative(2f, 2f, 0f, true, true, 0f, -0.01f)
+            }
+        }.build()
+    }
 }
+

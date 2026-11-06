@@ -21,10 +21,12 @@ import com.example.petcare.ui.screens.AddNewVaccinationScreen
 import com.example.petcare.ui.screens.AddPetCameraScreen
 import com.example.petcare.ui.screens.AddPetHandmadeScreen
 import com.example.petcare.ui.screens.AddPetOptionScreen
+import com.example.petcare.ui.screens.CheckupHistoryScreen
 import com.example.petcare.ui.screens.EditPetScreen
 import com.example.petcare.ui.screens.ErrorScreen
 import com.example.petcare.ui.screens.ForgotPasswordScreen
 import com.example.petcare.ui.screens.HealthDetailScreen
+import com.example.petcare.ui.screens.HealthScreen
 import com.example.petcare.ui.screens.HomeScreen
 import com.example.petcare.ui.screens.ListPetScreen
 import com.example.petcare.ui.screens.LoginScreen
@@ -37,6 +39,7 @@ import com.example.petcare.ui.screens.ResetPasswordScreen
 import com.example.petcare.ui.screens.SelectPetToEditScreen
 import com.example.petcare.ui.screens.SuccessScreen
 import com.example.petcare.ui.screens.VaccinationScreen
+import com.example.petcare.ui.screens.WeightHistoryScreen
 import com.example.petcare.ui.theme.PetCareTheme
 
 class MainActivity : ComponentActivity() {
@@ -51,6 +54,7 @@ class MainActivity : ComponentActivity() {
                 var scannedPetBreed by remember { mutableStateOf("") }
                 var selectedPetId by remember { mutableStateOf("1") }
                 var listPetTab by remember { mutableStateOf(PetCareTab.HOME) }
+                var healthDetailBackScreen by remember { mutableStateOf(AppScreen.HOME) }
 
                 when (currentScreen) {
                     AppScreen.ONBOARDING -> {
@@ -164,6 +168,7 @@ class MainActivity : ComponentActivity() {
                             onPetDetailClick = { petId ->
                                 selectedPetId = petId
                                 PetRepository.currentSelectedPetId.value = petId
+                                healthDetailBackScreen = AppScreen.HOME
                                 currentScreen = AppScreen.HEALTH_DETAIL
                             },
                             onViewAllPetsClick = {
@@ -171,8 +176,7 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = AppScreen.LIST_PET
                             },
                             onHealthTabClick = {
-                                listPetTab = PetCareTab.HEALTH
-                                currentScreen = AppScreen.LIST_PET
+                                currentScreen = AppScreen.HEALTH
                             },
                         )
                     }
@@ -227,6 +231,7 @@ class MainActivity : ComponentActivity() {
                             onPetClick = { pet ->
                                 selectedPetId = pet.id
                                 PetRepository.currentSelectedPetId.value = pet.id
+                                healthDetailBackScreen = AppScreen.LIST_PET
                                 currentScreen = AppScreen.HEALTH_DETAIL
                             },
                             onEditPetClick = {
@@ -242,8 +247,46 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = AppScreen.HOME
                                     }
                                     PetCareTab.HEALTH -> {
-                                        listPetTab = PetCareTab.HEALTH
-                                        currentScreen = AppScreen.LIST_PET
+                                        currentScreen = AppScreen.HEALTH
+                                    }
+                                    else -> {}
+                                }
+                            },
+                        )
+                    }
+
+                    AppScreen.HEALTH -> {
+                        HealthScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onPetClick = { pet ->
+                                selectedPetId = pet.id
+                                PetRepository.currentSelectedPetId.value = pet.id
+                                healthDetailBackScreen = AppScreen.HEALTH
+                                currentScreen = AppScreen.HEALTH_DETAIL
+                            },
+                            onHistoryItemClick = { item ->
+                                when (item.id) {
+                                    "h1" -> {
+                                        selectedPetId = "all"
+                                        currentScreen = AppScreen.VACCINATION
+                                    }
+                                    "h2" -> {
+                                        currentScreen = AppScreen.WEIGHT_HISTORY
+                                    }
+                                    "h3" -> {
+                                        currentScreen = AppScreen.CHECKUP_HISTORY
+                                    }
+                                    else -> {}
+                                }
+                            },
+                            onTabSelected = { tab ->
+                                when (tab) {
+                                    PetCareTab.HOME -> {
+                                        listPetTab = PetCareTab.HOME
+                                        currentScreen = AppScreen.HOME
+                                    }
+                                    PetCareTab.HEALTH -> {
+                                        // Đang ở màn hình Sức khỏe
                                     }
                                     else -> {}
                                 }
@@ -286,7 +329,7 @@ class MainActivity : ComponentActivity() {
                             petId = selectedPetId,
                             modifier = Modifier.fillMaxSize(),
                             onBackClick = {
-                                currentScreen = AppScreen.LIST_PET
+                                currentScreen = healthDetailBackScreen
                             },
                             onVaccinationClick = { petId ->
                                 selectedPetId = petId
@@ -311,8 +354,7 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = AppScreen.HOME
                                     }
                                     PetCareTab.HEALTH -> {
-                                        listPetTab = PetCareTab.HEALTH
-                                        currentScreen = AppScreen.LIST_PET
+                                        currentScreen = AppScreen.HEALTH
                                     }
                                     else -> {}
                                 }
@@ -325,10 +367,32 @@ class MainActivity : ComponentActivity() {
                             petId = selectedPetId,
                             modifier = Modifier.fillMaxSize(),
                             onBackClick = {
-                                currentScreen = AppScreen.HEALTH_DETAIL
+                                currentScreen = if (selectedPetId == "all") AppScreen.HEALTH else AppScreen.HEALTH_DETAIL
                             },
-                            onAddVaccinationClick = {
+                            onAddVaccinationClick = { targetPetId ->
+                                selectedPetId = targetPetId
                                 currentScreen = AppScreen.ADD_NEW_VACCINATION
+                            },
+                            onViewInCalendarClick = {
+                                // Calendar view
+                            },
+                        )
+                    }
+
+                    AppScreen.WEIGHT_HISTORY -> {
+                        WeightHistoryScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.HEALTH
+                            },
+                        )
+                    }
+
+                    AppScreen.CHECKUP_HISTORY -> {
+                        CheckupHistoryScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.HEALTH
                             },
                         )
                     }
@@ -392,8 +456,7 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = AppScreen.HOME
                                     }
                                     PetCareTab.HEALTH -> {
-                                        listPetTab = PetCareTab.HEALTH
-                                        currentScreen = AppScreen.LIST_PET
+                                        currentScreen = AppScreen.HEALTH
                                     }
                                     else -> {}
                                 }
