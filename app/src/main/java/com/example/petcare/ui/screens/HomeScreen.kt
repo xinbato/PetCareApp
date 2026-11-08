@@ -1,5 +1,6 @@
 package com.example.petcare.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -216,139 +222,6 @@ val RabbitIconVector: ImageVector by lazy {
     }.build()
 }
 
-val HospitalIconVector: ImageVector by lazy {
-    ImageVector.Builder("HospitalIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(GreenPrimary)) {
-            moveTo(19f, 3f)
-            horizontalLineTo(5f)
-            curveTo(3.9f, 3f, 3f, 3.9f, 3f, 5f)
-            verticalLineToRelative(14f)
-            curveTo(3f, 20.1f, 3.9f, 21f, 5f, 21f)
-            horizontalLineToRelative(14f)
-            curveTo(20.1f, 21f, 21f, 20.1f, 21f, 19f)
-            verticalLineTo(5f)
-            curveTo(21f, 3.9f, 20.1f, 3f, 19f, 3f)
-            close()
-            moveTo(10.5f, 17f)
-            verticalLineToRelative(-3.5f)
-            horizontalLineTo(7f)
-            verticalLineToRelative(-3f)
-            horizontalLineToRelative(3.5f)
-            verticalLineTo(7f)
-            horizontalLineToRelative(3f)
-            verticalLineToRelative(3.5f)
-            horizontalLineTo(17f)
-            verticalLineToRelative(3f)
-            horizontalLineToRelative(-3.5f)
-            verticalLineTo(17f)
-            horizontalLineToRelative(-3f)
-            close()
-        }
-    }.build()
-}
-
-val ChartIconVector: ImageVector by lazy {
-    ImageVector.Builder("ChartIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFFE65100))) {
-            moveTo(19f, 3f)
-            horizontalLineTo(5f)
-            curveTo(3.9f, 3f, 3f, 3.9f, 3f, 5f)
-            verticalLineToRelative(14f)
-            curveTo(3f, 20.1f, 3.9f, 21f, 5f, 21f)
-            horizontalLineToRelative(14f)
-            curveTo(20.1f, 21f, 21f, 20.1f, 21f, 19f)
-            verticalLineTo(5f)
-            curveTo(21f, 3.9f, 20.1f, 3f, 19f, 3f)
-            close()
-            moveTo(9f, 17f)
-            horizontalLineTo(7f)
-            verticalLineToRelative(-5f)
-            horizontalLineToRelative(2f)
-            verticalLineToRelative(5f)
-            close()
-            moveTo(13f, 17f)
-            horizontalLineToRelative(-2f)
-            verticalLineTo(7f)
-            horizontalLineToRelative(2f)
-            verticalLineToRelative(10f)
-            close()
-            moveTo(17f, 17f)
-            horizontalLineToRelative(-2f)
-            verticalLineToRelative(-8f)
-            horizontalLineToRelative(2f)
-            verticalLineToRelative(8f)
-            close()
-        }
-    }.build()
-}
-
-val AlarmClockIconVector: ImageVector by lazy {
-    ImageVector.Builder("AlarmClockIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFF283593))) {
-            moveTo(22f, 5.72f)
-            lineToRelative(-4.6f, -3.86f)
-            lineToRelative(-1.29f, 1.53f)
-            lineTo(20.71f, 7.25f)
-            close()
-            moveTo(7.88f, 3.39f)
-            lineTo(6.6f, 1.86f)
-            lineTo(2f, 5.71f)
-            lineToRelative(1.29f, 1.53f)
-            close()
-            moveTo(12.5f, 8f)
-            horizontalLineTo(11f)
-            verticalLineToRelative(6f)
-            lineToRelative(4.75f, 2.85f)
-            lineToRelative(0.75f, -1.23f)
-            lineToRelative(-4f, -2.37f)
-            close()
-            moveTo(12f, 4f)
-            curveTo(7.03f, 4f, 3f, 8.03f, 3f, 13f)
-            curveTo(3f, 17.97f, 7.03f, 22f, 12f, 22f)
-            curveTo(16.97f, 22f, 21f, 17.97f, 21f, 13f)
-            curveTo(21f, 8.03f, 16.97f, 4f, 12f, 4f)
-            close()
-            moveTo(12f, 20f)
-            curveTo(8.13f, 20f, 5f, 16.87f, 5f, 13f)
-            curveTo(5f, 9.13f, 8.13f, 6f, 12f, 6f)
-            curveTo(15.87f, 6f, 19f, 9.13f, 19f, 13f)
-            curveTo(19f, 16.87f, 15.87f, 20f, 12f, 20f)
-            close()
-        }
-    }.build()
-}
-
-val BookOpenIconVector: ImageVector by lazy {
-    ImageVector.Builder("BookOpenIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFF6A1B9A))) {
-            moveTo(21f, 5f)
-            curveToRelative(-1.11f, -0.35f, -2.33f, -0.5f, -3.5f, -0.5f)
-            curveToRelative(-1.95f, 0f, -4.05f, 0.4f, -5.5f, 1.5f)
-            curveTo(10.55f, 4.9f, 8.45f, 4.5f, 6.5f, 4.5f)
-            curveTo(4.55f, 4.5f, 2.45f, 4.9f, 1f, 6f)
-            verticalLineToRelative(14.65f)
-            curveToRelative(0f, 0.25f, 0.25f, 0.5f, 0.5f, 0.5f)
-            curveToRelative(0.1f, 0f, 0.15f, -0.05f, 0.25f, -0.05f)
-            curveTo(3.1f, 20.45f, 4.81f, 20f, 6.5f, 20f)
-            curveToRelative(1.95f, 0f, 4.05f, 0.4f, 5.5f, 1.5f)
-            curveToRelative(1.35f, -0.85f, 3.8f, -1.5f, 5.5f, -1.5f)
-            curveToRelative(1.65f, 0f, 3.35f, 0.3f, 4.75f, 1.05f)
-            curveToRelative(0.1f, 0.05f, 0.15f, 0.05f, 0.25f, 0.05f)
-            curveToRelative(0.25f, 0f, 0.5f, -0.25f, 0.5f, -0.5f)
-            verticalLineTo(6f)
-            curveToRelative(-0.6f, -0.45f, -1.25f, -0.75f, -2f, -1f)
-            close()
-            moveTo(19f, 18.5f)
-            curveToRelative(-1.15f, -0.35f, -2.3f, -0.5f, -3.5f, -0.5f)
-            curveToRelative(-1.7f, 0f, -3.85f, 0.5f, -4.5f, 1.25f)
-            verticalLineTo(7.5f)
-            curveToRelative(0.8f, -0.6f, 2.65f, -1f, 4.5f, -1f)
-            curveToRelative(1.2f, 0f, 2.35f, 0.15f, 3.5f, 0.5f)
-            verticalLineToRelative(11.5f)
-            close()
-        }
-    }.build()
-}
 
 val LightbulbIconVector: ImageVector by lazy {
     ImageVector.Builder("LightbulbIcon", 24.dp, 24.dp, 24f, 24f).apply {
@@ -426,7 +299,8 @@ data class ServiceUiModel(
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
-    val backgroundColor: Color,
+    val backgroundColor: Color = GreenLight,
+    val iconTint: Color = GreenPrimary,
 )
 
 data class HomeUiState(
@@ -488,10 +362,10 @@ data class HomeUiState(
         ),
     ),
     val services: List<ServiceUiModel> = listOf(
-        ServiceUiModel("srv1", "Đặt lịch khám", "Bác sĩ thú y 24/7", HospitalIconVector, GreenLight),
-        ServiceUiModel("srv2", "Nhật ký sức khỏe", "Theo dõi cân nặng & số đo", ChartIconVector, Color(0xFFFFF3E0)),
-        ServiceUiModel("srv3", "Nhắc nhở ăn uống", "Thiết lập giờ ăn", AlarmClockIconVector, Color(0xFFE8EAF6)),
-        ServiceUiModel("srv4", "Mẹo chăm sóc", "Kiến thức nuôi bé", BookOpenIconVector, Color(0xFFF3E5F5)),
+        ServiceUiModel("srv1", "Đặt lịch khám", "Bác sĩ thú y 24/7", Icons.Default.DateRange),
+        ServiceUiModel("srv2", "Nhật ký sức khỏe", "Theo dõi cân nặng & số đo", Icons.Default.Favorite, iconTint = LightGreenIcon),
+        ServiceUiModel("srv3", "Nhắc nhở ăn uống", "Thiết lập giờ ăn", Icons.Default.Notifications),
+        ServiceUiModel("srv4", "Mẹo chăm sóc", "Kiến thức nuôi bé", Icons.Default.Info, iconTint = LightGreenIcon),
     ),
 )
 
@@ -863,10 +737,13 @@ private fun PetCardItem(
 @Composable
 private fun QuickServicesSection(
     services: List<ServiceUiModel>,
+    modifier: Modifier = Modifier,
     onServiceClick: (String) -> Unit,
 ) {
+    if (services.isEmpty()) return
+
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp),
     ) {
@@ -894,6 +771,9 @@ private fun QuickServicesSection(
                         onClick = { onServiceClick(service.id) },
                     )
                 }
+                if (rowServices.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
         }
     }
@@ -906,9 +786,8 @@ private fun ServiceCard(
     onClick: () -> Unit,
 ) {
     Card(
-        modifier = modifier
-            .height(84.dp)
-            .clickable { onClick() },
+        onClick = onClick,
+        modifier = modifier.height(84.dp),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(BorderLight)),
@@ -930,14 +809,14 @@ private fun ServiceCard(
                 Icon(
                     imageVector = service.icon,
                     contentDescription = service.title,
-                    tint = TextPrimary,
+                    tint = service.iconTint,
                     modifier = Modifier.size(22.dp),
                 )
             }
 
             Spacer(modifier = Modifier.width(10.dp))
 
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = service.title,
                     fontSize = 13.sp,
@@ -1146,10 +1025,41 @@ private fun CareTipsSection() {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(name = "Light Mode", showBackground = true)
+@Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun HomeScreenPreview() {
     PetCareTheme {
         HomeScreen()
     }
 }
+
+@Preview(name = "Light Mode", showBackground = true)
+@Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun QuickServicesSectionPreview() {
+    PetCareTheme {
+        QuickServicesSection(
+            services = HomeUiState().services,
+            onServiceClick = {},
+        )
+    }
+}
+
+@Preview(name = "Light Mode", showBackground = true)
+@Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun ServiceCardPreview() {
+    PetCareTheme {
+        ServiceCard(
+            service = ServiceUiModel(
+                id = "preview",
+                title = "Đặt lịch khám",
+                subtitle = "Bác sĩ thú y 24/7",
+                icon = Icons.Default.DateRange,
+            ),
+            onClick = {},
+        )
+    }
+}
+
