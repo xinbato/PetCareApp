@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.theme.BackgroundLight
@@ -52,7 +53,7 @@ fun PersonalInfoScreen(
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
-    val userProfile = PetRepository.userProfile.value
+    val userProfile by PetRepository.userProfile.collectAsStateWithLifecycle()
 
     var fullName by remember { mutableStateOf(userProfile.name) }
     var email by remember { mutableStateOf(userProfile.email) }

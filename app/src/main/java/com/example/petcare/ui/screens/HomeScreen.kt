@@ -27,359 +27,57 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.painterResource
-import com.example.petcare.R
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.petcare.data.model.PetModel
+import com.example.petcare.data.model.ScheduleModel
 import com.example.petcare.ui.components.PetCareTabBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
-import com.example.petcare.ui.theme.LightGreenIcon
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
-
-// --- Pure Jetpack Compose ImageVectors (No Emojis) ---
-val PawIconVector: ImageVector by lazy {
-    ImageVector.Builder("PawIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(LightGreenIcon)) {
-            // Main Pad
-            moveTo(12f, 13f)
-            curveToRelative(-2.2f, 0f, -4f, 1.8f, -4f, 4f)
-            curveToRelative(0f, 1.5f, 1.2f, 2.7f, 2.7f, 2.9f)
-            curveToRelative(0.4f, 0.1f, 0.9f, 0.1f, 1.3f, 0.1f)
-            curveToRelative(0.4f, 0f, 0.9f, 0f, 1.3f, -0.1f)
-            curveToRelative(1.5f, -0.2f, 2.7f, -1.4f, 2.7f, -2.9f)
-            curveToRelative(0f, -2.2f, -1.8f, -4f, -4f, -4f)
-            close()
-            // Toe 1
-            moveTo(6.5f, 10f)
-            curveToRelative(-1.1f, 0f, -2f, 1.1f, -2f, 2.5f)
-            curveToRelative(0f, 1.4f, 0.9f, 2.5f, 2f, 2.5f)
-            curveToRelative(1.1f, 0f, 2f, -1.1f, 2f, -2.5f)
-            curveToRelative(0f, -1.4f, -0.9f, -2.5f, -2f, -2.5f)
-            close()
-            // Toe 2
-            moveTo(9.5f, 5.5f)
-            curveToRelative(-1.1f, 0f, -2f, 1.1f, -2f, 2.5f)
-            curveToRelative(0f, 1.4f, 0.9f, 2.5f, 2f, 2.5f)
-            curveToRelative(1.1f, 0f, 2f, -1.1f, 2f, -2.5f)
-            curveToRelative(0f, -1.4f, -0.9f, -2.5f, -2f, -2.5f)
-            close()
-            // Toe 3
-            moveTo(14.5f, 5.5f)
-            curveToRelative(-1.1f, 0f, -2f, 1.1f, -2f, 2.5f)
-            curveToRelative(0f, 1.4f, 0.9f, 2.5f, 2f, 2.5f)
-            curveToRelative(1.1f, 0f, 2f, -1.1f, 2f, -2.5f)
-            curveToRelative(0f, -1.4f, -0.9f, -2.5f, -2f, -2.5f)
-            close()
-            // Toe 4
-            moveTo(17.5f, 10f)
-            curveToRelative(-1.1f, 0f, -2f, 1.1f, -2f, 2.5f)
-            curveToRelative(0f, 1.4f, 0.9f, 2.5f, 2f, 2.5f)
-            curveToRelative(1.1f, 0f, 2f, -1.1f, 2f, -2.5f)
-            curveToRelative(0f, -1.4f, -0.9f, -2.5f, -2f, -2.5f)
-            close()
-        }
-    }.build()
-}
-
-val CatIconVector: ImageVector by lazy {
-    ImageVector.Builder("CatIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        // Cat Head
-        path(fill = SolidColor(LightGreenIcon)) {
-            moveTo(12f, 4f)
-            curveTo(7.58f, 4f, 4f, 7.58f, 4f, 12f)
-            curveToRelative(0f, 2.5f, 1.15f, 4.73f, 2.96f, 6.22f)
-            lineTo(5f, 21f)
-            lineToRelative(3.5f, -1.25f)
-            curveTo(9.6f, 20.24f, 10.77f, 20.5f, 12f, 20.5f)
-            curveToRelative(4.42f, 0f, 8f, -3.58f, 8f, -8.5f)
-            curveToRelative(0f, -4.42f, -3.58f, -8f, -8f, -8f)
-            close()
-        }
-        // Cute Ears & Eyes Detailing
-        path(fill = SolidColor(GreenLight)) {
-            // Left Ear
-            moveTo(6.5f, 7.5f)
-            lineTo(4.8f, 4.5f)
-            lineTo(8.5f, 5.8f)
-            close()
-            // Right Ear
-            moveTo(17.5f, 7.5f)
-            lineTo(19.2f, 4.5f)
-            lineTo(15.5f, 5.8f)
-            close()
-            // Eyes
-            moveTo(8.5f, 11f)
-            curveTo(9.33f, 11f, 10f, 11.67f, 10f, 12.5f)
-            curveTo(10f, 13.33f, 9.33f, 14f, 8.5f, 14f)
-            curveTo(7.67f, 14f, 7f, 13.33f, 7f, 12.5f)
-            curveTo(7f, 11.67f, 7.67f, 11f, 8.5f, 11f)
-            close()
-            moveTo(15.5f, 11f)
-            curveTo(16.33f, 11f, 17f, 11.67f, 17f, 12.5f)
-            curveTo(17f, 13.33f, 16.33f, 14f, 15.5f, 14f)
-            curveTo(14.67f, 14f, 14f, 13.33f, 14f, 12.5f)
-            curveTo(14f, 11.67f, 14.67f, 11f, 15.5f, 11f)
-            close()
-        }
-    }.build()
-}
-
-val DogIconVector: ImageVector by lazy {
-    ImageVector.Builder("DogIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        // Dog Head Base
-        path(fill = SolidColor(LightGreenIcon)) {
-            moveTo(12f, 2f)
-            curveTo(8.13f, 2f, 5f, 5.13f, 5f, 9f)
-            curveToRelative(0f, 2.38f, 1.19f, 4.47f, 3f, 5.74f)
-            verticalLineTo(19f)
-            curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
-            horizontalLineToRelative(4f)
-            curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
-            verticalLineToRelative(-4.26f)
-            curveToRelative(1.81f, -1.27f, 3f, -3.36f, 3f, -5.74f)
-            curveToRelative(0f, -3.87f, -3.13f, -7f, -7f, -7f)
-            close()
-        }
-        // Floppy Ears & Eyes/Muzzle
-        path(fill = SolidColor(GreenLight)) {
-            // Left Ear
-            moveTo(4.5f, 5f)
-            curveTo(3f, 7f, 2.5f, 10f, 3.5f, 13f)
-            curveTo(4.5f, 15f, 6.5f, 15f, 7f, 12f)
-            lineTo(6.5f, 7f)
-            close()
-            // Right Ear
-            moveTo(19.5f, 5f)
-            curveTo(21f, 7f, 21.5f, 10f, 20.5f, 13f)
-            curveTo(19.5f, 15f, 17.5f, 15f, 17f, 12f)
-            lineTo(17.5f, 7f)
-            close()
-            // Eyes
-            moveTo(9f, 9f)
-            curveToRelative(0.83f, 0f, 1.5f, 0.67f, 1.5f, 1.5f)
-            curveTo(10.5f, 11.33f, 9.83f, 12f, 9f, 12f)
-            curveToRelative(-0.83f, 0f, -1.5f, -0.67f, -1.5f, -1.5f)
-            curveTo(7.5f, 9.67f, 8.17f, 9f, 9f, 9f)
-            close()
-            moveTo(15f, 9f)
-            curveToRelative(0.83f, 0f, 1.5f, 0.67f, 1.5f, 1.5f)
-            curveTo(16.5f, 11.33f, 15.83f, 12f, 15f, 12f)
-            curveToRelative(-0.83f, 0f, -1.5f, -0.67f, -1.5f, -1.5f)
-            curveTo(13.5f, 9.67f, 14.17f, 9f, 15f, 9f)
-            close()
-        }
-    }.build()
-}
-
-val RabbitIconVector: ImageVector by lazy {
-    ImageVector.Builder("RabbitIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(GreenPrimary)) {
-            moveTo(12f, 10f)
-            curveTo(8.69f, 10f, 6f, 12.69f, 6f, 16f)
-            curveToRelative(0f, 3.31f, 2.69f, 6f, 6f, 6f)
-            curveToRelative(3.31f, 0f, 6f, -2.69f, 6f, -6f)
-            curveToRelative(0f, -3.31f, -2.69f, -6f, -6f, -6f)
-            close()
-            moveTo(8.5f, 2f)
-            curveToRelative(-1.1f, 0f, -2f, 1.5f, -2f, 4f)
-            curveToRelative(0f, 2.5f, 1.5f, 4f, 2.5f, 4f)
-            curveToRelative(1f, 0f, 1.5f, -1.5f, 1.5f, -4f)
-            curveToRelative(0f, -2.5f, -0.9f, -4f, -2f, -4f)
-            close()
-            moveTo(15.5f, 2f)
-            curveToRelative(-1.1f, 0f, -2f, 1.5f, -2f, 4f)
-            curveToRelative(0f, 2.5f, 0.5f, 4f, 1.5f, 4f)
-            curveToRelative(1f, 0f, 2.5f, -1.5f, 2.5f, -4f)
-            curveToRelative(0f, -2.5f, -0.9f, -4f, -2f, -4f)
-            close()
-        }
-    }.build()
-}
-
-
-val LightbulbIconVector: ImageVector by lazy {
-    ImageVector.Builder("LightbulbIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFFF57F17))) {
-            moveTo(9f, 21f)
-            horizontalLineToRelative(6f)
-            verticalLineToRelative(-1f)
-            horizontalLineTo(9f)
-            verticalLineToRelative(1f)
-            close()
-            moveTo(12f, 2f)
-            curveTo(7.86f, 2f, 4.5f, 5.36f, 4.5f, 9.5f)
-            curveToRelative(0f, 2.82f, 1.55f, 5.27f, 3.86f, 6.55f)
-            verticalLineTo(18f)
-            curveToRelative(0f, 0.55f, 0.45f, 1f, 1f, 1f)
-            horizontalLineToRelative(5.28f)
-            curveToRelative(0.55f, 0f, 1f, -0.45f, 1f, -1f)
-            verticalLineToRelative(-1.95f)
-            curveToRelative(2.31f, -1.28f, 3.86f, -3.73f, 3.86f, -6.55f)
-            curveTo(19.5f, 5.36f, 16.14f, 2f, 12f, 2f)
-            close()
-        }
-    }.build()
-}
-
-val BellIconVector: ImageVector by lazy {
-    ImageVector.Builder("BellIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(TextPrimary)) {
-            moveTo(12f, 22f)
-            curveTo(13.1f, 22f, 14f, 21.1f, 14f, 20f)
-            lineTo(10f, 20f)
-            curveTo(10f, 21.1f, 10.89f, 22f, 12f, 22f)
-            close()
-            moveTo(18f, 16f)
-            lineTo(18f, 11f)
-            curveTo(18f, 7.93f, 16.36f, 5.36f, 13.5f, 4.68f)
-            lineTo(13.5f, 4f)
-            curveTo(13.5f, 3.17f, 12.83f, 2.5f, 12f, 2.5f)
-            curveTo(11.17f, 2.5f, 10.5f, 3.17f, 10.5f, 4f)
-            lineTo(10.5f, 4.68f)
-            curveTo(7.63f, 5.36f, 6f, 7.92f, 6f, 11f)
-            lineTo(6f, 16f)
-            lineTo(4f, 18f)
-            lineTo(4f, 19f)
-            lineTo(20f, 19f)
-            lineTo(20f, 18f)
-            lineTo(18f, 16f)
-            close()
-        }
-    }.build()
-}
-
-// --- MVI Data Models ---
-data class PetUiModel(
-    val id: String,
-    val name: String,
-    val breed: String,
-    val age: String,
-    val weight: String,
-    val iconRes: Int,
-    val statusText: String,
-)
-
-data class ScheduleUiModel(
-    val id: String,
-    val title: String,
-    val petName: String,
-    val timeText: String,
-    val category: String,
-    val isCompleted: Boolean,
-)
+import com.example.petcare.ui.viewmodel.HomeUiState
+import com.example.petcare.ui.viewmodel.HomeViewModel
 
 data class ServiceUiModel(
     val id: String,
     val title: String,
     val subtitle: String,
     val icon: ImageVector,
-    val backgroundColor: Color = GreenLight,
-    val iconTint: Color = GreenPrimary,
 )
 
-data class HomeUiState(
-    val userName: String = "Nguyễn Văn A",
-    val pets: List<PetUiModel> = listOf(
-        PetUiModel(
-            id = "1",
-            name = "Miu Miu",
-            breed = "Mèo Anh Lông Ngắn",
-            age = "2 tuổi",
-            weight = "4.2 kg",
-            iconRes = R.drawable.cat,
-            statusText = "Sắp đến lịch tiêm phòng",
-        ),
-        PetUiModel(
-            id = "2",
-            name = "Cậu Vàng",
-            breed = "Cún Poodle",
-            age = "1.5 tuổi",
-            weight = "5.0 kg",
-            iconRes = R.drawable.dog,
-            statusText = "Khỏe mạnh",
-        ),
-        PetUiModel(
-            id = "3",
-            name = "Lô Lô",
-            breed = "Thỏ Lốp",
-            age = "8 tháng",
-            weight = "1.8 kg",
-            iconRes = R.drawable.rabbit,
-            statusText = "Đã tắm rửa",
-        ),
-    ),
-    val selectedPetId: String = "1",
-    val schedules: List<ScheduleUiModel> = listOf(
-        ScheduleUiModel(
-            id = "s1",
-            title = "Tắm rửa & Cắt tỉa lông",
-            petName = "Miu Miu",
-            timeText = "15:00 - Hôm nay",
-            category = "Grooming",
-            isCompleted = false,
-        ),
-        ScheduleUiModel(
-            id = "s2",
-            title = "Tiêm vắc-xin định kỳ",
-            petName = "Miu Miu",
-            timeText = "09:30 - Ngày mai",
-            category = "Y tế",
-            isCompleted = false,
-        ),
-        ScheduleUiModel(
-            id = "s3",
-            title = "Uống thuốc tẩy giun",
-            petName = "Cậu Vàng",
-            timeText = "08:00 - 15/11",
-            category = "Thuốc",
-            isCompleted = true,
-        ),
-    ),
-    val services: List<ServiceUiModel> = listOf(
-        ServiceUiModel("srv1", "Đặt lịch khám", "Bác sĩ thú y 24/7", Icons.Default.DateRange),
-        ServiceUiModel("srv2", "Nhật ký sức khỏe", "Theo dõi cân nặng & số đo", Icons.Default.Favorite, iconTint = LightGreenIcon),
-        ServiceUiModel("srv3", "Nhắc nhở ăn uống", "Thiết lập giờ ăn", Icons.Default.Notifications),
-        ServiceUiModel("srv4", "Mẹo chăm sóc", "Kiến thức nuôi bé", Icons.Default.Info, iconTint = LightGreenIcon),
-    ),
+val defaultServices = listOf(
+    ServiceUiModel("srv1", "Đặt lịch khám", "Bác sĩ thú y 24/7", Icons.Default.DateRange),
+    ServiceUiModel("srv2", "Nhật ký sức khỏe", "Theo dõi cân nặng & số đo", Icons.Default.Favorite),
+    ServiceUiModel("srv3", "Nhắc nhở ăn uống", "Thiết lập giờ ăn", Icons.Default.Notifications),
+    ServiceUiModel("srv4", "Mẹo chăm sóc", "Kiến thức nuôi bé", Icons.Default.Info),
 )
-
-sealed interface HomeUiIntent {
-    data class SelectPet(val petId: String) : HomeUiIntent
-    data class ToggleScheduleComplete(val scheduleId: String) : HomeUiIntent
-    data class SelectBottomTab(val tabIndex: Int) : HomeUiIntent
-    data class ClickService(val serviceId: String) : HomeUiIntent
-    data object ClickNotification : HomeUiIntent
-}
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = viewModel(),
     userName: String = "Nguyễn Văn A",
     onAddPetClick: () -> Unit = {},
     onPetDetailClick: (String) -> Unit = {},
@@ -389,81 +87,37 @@ fun HomeScreen(
     onMapTabClick: () -> Unit = {},
     onProfileTabClick: () -> Unit = {},
 ) {
-    var uiState by remember(userName) { mutableStateOf(HomeUiState(userName = userName)) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedBottomTab by remember { mutableIntStateOf(0) }
-
-    fun processIntent(intent: HomeUiIntent) {
-        when (intent) {
-            is HomeUiIntent.SelectPet -> {
-                uiState = uiState.copy(selectedPetId = intent.petId)
-                onPetDetailClick(intent.petId)
-            }
-
-            is HomeUiIntent.ToggleScheduleComplete -> {
-                val updatedList = uiState.schedules.map { schedule ->
-                    if (schedule.id == intent.scheduleId) schedule.copy(isCompleted = !schedule.isCompleted) else schedule
-                }
-                uiState = uiState.copy(schedules = updatedList)
-            }
-
-            is HomeUiIntent.SelectBottomTab -> {
-                selectedBottomTab = intent.tabIndex
-                if (intent.tabIndex == 1) {
-                    onHealthTabClick()
-                } else if (intent.tabIndex == 2) {
-                    onCalendarTabClick()
-                } else if (intent.tabIndex == 3) {
-                    onMapTabClick()
-                } else if (intent.tabIndex == 4) {
-                    onProfileTabClick()
-                }
-            }
-
-            is HomeUiIntent.ClickService -> {
-                if (intent.serviceId == "srv1") {
-                    onCalendarTabClick()
-                } else if (intent.serviceId == "srv2") {
-                    onHealthTabClick()
-                }
-            }
-
-            is HomeUiIntent.ClickNotification -> {
-                /* Action on notification click */
-            }
-        }
-    }
-
-
-
+    val displayName = uiState.userName.ifEmpty { userName }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding(),
         ) {
-            // Top App Header
             HomeTopHeader(
-                userName = uiState.userName,
-            ) { processIntent(HomeUiIntent.ClickNotification) }
+                userName = displayName,
+                onNotificationClick = { /* Notification click */ },
+            )
 
-            // Scrollable Main Content
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 16.dp),
             ) {
-                // 1. My Pets Section
                 MyPetsSection(
                     pets = uiState.pets,
                     selectedPetId = uiState.selectedPetId,
                     onPetSelected = { petId ->
-                        processIntent(HomeUiIntent.SelectPet(petId))
+                        viewModel.selectPet(petId)
+                        onPetDetailClick(petId)
                     },
                     onAddPetClick = onAddPetClick,
                     onViewAllPetsClick = onViewAllPetsClick,
@@ -471,35 +125,44 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // 2. Quick Services Section
                 QuickServicesSection(
-                    services = uiState.services,
+                    services = defaultServices,
                     onServiceClick = { serviceId ->
-                        processIntent(HomeUiIntent.ClickService(serviceId))
+                        when (serviceId) {
+                            "srv1" -> onCalendarTabClick()
+                            "srv2" -> onHealthTabClick()
+                            "srv3" -> onCalendarTabClick()
+                            "srv4" -> onHealthTabClick()
+                        }
                     },
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // 3. Upcoming Schedule Section
                 UpcomingScheduleSection(
                     schedules = uiState.schedules,
                     onToggleComplete = { scheduleId ->
-                        processIntent(HomeUiIntent.ToggleScheduleComplete(scheduleId))
+                        viewModel.toggleScheduleComplete(scheduleId)
                     },
+                    onViewAllClick = onCalendarTabClick,
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // 4. Care Tips Section
                 CareTipsSection()
             }
 
-            // Bottom Navigation TabBar (Pill Shape with Jetpack Compose Icons)
             PetCareTabBar(
                 selectedTab = selectedBottomTab,
                 onTabSelected = { tabIndex ->
-                    processIntent(HomeUiIntent.SelectBottomTab(tabIndex))
+                    selectedBottomTab = tabIndex
+                    when (tabIndex) {
+                        0 -> {}
+                        1 -> onHealthTabClick()
+                        2 -> onCalendarTabClick()
+                        3 -> onMapTabClick()
+                        4 -> onProfileTabClick()
+                    }
                 },
                 onAddPetClick = onAddPetClick,
             )
@@ -524,14 +187,14 @@ private fun HomeTopHeader(
                 modifier = Modifier
                     .size(46.dp)
                     .clip(CircleShape)
-                    .background(GreenLight)
-                    .border(1.5.dp, GreenPrimary, CircleShape),
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = PawIconVector,
+                    imageVector = Icons.Default.Pets,
                     contentDescription = "Avatar Badge",
-                    tint = GreenPrimary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp),
                 )
             }
@@ -541,13 +204,13 @@ private fun HomeTopHeader(
                     text = "Xin chào, $userName",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = "Thú cưng của bạn hôm nay thế nào?",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -556,23 +219,22 @@ private fun HomeTopHeader(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.White)
-                .border(1.dp, BorderLight, CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                 .clickable { onNotificationClick() },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = BellIconVector,
+                imageVector = Icons.Default.Notifications,
                 contentDescription = "Thông báo",
-                tint = TextPrimary,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(20.dp),
             )
-            // Notification Dot
             Box(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFE53935))
+                    .background(MaterialTheme.colorScheme.error)
                     .align(Alignment.TopEnd)
                     .padding(2.dp),
             )
@@ -582,7 +244,7 @@ private fun HomeTopHeader(
 
 @Composable
 private fun MyPetsSection(
-    pets: List<PetUiModel>,
+    pets: List<PetModel>,
     selectedPetId: String,
     onPetSelected: (String) -> Unit,
     onAddPetClick: () -> Unit,
@@ -598,46 +260,62 @@ private fun MyPetsSection(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onViewAllPetsClick() }
+                modifier = Modifier.clickable { onViewAllPetsClick() },
             ) {
                 Text(
                     text = "Thú cưng của tôi",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "(Xem tất cả)",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = GreenPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             Text(
                 text = "+ Thêm bé mới",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = GreenPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { onAddPetClick() },
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            items(pets) { pet ->
-                val isSelected = pet.id == selectedPetId
-                PetCardItem(
-                    pet = pet,
-                    isSelected = isSelected,
-                    onClick = {
-                        onPetSelected(pet.id)
-                    },
+        if (pets.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Chưa có thú cưng nào. Nhấn '+ Thêm bé mới' để tạo!",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        } else {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                items(pets, key = { it.id }) { pet ->
+                    val isSelected = pet.id == selectedPetId
+                    PetCardItem(
+                        pet = pet,
+                        isSelected = isSelected,
+                        onClick = { onPetSelected(pet.id) },
+                    )
+                }
             }
         }
     }
@@ -645,7 +323,7 @@ private fun MyPetsSection(
 
 @Composable
 private fun PetCardItem(
-    pet: PetUiModel,
+    pet: PetModel,
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
@@ -655,10 +333,10 @@ private fun PetCardItem(
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) GreenLight else Color.White,
+            containerColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
         ),
         border = CardDefaults.outlinedCardBorder().copy(
-            brush = SolidColor(if (isSelected) GreenPrimary else BorderLight),
+            brush = SolidColor(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp),
     ) {
@@ -675,14 +353,14 @@ private fun PetCardItem(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(Color.White)
-                        .border(1.dp, BorderLight, CircleShape),
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painter = painterResource(id = pet.iconRes),
                         contentDescription = pet.name,
-                        tint = LightGreenIcon,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -691,14 +369,14 @@ private fun PetCardItem(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(GreenPrimary)
+                            .background(MaterialTheme.colorScheme.primary)
                             .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
                         Text(
                             text = "Đang chọn",
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                 }
@@ -710,7 +388,7 @@ private fun PetCardItem(
                 text = pet.name,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -719,7 +397,7 @@ private fun PetCardItem(
                 text = pet.breed,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Normal,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -730,18 +408,18 @@ private fun PetCardItem(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(BackgroundLight)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 ) {
-                    Text(text = pet.age, fontSize = 10.sp, color = TextSecondary)
+                    Text(text = pet.age, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(BackgroundLight)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 ) {
-                    Text(text = pet.weight, fontSize = 10.sp, color = TextSecondary)
+                    Text(text = pet.weight, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -765,7 +443,7 @@ private fun QuickServicesSection(
             text = "Dịch vụ & Tiện ích",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -803,8 +481,8 @@ private fun ServiceCard(
         onClick = onClick,
         modifier = modifier.height(84.dp),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(BorderLight)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(MaterialTheme.colorScheme.outlineVariant)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
@@ -817,13 +495,13 @@ private fun ServiceCard(
                 modifier = Modifier
                     .size(42.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(service.backgroundColor),
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = service.icon,
                     contentDescription = service.title,
-                    tint = service.iconTint,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(22.dp),
                 )
             }
@@ -835,7 +513,7 @@ private fun ServiceCard(
                     text = service.title,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -843,7 +521,7 @@ private fun ServiceCard(
                     text = service.subtitle,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Normal,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -854,8 +532,9 @@ private fun ServiceCard(
 
 @Composable
 private fun UpcomingScheduleSection(
-    schedules: List<ScheduleUiModel>,
+    schedules: List<ScheduleModel>,
     onToggleComplete: (String) -> Unit,
+    onViewAllClick: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -871,24 +550,42 @@ private fun UpcomingScheduleSection(
                 text = "Lịch trình hôm nay",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = "Xem tất cả",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Normal,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { onViewAllClick() },
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            schedules.forEach { schedule ->
-                ScheduleCardItem(
-                    schedule = schedule,
-                    onToggleComplete = { onToggleComplete(schedule.id) },
+        if (schedules.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Không có lịch trình nào hôm nay",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                schedules.take(3).forEach { schedule ->
+                    ScheduleCardItem(
+                        schedule = schedule,
+                        onToggleComplete = { onToggleComplete(schedule.id) },
+                    )
+                }
             }
         }
     }
@@ -896,14 +593,14 @@ private fun UpcomingScheduleSection(
 
 @Composable
 private fun ScheduleCardItem(
-    schedule: ScheduleUiModel,
+    schedule: ScheduleModel,
     onToggleComplete: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(BorderLight)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(MaterialTheme.colorScheme.outlineVariant)),
     ) {
         Row(
             modifier = Modifier
@@ -917,13 +614,22 @@ private fun ScheduleCardItem(
                     modifier = Modifier
                         .size(24.dp)
                         .clip(CircleShape)
-                        .background(if (schedule.isCompleted) GreenPrimary else Color.White)
-                        .border(1.5.dp, if (schedule.isCompleted) GreenPrimary else BorderLight, CircleShape)
+                        .background(if (schedule.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                        .border(
+                            1.5.dp,
+                            if (schedule.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                            CircleShape,
+                        )
                         .clickable { onToggleComplete() },
                     contentAlignment = Alignment.Center,
                 ) {
                     if (schedule.isCompleted) {
-                        Text(text = "✓", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "✓",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
 
@@ -934,14 +640,14 @@ private fun ScheduleCardItem(
                         text = schedule.title,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (schedule.isCompleted) TextSecondary else TextPrimary,
+                        color = if (schedule.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = PawIconVector,
+                            imageVector = Icons.Default.Pets,
                             contentDescription = null,
-                            tint = GreenPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(12.dp),
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -949,12 +655,12 @@ private fun ScheduleCardItem(
                             text = schedule.petName,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
-                            color = GreenPrimary,
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = "  •  ${schedule.timeText}",
+                            text = "  •  ${schedule.timeText.ifEmpty { schedule.dateText }}",
                             fontSize = 11.sp,
-                            color = TextSecondary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -963,14 +669,14 @@ private fun ScheduleCardItem(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(GreenLight)
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Text(
-                    text = schedule.category,
+                    text = schedule.description.ifEmpty { "Lịch hẹn" },
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = GreenPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -988,7 +694,7 @@ private fun CareTipsSection() {
             text = "Mẹo chăm sóc bé",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -996,8 +702,8 @@ private fun CareTipsSection() {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = GreenLight.copy(alpha = 0.6f)),
-            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(BorderLight)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(MaterialTheme.colorScheme.outlineVariant)),
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -1007,13 +713,13 @@ private fun CareTipsSection() {
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(Color.White),
+                        .background(MaterialTheme.colorScheme.surface),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = LightbulbIconVector,
+                        imageVector = Icons.Default.Lightbulb,
                         contentDescription = "Mẹo chăm sóc",
-                        tint = Color(0xFFF57F17),
+                        tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(24.dp),
                     )
                 }
@@ -1023,13 +729,13 @@ private fun CareTipsSection() {
                         text = "Chế độ dinh dưỡng cho Mèo con",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Đảm bảo cung cấp đủ lượng Protein và Nước mỗi ngày để bé phát triển toàn diện.",
                         fontSize = 12.sp,
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1047,33 +753,3 @@ fun HomeScreenPreview() {
         HomeScreen()
     }
 }
-
-@Preview(name = "Light Mode", showBackground = true)
-@Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun QuickServicesSectionPreview() {
-    PetCareTheme {
-        QuickServicesSection(
-            services = HomeUiState().services,
-            onServiceClick = {},
-        )
-    }
-}
-
-@Preview(name = "Light Mode", showBackground = true)
-@Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun ServiceCardPreview() {
-    PetCareTheme {
-        ServiceCard(
-            service = ServiceUiModel(
-                id = "preview",
-                title = "Đặt lịch khám",
-                subtitle = "Bác sĩ thú y 24/7",
-                icon = Icons.Default.DateRange,
-            ),
-            onClick = {},
-        )
-    }
-}
-

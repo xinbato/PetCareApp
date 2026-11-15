@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petcare.data.model.VaccinationModel
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
@@ -58,7 +60,8 @@ fun VaccinationScreen(
     onViewInCalendarClick: () -> Unit = {},
 ) {
     val isAllPets = petId == "all" || petId.isBlank()
-    val allPets = PetRepository.pets
+    val allPets by PetRepository.pets.collectAsStateWithLifecycle()
+    val vaccinations by PetRepository.vaccinations.collectAsStateWithLifecycle()
     val singlePet = if (!isAllPets) PetRepository.getPetById(petId) ?: PetRepository.getSelectedPet() else null
 
     Box(
@@ -119,7 +122,7 @@ fun VaccinationScreen(
                 if (isAllPets) {
                     // Hiển thị lịch sử tiêm
                     allPets.forEach { pet ->
-                        val petVaccinations = PetRepository.vaccinations.filter { it.petId == pet.id }
+                        val petVaccinations = vaccinations.filter { it.petId == pet.id }
 
                         item(key = "header_${pet.id}") {
                             PetVaccinationSectionHeader(
@@ -160,7 +163,7 @@ fun VaccinationScreen(
                     }
                 } else {
                     // Xem của riêng 1 bé
-                    val petVaccinations = PetRepository.vaccinations.filter { it.petId == singlePet?.id }
+                    val petVaccinations = vaccinations.filter { it.petId == singlePet?.id }
                     items(petVaccinations, key = { it.id }) { item ->
                         VaccinationItemCard(item = item)
                     }

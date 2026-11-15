@@ -1,7 +1,11 @@
 package com.example.petcare.ui.screens
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,20 +29,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MedicalServices
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,9 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -57,201 +67,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petcare.data.model.PetPlaceModel
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-
-private val StethoscopeIcon: ImageVector by lazy {
-    ImageVector.Builder("StethoscopeIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFF338C63))) {
-            moveTo(19f, 8f)
-            verticalLineTo(3f)
-            horizontalLineToRelative(-2f)
-            verticalLineToRelative(5f)
-            curveToRelative(0f, 2.76f, -2.24f, 5f, -5f, 5f)
-            curveToRelative(-2.76f, 0f, -5f, -2.24f, -5f, -5f)
-            verticalLineTo(3f)
-            horizontalLineTo(5f)
-            verticalLineToRelative(5f)
-            curveToRelative(0f, 3.53f, 2.61f, 6.43f, 6f, 6.92f)
-            verticalLineTo(18f)
-            curveToRelative(0f, 1.66f, 1.34f, 3f, 3f, 3f)
-            horizontalLineToRelative(2f)
-            verticalLineToRelative(-2f)
-            horizontalLineToRelative(-2f)
-            curveToRelative(-0.55f, 0f, -1f, -0.45f, -1f, -1f)
-            verticalLineToRelative(-3.08f)
-            curveToRelative(3.39f, -0.49f, 6f, -3.39f, 6f, -6.92f)
-            close()
-        }
-    }.build()
-}
-
-private val ScissorsIcon: ImageVector by lazy {
-    ImageVector.Builder("ScissorsIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFFD99B26))) {
-            moveTo(9.64f, 7.64f)
-            curveToRelative(0.23f, -0.5f, 0.36f, -1.05f, 0.36f, -1.64f)
-            curveToRelative(0f, -2.21f, -1.79f, -4f, -4f, -4f)
-            curveTo(3.79f, 2f, 2f, 3.79f, 2f, 6f)
-            curveToRelative(0f, 2.21f, 1.79f, 4f, 4f, 4f)
-            curveToRelative(0.59f, 0f, 1.14f, -0.13f, 1.64f, -0.36f)
-            lineTo(10f, 12f)
-            lineToRelative(-2.36f, 2.36f)
-            curveTo(7.14f, 14.13f, 6.59f, 14f, 6f, 14f)
-            curveToRelative(-2.21f, 0f, -4f, 1.79f, -4f, 4f)
-            curveToRelative(0f, 2.21f, 1.79f, 4f, 4f, 4f)
-            curveToRelative(2.21f, 0f, 4f, -1.79f, 4f, -4f)
-            curveToRelative(0f, -0.59f, -0.13f, -1.14f, -0.36f, -1.64f)
-            lineTo(12f, 14f)
-            lineToRelative(7f, 7f)
-            horizontalLineToRelative(3f)
-            verticalLineToRelative(-1f)
-            lineToRelative(-9f, -9f)
-            lineToRelative(9f, -9f)
-            verticalLineTo(1f)
-            horizontalLineToRelative(-3f)
-            lineToRelative(-7f, 7f)
-            close()
-        }
-    }.build()
-}
-
-private val ListIcon: ImageVector by lazy {
-    ImageVector.Builder("ListIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(GreenPrimary)) {
-            moveTo(4f, 10.5f)
-            curveTo(3.17f, 10.5f, 2.5f, 11.17f, 2.5f, 12f)
-            curveTo(2.5f, 12.83f, 3.17f, 13.5f, 4f, 13.5f)
-            curveTo(4.83f, 13.5f, 5.5f, 12.83f, 5.5f, 12f)
-            curveTo(5.5f, 11.17f, 4.83f, 10.5f, 4f, 10.5f)
-            close()
-            moveTo(4f, 4.5f)
-            curveTo(3.17f, 4.5f, 2.5f, 5.17f, 2.5f, 6f)
-            curveTo(2.5f, 6.83f, 3.17f, 7.5f, 4f, 7.5f)
-            curveTo(4.83f, 7.5f, 5.5f, 6.83f, 5.5f, 6f)
-            curveTo(5.5f, 5.17f, 4.83f, 4.5f, 4f, 4.5f)
-            close()
-            moveTo(4f, 16.5f)
-            curveTo(3.17f, 16.5f, 2.5f, 17.17f, 2.5f, 18f)
-            curveTo(2.5f, 18.83f, 3.17f, 19.5f, 4f, 19.5f)
-            curveTo(4.83f, 19.5f, 5.5f, 18.83f, 5.5f, 18f)
-            curveTo(5.5f, 17.17f, 4.83f, 16.5f, 4f, 16.5f)
-            close()
-            moveTo(7f, 19f)
-            horizontalLineToRelative(14f)
-            verticalLineToRelative(-2f)
-            horizontalLineTo(7f)
-            verticalLineToRelative(2f)
-            close()
-            moveTo(7f, 13f)
-            horizontalLineToRelative(14f)
-            verticalLineToRelative(-2f)
-            horizontalLineTo(7f)
-            verticalLineToRelative(2f)
-            close()
-            moveTo(7f, 5f)
-            verticalLineToRelative(2f)
-            horizontalLineToRelative(14f)
-            verticalLineTo(5f)
-            horizontalLineTo(7f)
-            close()
-        }
-    }.build()
-}
-
-private val FilterIcon: ImageVector by lazy {
-    ImageVector.Builder("FilterIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(GreenPrimary)) {
-            moveTo(10f, 18f)
-            horizontalLineToRelative(4f)
-            verticalLineToRelative(-2f)
-            horizontalLineToRelative(-4f)
-            verticalLineToRelative(2f)
-            close()
-            moveTo(3f, 6f)
-            verticalLineToRelative(2f)
-            horizontalLineToRelative(18f)
-            verticalLineTo(6f)
-            horizontalLineTo(3f)
-            close()
-            moveTo(6f, 13f)
-            horizontalLineToRelative(12f)
-            verticalLineToRelative(-2f)
-            horizontalLineTo(6f)
-            verticalLineToRelative(2f)
-            close()
-        }
-    }.build()
-}
-
-private val ShoppingBagIcon: ImageVector by lazy {
-    ImageVector.Builder("ShoppingBagIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFF8E44AD))) {
-            moveTo(18f, 6f)
-            horizontalLineToRelative(-2f)
-            curveToRelative(0f, -2.21f, -1.79f, -4f, -4f, -4f)
-            curveTo(9.79f, 2f, 8f, 3.79f, 8f, 6f)
-            horizontalLineTo(6f)
-            curveTo(4.9f, 6f, 4f, 6.9f, 4f, 8f)
-            verticalLineToRelative(12f)
-            curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
-            horizontalLineToRelative(12f)
-            curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
-            verticalLineTo(8f)
-            curveTo(20f, 6.9f, 19.1f, 6f, 18f, 6f)
-            close()
-            moveTo(12f, 4f)
-            curveToRelative(1.1f, 0f, 2f, 0.9f, 2f, 2f)
-            horizontalLineToRelative(-4f)
-            curveTo(10f, 4.9f, 10.9f, 4f, 12f, 4f)
-            close()
-            moveTo(18f, 20f)
-            horizontalLineTo(6f)
-            verticalLineTo(8f)
-            horizontalLineToRelative(2f)
-            verticalLineToRelative(2f)
-            horizontalLineToRelative(2f)
-            verticalLineTo(8f)
-            horizontalLineToRelative(4f)
-            verticalLineToRelative(2f)
-            horizontalLineToRelative(2f)
-            verticalLineTo(8f)
-            horizontalLineToRelative(2f)
-            verticalLineToRelative(12f)
-            close()
-        }
-    }.build()
-}
-
-private val NavigationIcon: ImageVector by lazy {
-    ImageVector.Builder("NavigationIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFF2563EB))) {
-            moveTo(12f, 2f)
-            lineTo(4.5f, 20.29f)
-            lineToRelative(0.71f, 0.71f)
-            lineTo(12f, 18f)
-            lineToRelative(6.79f, 3f)
-            lineToRelative(0.71f, -0.71f)
-            close()
-        }
-    }.build()
-}
 
 @Composable
 fun MapScreen(
@@ -266,14 +96,41 @@ fun MapScreen(
     var showLocationDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val places = PetRepository.petPlaces
+    val places by PetRepository.petPlaces.collectAsStateWithLifecycle()
 
-    val filteredPlaces = remember(searchQuery, selectedCategory, places.size) {
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED,
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+    ) { permissions ->
+        hasLocationPermission = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                ),
+            )
+        }
+    }
+
+    val filteredPlaces = remember(searchQuery, selectedCategory, places) {
         places.filter { place ->
             val matchesCategory = selectedCategory == "Tất cả" || place.category.equals(selectedCategory, ignoreCase = true)
             val matchesSearch = searchQuery.isBlank() ||
-                    place.name.lowercase().contains(searchQuery.lowercase()) ||
-                    place.subtitle.lowercase().contains(searchQuery.lowercase())
+                place.name.lowercase().contains(searchQuery.lowercase()) ||
+                place.subtitle.lowercase().contains(searchQuery.lowercase())
             matchesCategory && matchesSearch
         }
     }
@@ -281,12 +138,12 @@ fun MapScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
+                .statusBarsPadding(),
         ) {
             // Main Top Header Bar
             Row(
@@ -294,20 +151,20 @@ fun MapScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
                     Text(
                         text = "Bản đồ",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "Tất cả cơ sở thú y gần nhất",
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
@@ -316,16 +173,16 @@ fun MapScreen(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(Color.White)
-                        .border(1.dp, BorderLight, CircleShape)
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                         .clickable { isMapView = !isMapView },
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = if (isMapView) ListIcon else Icons.Default.LocationOn,
+                        imageVector = if (isMapView) Icons.AutoMirrored.Filled.FormatListBulleted else Icons.Default.LocationOn,
                         contentDescription = if (isMapView) "Xem danh sách" else "Xem bản đồ",
-                        tint = GreenPrimary,
-                        modifier = Modifier.size(24.dp)
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
@@ -337,13 +194,13 @@ fun MapScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(rememberScrollState()),
                 ) {
                     // Search Bar
                     PaddingBox {
                         MapSearchBar(
                             query = searchQuery,
-                            onQueryChange = { searchQuery = it }
+                            onQueryChange = { searchQuery = it },
                         )
                     }
 
@@ -354,30 +211,30 @@ fun MapScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceAround
+                        horizontalArrangement = Arrangement.SpaceAround,
                     ) {
                         CategoryCircleButton(
                             title = "Thú y",
-                            icon = StethoscopeIcon,
-                            bgColor = Color(0xFFE8F5E9),
+                            icon = Icons.Default.MedicalServices,
+                            bgColor = MaterialTheme.colorScheme.secondaryContainer,
                             isSelected = selectedCategory == "Thú y",
-                            onClick = { selectedCategory = if (selectedCategory == "Thú y") "Tất cả" else "Thú y" }
+                            onClick = { selectedCategory = if (selectedCategory == "Thú y") "Tất cả" else "Thú y" },
                         )
 
                         CategoryCircleButton(
                             title = "Spa",
-                            icon = ScissorsIcon,
-                            bgColor = Color(0xFFFFF8E1),
+                            icon = Icons.Default.ContentCut,
+                            bgColor = MaterialTheme.colorScheme.tertiaryContainer,
                             isSelected = selectedCategory == "Spa",
-                            onClick = { selectedCategory = if (selectedCategory == "Spa") "Tất cả" else "Spa" }
+                            onClick = { selectedCategory = if (selectedCategory == "Spa") "Tất cả" else "Spa" },
                         )
 
                         CategoryCircleButton(
                             title = "Cửa hàng",
-                            icon = ShoppingBagIcon,
-                            bgColor = Color(0xFFF3E5F5),
+                            icon = Icons.Default.ShoppingBag,
+                            bgColor = MaterialTheme.colorScheme.surfaceVariant,
                             isSelected = selectedCategory == "Cửa hàng",
-                            onClick = { selectedCategory = if (selectedCategory == "Cửa hàng") "Tất cả" else "Cửa hàng" }
+                            onClick = { selectedCategory = if (selectedCategory == "Cửa hàng") "Tất cả" else "Cửa hàng" },
                         )
                     }
 
@@ -389,7 +246,7 @@ fun MapScreen(
                             text = "Gợi ý cho bạn",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
 
@@ -403,7 +260,7 @@ fun MapScreen(
                                 onClick = {
                                     selectedPlaceId = place.id
                                     isMapView = true
-                                }
+                                },
                             )
                         }
                     }
@@ -416,19 +273,18 @@ fun MapScreen(
                             text = "Gần bạn",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Horizontal list of nearby places
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
                             .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         filteredPlaces.forEach { place ->
                             NearbyPlaceCard(
@@ -437,7 +293,7 @@ fun MapScreen(
                                 onClick = {
                                     selectedPlaceId = place.id
                                     isMapView = true
-                                }
+                                },
                             )
                         }
                     }
@@ -450,31 +306,31 @@ fun MapScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFFFF7EC))
-                            .border(1.dp, Color(0xFFFFE0B2), RoundedCornerShape(16.dp))
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Row(
                                 modifier = Modifier.weight(1f),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.LocationOn,
                                     contentDescription = "Vị trí",
-                                    tint = Color(0xFFE65100),
-                                    modifier = Modifier.size(20.dp)
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp),
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Đang hiển thị dịch vụ quanh $currentLocationText",
                                     fontSize = 12.sp,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Medium
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Medium,
                                 )
                             }
 
@@ -482,10 +338,10 @@ fun MapScreen(
                                 text = "Đổi",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = GreenPrimary,
+                                color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier
                                     .clickable { showLocationDialog = true }
-                                    .padding(start = 8.dp)
+                                    .padding(start = 8.dp),
                             )
                         }
                     }
@@ -497,37 +353,36 @@ fun MapScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxSize()
+                        .fillMaxSize(),
                 ) {
-                    // NATIVE Google Maps Android SDK Rendering (com.google.maps.android.compose)
                     NativeGoogleMapView(
                         places = filteredPlaces,
                         selectedPlaceId = selectedPlaceId,
+                        hasLocationPermission = hasLocationPermission,
                         onSelectMarker = { placeId ->
                             selectedPlaceId = placeId
-                        }
+                        },
                     )
 
                     // Floating Search bar on top of map
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(16.dp),
                     ) {
                         MapSearchBar(
                             query = searchQuery,
-                            onQueryChange = { searchQuery = it }
+                            onQueryChange = { searchQuery = it },
                         )
                     }
 
-                    // Small Single Preview Tooltip Popup when a marker pin is selected
                     val selectedPlace = filteredPlaces.find { it.id == selectedPlaceId }
                     selectedPlace?.let { place ->
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                         ) {
                             SingleMapClinicPreviewCard(
                                 place = place,
@@ -557,7 +412,7 @@ fun MapScreen(
                                 },
                                 onSaveToggle = {
                                     PetRepository.toggleSavePlace(place.id)
-                                }
+                                },
                             )
                         }
                     }
@@ -566,8 +421,8 @@ fun MapScreen(
 
             // Bottom Navigation Bar
             PetCareTabBar(
-                currentTab = PetCareTab.MAP,
-                onTabSelected = onTabSelected
+                selectedTab = PetCareTab.MAP.ordinal,
+                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) },
             )
         }
 
@@ -583,19 +438,19 @@ fun MapScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(if (currentLocationText == loc) GreenLight else Color.White)
-                                    .border(1.dp, BorderLight, RoundedCornerShape(12.dp))
+                                    .background(if (currentLocationText == loc) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
                                     .clickable {
                                         currentLocationText = loc
                                         showLocationDialog = false
                                     }
-                                    .padding(14.dp)
+                                    .padding(14.dp),
                             ) {
                                 Text(
                                     text = loc,
                                     fontSize = 14.sp,
                                     fontWeight = if (currentLocationText == loc) FontWeight.Bold else FontWeight.Normal,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
                         }
@@ -606,7 +461,7 @@ fun MapScreen(
                     OutlinedButton(onClick = { showLocationDialog = false }) {
                         Text("Đóng")
                     }
-                }
+                },
             )
         }
     }
@@ -616,8 +471,9 @@ fun MapScreen(
 private fun NativeGoogleMapView(
     places: List<PetPlaceModel>,
     selectedPlaceId: String?,
+    hasLocationPermission: Boolean,
     onSelectMarker: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val selectedPlace = places.find { it.id == selectedPlaceId } ?: places.firstOrNull()
     val centerLatLng = LatLng(selectedPlace?.lat ?: 10.7769, selectedPlace?.lng ?: 106.7009)
@@ -626,18 +482,25 @@ private fun NativeGoogleMapView(
         position = CameraPosition.fromLatLngZoom(centerLatLng, 14f)
     }
 
-    val uiSettings = remember {
+    val uiSettings = remember(hasLocationPermission) {
         MapUiSettings(
             zoomControlsEnabled = false,
-            myLocationButtonEnabled = false,
-            compassEnabled = true
+            myLocationButtonEnabled = hasLocationPermission,
+            compassEnabled = true,
+        )
+    }
+
+    val mapProperties = remember(hasLocationPermission) {
+        MapProperties(
+            isMyLocationEnabled = hasLocationPermission,
         )
     }
 
     GoogleMap(
         modifier = modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        uiSettings = uiSettings
+        uiSettings = uiSettings,
+        properties = mapProperties,
     ) {
         places.forEach { place ->
             val markerState = remember(place.id) {
@@ -650,10 +513,9 @@ private fun NativeGoogleMapView(
                 onClick = {
                     onSelectMarker(place.id)
                     false
-                }
+                },
             )
         }
-
     }
 }
 
@@ -664,39 +526,39 @@ private fun SingleMapClinicPreviewCard(
     onDirectionsClick: () -> Unit,
     onCallClick: () -> Unit,
     onShareClick: () -> Unit,
-    onSaveToggle: () -> Unit
+    onSaveToggle: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(Color.White)
-            .border(1.5.dp, GreenPrimary, RoundedCornerShape(20.dp))
-            .padding(16.dp)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(20.dp))
+            .padding(16.dp),
     ) {
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = place.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    modifier = Modifier.weight(1f)
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
                 )
 
                 IconButton(
                     onClick = onClose,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(28.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Đóng",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(20.dp)
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -707,7 +569,7 @@ private fun SingleMapClinicPreviewCard(
                 Text(
                     text = "${place.rating}  (${place.reviewCount})",
                     fontSize = 13.sp,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Row {
@@ -715,8 +577,8 @@ private fun SingleMapClinicPreviewCard(
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = "Star",
-                            tint = Color(0xFFFFB300),
-                            modifier = Modifier.size(15.dp)
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(15.dp),
                         )
                     }
                 }
@@ -727,7 +589,7 @@ private fun SingleMapClinicPreviewCard(
             Text(
                 text = place.statusText,
                 fontSize = 13.sp,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -735,35 +597,35 @@ private fun SingleMapClinicPreviewCard(
             // Action Pill Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 MapActionButton(
                     title = "Directions",
-                    icon = NavigationIcon,
+                    icon = Icons.Default.Navigation,
                     onClick = onDirectionsClick,
-                    modifier = Modifier.weight(1.2f)
+                    modifier = Modifier.weight(1.2f),
                 )
 
                 MapActionButton(
                     title = "Call",
                     icon = Icons.Default.Call,
                     onClick = onCallClick,
-                    modifier = Modifier.weight(0.9f)
+                    modifier = Modifier.weight(0.9f),
                 )
 
                 MapActionButton(
                     title = "Share",
                     icon = Icons.Default.Share,
                     onClick = onShareClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
 
                 MapActionButton(
                     title = "Save",
                     icon = if (place.isSaved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    iconTint = if (place.isSaved) Color(0xFFE53935) else Color(0xFF2563EB),
+                    iconTint = if (place.isSaved) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     onClick = onSaveToggle,
-                    modifier = Modifier.weight(0.9f)
+                    modifier = Modifier.weight(0.9f),
                 )
             }
         }
@@ -780,27 +642,27 @@ private fun PaddingBox(content: @Composable () -> Unit) {
 @Composable
 private fun MapSearchBar(
     query: String,
-    onQueryChange: (String) -> Unit
+    onQueryChange: (String) -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
             .clip(RoundedCornerShape(26.dp))
-            .background(Color.White)
-            .border(1.dp, BorderLight, RoundedCornerShape(26.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(26.dp))
             .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.CenterStart
+        contentAlignment = Alignment.CenterStart,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = TextSecondary,
-                modifier = Modifier.size(22.dp)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
             )
             Spacer(modifier = Modifier.width(10.dp))
             BasicTextField(
@@ -813,25 +675,25 @@ private fun MapSearchBar(
                         Text(
                             text = "Tìm phòng khám, spa thú cưng...",
                             fontSize = 14.sp,
-                            color = TextSecondary.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         )
                     }
                     inner()
-                }
+                },
             )
 
             Box(
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFE8F5E9)),
-                contentAlignment = Alignment.Center
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = FilterIcon,
+                    imageVector = Icons.Default.FilterList,
                     contentDescription = "Bộ lọc",
-                    tint = GreenPrimary,
-                    modifier = Modifier.size(18.dp)
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
@@ -844,25 +706,25 @@ private fun CategoryCircleButton(
     icon: ImageVector,
     bgColor: Color,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
+        modifier = Modifier.clickable { onClick() },
     ) {
         Box(
             modifier = Modifier
                 .size(64.dp)
                 .clip(CircleShape)
-                .background(if (isSelected) GreenPrimary else bgColor)
-                .border(if (isSelected) 2.dp else 0.dp, GreenPrimary, CircleShape),
-            contentAlignment = Alignment.Center
+                .background(if (isSelected) MaterialTheme.colorScheme.primary else bgColor)
+                .border(if (isSelected) 2.dp else 0.dp, MaterialTheme.colorScheme.primary, CircleShape),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = if (isSelected) Color.White else GreenPrimary,
-                modifier = Modifier.size(28.dp)
+                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp),
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -870,7 +732,7 @@ private fun CategoryCircleButton(
             text = title,
             fontSize = 13.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -878,47 +740,45 @@ private fun CategoryCircleButton(
 @Composable
 private fun FeaturedPlaceCard(
     place: PetPlaceModel,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
             .clip(RoundedCornerShape(20.dp))
-            .clickable { onClick() }
+            .clickable { onClick() },
     ) {
         Image(
             painter = painterResource(id = place.imageRes),
             contentDescription = place.name,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
         )
 
-        // Dark gradient overlay
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
+                .background(Color.Black.copy(alpha = 0.45f)),
         )
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            // Tag: Được tin chọn
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
                     .background(Color.White.copy(alpha = 0.25f))
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
             ) {
                 Text(
                     text = "Được tin chọn",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = Color.White,
                 )
             }
 
@@ -927,28 +787,28 @@ private fun FeaturedPlaceCard(
                     text = place.name,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = Color.White,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = place.subtitle,
                     fontSize = 13.sp,
-                    color = Color.White.copy(alpha = 0.9f)
+                    color = Color.White.copy(alpha = 0.9f),
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Star,
                         contentDescription = "Star",
-                        tint = Color(0xFFFFC107),
-                        modifier = Modifier.size(16.dp)
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(16.dp),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "${place.rating} (${place.reviewCount})   ${place.distance}",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.White,
                     )
                 }
             }
@@ -960,45 +820,44 @@ private fun FeaturedPlaceCard(
 private fun NearbyPlaceCard(
     place: PetPlaceModel,
     onSaveToggle: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
             .width(220.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color.White)
-            .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
-            .clickable { onClick() }
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp))
+            .clickable { onClick() },
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(110.dp)
+                    .height(110.dp),
             ) {
                 Image(
                     painter = painterResource(id = place.imageRes),
                     contentDescription = place.name,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
 
-                // Favorite Heart Button
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .clickable { onSaveToggle() },
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = if (place.isSaved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Yêu thích",
-                        tint = if (place.isSaved) Color(0xFFE53935) else TextSecondary,
-                        modifier = Modifier.size(18.dp)
+                        tint = if (place.isSaved) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
@@ -1007,14 +866,14 @@ private fun NearbyPlaceCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE8F5E9))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                 ) {
                     Text(
                         text = place.category,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GreenPrimary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
 
@@ -1024,8 +883,8 @@ private fun NearbyPlaceCard(
                     text = place.name,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
-                    maxLines = 1
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
                 )
 
                 Spacer(modifier = Modifier.height(2.dp))
@@ -1033,8 +892,8 @@ private fun NearbyPlaceCard(
                 Text(
                     text = place.subtitle,
                     fontSize = 12.sp,
-                    color = TextSecondary,
-                    maxLines = 1
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1042,28 +901,28 @@ private fun NearbyPlaceCard(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Star,
                             contentDescription = "Rating",
-                            tint = Color(0xFFFFB300),
-                            modifier = Modifier.size(14.dp)
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(14.dp),
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = place.rating,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
 
                     Text(
                         text = place.distance,
                         fontSize = 12.sp,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -1075,34 +934,34 @@ private fun NearbyPlaceCard(
 private fun MapActionButton(
     title: String,
     icon: ImageVector,
-    iconTint: Color = Color(0xFF2563EB),
+    iconTint: Color = MaterialTheme.colorScheme.primary,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .height(38.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFFDCE8FF))
+            .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable { onClick() },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
                 tint = iconTint,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(16.dp),
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = title,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF2563EB)
+                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
