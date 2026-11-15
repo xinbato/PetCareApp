@@ -24,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,8 +38,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.PetModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.components.PetCareTab
@@ -50,18 +51,21 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.PetManagementViewModel
 
 @Composable
 fun ListPetScreen(
     modifier: Modifier = Modifier,
     currentTab: PetCareTab = PetCareTab.HOME,
+    viewModel: PetManagementViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onPetClick: (PetModel) -> Unit = {},
     onEditPetClick: () -> Unit = {},
     onAddPetClick: () -> Unit = {},
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val pets by PetRepository.pets.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pets = uiState.pets
 
     Box(
         modifier = modifier
@@ -147,11 +151,11 @@ fun ListPetScreen(
                     PetListItemCard(
                         pet = pet,
                         onClick = {
-                            PetRepository.selectPet(pet.id)
+                            viewModel.selectPet(pet.id)
                             onPetClick(pet)
                         },
                         onToggleFavorite = {
-                            PetRepository.toggleFavorite(pet.id)
+                            viewModel.toggleFavorite(pet.id)
                         }
                     )
                 }
@@ -262,7 +266,7 @@ fun PetListItemCard(
                         text = pet.statusText,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (pet.statusText == "Khỏe mạnh") GreenPrimary else Color(0xFFE65100)
+                        color = if (pet.statusText == "Khỏe mạnh") GreenPrimary else MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
@@ -281,7 +285,7 @@ fun PetListItemCard(
                 Icon(
                     imageVector = if (pet.isFavorite) PetCareIcons.StarFilled else PetCareIcons.StarOutline,
                     contentDescription = "Yêu thích",
-                    tint = if (pet.isFavorite) Color(0xFFFFB300) else Color(0xFF9E9E9E),
+                    tint = if (pet.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                     modifier = Modifier.size(24.dp)
                 )
             }

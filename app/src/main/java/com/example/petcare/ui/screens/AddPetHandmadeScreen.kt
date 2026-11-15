@@ -40,9 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.R
 import com.example.petcare.data.model.PetModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.theme.BackgroundLight
@@ -52,11 +52,13 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.PetManagementViewModel
 import java.util.UUID
 
 @Composable
 fun AddPetHandmadeScreen(
     modifier: Modifier = Modifier,
+    viewModel: PetManagementViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onPetAdded: () -> Unit = {},
 ) {
@@ -268,8 +270,8 @@ fun AddPetHandmadeScreen(
                                 diet = "Tốt • 2/2 bữa",
                                 lastUpdated = "vừa xong"
                             )
-                            PetRepository.savePet(newPet)
-                            PetRepository.selectPet(newId)
+                            viewModel.savePet(newPet)
+                            viewModel.selectPet(newId)
                             onPetAdded()
                         }
                     },

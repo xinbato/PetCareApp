@@ -35,6 +35,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -62,8 +63,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.R
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
@@ -71,6 +72,7 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.ProfileViewModel
 
 
 
@@ -78,13 +80,15 @@ import com.example.petcare.ui.theme.TextSecondary
 @Composable
 fun UserProfileDetailScreen(
     modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onPetClick: (String) -> Unit = {},
 ) {
-    val userProfile by PetRepository.userProfile.collectAsStateWithLifecycle()
-    val pets by PetRepository.pets.collectAsStateWithLifecycle()
-    val accounts by PetRepository.accounts.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val userProfile = uiState.userProfile
+    val pets = uiState.myPets
+    val accounts = uiState.accounts
 
     var showAccountBottomSheet by remember { mutableStateOf(false) }
     var showEditChoiceDialog by remember { mutableStateOf(false) }
@@ -101,7 +105,7 @@ fun UserProfileDetailScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            PetRepository.updateUserProfile(avatarUri = it.toString())
+            viewModel.updateUserProfile(avatarUri = it.toString())
         }
     }
 
@@ -109,7 +113,7 @@ fun UserProfileDetailScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            PetRepository.updateUserProfile(headerBgUri = it.toString())
+            viewModel.updateUserProfile(headerBgUri = it.toString())
         }
     }
 
@@ -189,7 +193,7 @@ fun UserProfileDetailScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(CircleShape)
-                                .background(Color(0xFFFDF8E2)),
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
                         ) {
                             val avatarRes = userProfile.avatarRes
@@ -411,7 +415,7 @@ fun UserProfileDetailScreen(
                                 .height(48.dp),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF4A90E2),
+                                containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = Color.White
                             )
                         ) {
@@ -473,10 +477,10 @@ fun UserProfileDetailScreen(
                                 modifier = Modifier
                                     .size(56.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFFFF3E0))
+                                    .background(MaterialTheme.colorScheme.tertiaryContainer)
                                     .border(2.dp, GreenPrimary, CircleShape)
                                     .clickable {
-                                        PetRepository.updateUserProfile(avatarRes = R.drawable.dog)
+                                        viewModel.updateUserProfile(avatarRes = R.drawable.dog)
                                         showAvatarPicker = false
                                     },
                                 contentAlignment = Alignment.Center
@@ -493,10 +497,10 @@ fun UserProfileDetailScreen(
                                 modifier = Modifier
                                     .size(56.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFE8F5E9))
+                                    .background(MaterialTheme.colorScheme.secondaryContainer)
                                     .border(2.dp, GreenPrimary, CircleShape)
                                     .clickable {
-                                        PetRepository.updateUserProfile(avatarRes = R.drawable.cat)
+                                        viewModel.updateUserProfile(avatarRes = R.drawable.cat)
                                         showAvatarPicker = false
                                     },
                                 contentAlignment = Alignment.Center
@@ -513,10 +517,10 @@ fun UserProfileDetailScreen(
                                 modifier = Modifier
                                     .size(56.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFE0F7FA))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
                                     .border(2.dp, BorderLight, CircleShape)
                                     .clickable {
-                                        PetRepository.updateUserProfile(avatarUri = null, avatarRes = null)
+                                        viewModel.updateUserProfile(avatarUri = null, avatarRes = null)
                                         showAvatarPicker = false
                                     },
                                 contentAlignment = Alignment.Center
@@ -560,7 +564,7 @@ fun UserProfileDetailScreen(
                                 .fillMaxWidth()
                                 .height(48.dp),
                             shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2))
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("🖼️ Chọn ảnh bìa từ thư viện", fontWeight = FontWeight.Bold)
                         }
@@ -584,7 +588,7 @@ fun UserProfileDetailScreen(
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(Color(hex))
                                         .clickable {
-                                            PetRepository.updateUserProfile(headerBgColorHex = hex, headerBgUri = null)
+                                            viewModel.updateUserProfile(headerBgColorHex = hex, headerBgUri = null)
                                             showCoverPicker = false
                                         }
                                         .padding(horizontal = 14.dp),
@@ -616,12 +620,12 @@ fun UserProfileDetailScreen(
                 AccountSwitchSheetContent(
                     accounts = accounts,
                     onSelectAccount = { accountId ->
-                        PetRepository.switchAccount(accountId)
+                        viewModel.switchAccount(accountId)
                         showAccountBottomSheet = false
                     },
                     onAddNewAccount = { newName ->
                         if (newName.isNotBlank()) {
-                            PetRepository.addAccount(newName)
+                            viewModel.addAccount(newName)
                             showAccountBottomSheet = false
                         }
                     }

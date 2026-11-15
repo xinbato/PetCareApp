@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -178,7 +179,7 @@ private fun NotificationToggleCard(
                     checkedThumbColor = Color.White,
                     checkedTrackColor = GreenPrimary,
                     uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Color(0xFFE0E0E0)
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             )
         }

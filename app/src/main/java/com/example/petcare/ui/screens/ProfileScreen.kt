@@ -23,11 +23,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,7 +53,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.petcare.data.repository.PetRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
 import com.example.petcare.ui.theme.BackgroundLight
@@ -59,6 +62,7 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.ProfileViewModel
 
 @Composable
 fun rememberBitmapFromUri(uriString: String?): ImageBitmap? {
@@ -76,79 +80,10 @@ fun rememberBitmapFromUri(uriString: String?): ImageBitmap? {
     }
 }
 
-private val HelpQuestionIcon: ImageVector by lazy {
-    ImageVector.Builder("HelpQuestionIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(Color(0xFFE53935))) {
-            moveTo(12f, 2f)
-            curveTo(6.48f, 2f, 2f, 6.48f, 2f, 12f)
-            curveToRelative(0f, 5.52f, 4.48f, 10f, 10f, 10f)
-            curveToRelative(5.52f, 0f, 10f, -4.48f, 10f, -10f)
-            curveTo(22f, 6.48f, 17.52f, 2f, 12f, 2f)
-            close()
-            moveTo(13f, 18f)
-            horizontalLineToRelative(-2f)
-            verticalLineToRelative(-2f)
-            horizontalLineToRelative(2f)
-            verticalLineToRelative(2f)
-            close()
-            moveTo(13.07f, 13.25f)
-            lineToRelative(-0.9f, 0.92f)
-            curveTo(11.45f, 14.9f, 11f, 15.5f, 11f, 17f)
-            horizontalLineToRelative(2f)
-            curveToRelative(0f, -1.1f, 0.45f, -1.55f, 1.17f, -2.27f)
-            lineToRelative(1.24f, -1.26f)
-            curveTo(15.78f, 13.09f, 16f, 12.59f, 16f, 11.5f)
-            curveTo(16f, 9.29f, 14.21f, 7.5f, 12f, 7.5f)
-            curveTo(9.79f, 7.5f, 8f, 9.29f, 8f, 11.5f)
-            horizontalLineToRelative(2f)
-            curveToRelative(0f, -1.1f, 0.9f, -2f, 2f, -2f)
-            curveToRelative(1.1f, 0f, 2f, 0.9f, 2f, 2f)
-            curveToRelative(0f, 0.55f, -0.22f, 1.05f, -0.93f, 1.75f)
-            close()
-        }
-    }.build()
-}
-
-private val PawIcon: ImageVector by lazy {
-    ImageVector.Builder("PawIcon", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(GreenPrimary)) {
-            moveTo(12f, 11.5f)
-            curveToRelative(-1.93f, 0f, -3.5f, 1.57f, -3.5f, 3.5f)
-            curveToRelative(0f, 1.93f, 1.57f, 3.5f, 3.5f, 3.5f)
-            curveToRelative(1.93f, 0f, 3.5f, -1.57f, 3.5f, -3.5f)
-            curveToRelative(0f, -1.93f, -1.57f, -3.5f, -3.5f, -3.5f)
-            close()
-            moveTo(5f, 9.5f)
-            curveTo(3.9f, 9.5f, 3f, 10.4f, 3f, 11.5f)
-            curveTo(3f, 12.6f, 3.9f, 13.5f, 5f, 13.5f)
-            curveTo(6.1f, 13.5f, 7f, 12.6f, 7f, 11.5f)
-            curveTo(7f, 10.4f, 6.1f, 9.5f, 5f, 9.5f)
-            close()
-            moveTo(19f, 9.5f)
-            curveToRelative(-1.1f, 0f, -2f, 0.9f, -2f, 2f)
-            curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
-            curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
-            curveToRelative(0f, -1.1f, -0.9f, -2f, -2f, -2f)
-            close()
-            moveTo(8.5f, 4.5f)
-            curveToRelative(-1.1f, 0f, -2f, 0.9f, -2f, 2f)
-            curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
-            curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
-            curveToRelative(0f, -1.1f, -0.9f, -2f, -2f, -2f)
-            close()
-            moveTo(15.5f, 4.5f)
-            curveToRelative(-1.1f, 0f, -2f, 0.9f, -2f, 2f)
-            curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
-            curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
-            curveToRelative(0f, -1.1f, -0.9f, -2f, -2f, -2f)
-            close()
-        }
-    }.build()
-}
-
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = viewModel(),
     onUserProfileDetailClick: () -> Unit = {},
     onPersonalInfoClick: () -> Unit = {},
     onNotificationRemindersClick: () -> Unit = {},
@@ -157,9 +92,9 @@ fun ProfileScreen(
     onMyPetsClick: () -> Unit = {},
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val userProfile by PetRepository.userProfile.collectAsStateWithLifecycle()
-    val pets by PetRepository.pets.collectAsStateWithLifecycle()
-    val petCount = pets.size
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val userProfile = uiState.userProfile
+    val petCount = uiState.petCount
 
     Box(
         modifier = modifier
@@ -221,7 +156,7 @@ fun ProfileScreen(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFFDF8E2)),
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -261,7 +196,7 @@ fun ProfileScreen(
                     // Option 1: Thông tin cá nhân
                     ProfileMenuItem(
                         icon = Icons.Default.Person,
-                        iconTint = Color(0xFF4B6984),
+                        iconTint = MaterialTheme.colorScheme.primary,
                         title = "Thông tin cá nhân",
                         onClick = onPersonalInfoClick
                     )
@@ -269,7 +204,7 @@ fun ProfileScreen(
                     // Option 2: Thông báo & nhắc lịch
                     ProfileMenuItem(
                         icon = Icons.Default.Notifications,
-                        iconTint = Color(0xFFD99B26),
+                        iconTint = MaterialTheme.colorScheme.secondary,
                         title = "Thông báo & nhắc lịch",
                         onClick = onNotificationRemindersClick
                     )
@@ -277,25 +212,25 @@ fun ProfileScreen(
                     // Option 3: Cài đặt
                     ProfileMenuItem(
                         icon = Icons.Default.Settings,
-                        iconTint = Color(0xFF6B7280),
+                        iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
                         title = "Cài đặt",
                         onClick = onSettingsClick
                     )
 
                     // Option 4: Trợ giúp & hỗ trợ
                     ProfileMenuItem(
-                        icon = HelpQuestionIcon,
-                        iconTint = Color(0xFFE53935),
+                        icon = Icons.AutoMirrored.Filled.HelpOutline,
+                        iconTint = MaterialTheme.colorScheme.error,
                         title = "Trợ giúp & hỗ trợ",
                         onClick = onHelpSupportClick
                     )
 
                     // Option 5: Thú cưng của tôi
                     ProfileMenuItem(
-                        icon = PawIcon,
-                        iconTint = GreenPrimary,
+                        icon = Icons.Default.Pets,
+                        iconTint = MaterialTheme.colorScheme.primary,
                         title = "Thú cưng của tôi",
-                        titleColor = GreenPrimary,
+                        titleColor = MaterialTheme.colorScheme.primary,
                         showChevron = false,
                         onClick = onMyPetsClick
                     )

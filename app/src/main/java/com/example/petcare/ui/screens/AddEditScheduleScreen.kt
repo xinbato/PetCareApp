@@ -29,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,8 +47,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.ScheduleModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
@@ -56,7 +58,7 @@ import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.petcare.ui.viewmodel.CalendarViewModel
 import java.util.Calendar
 import java.util.Locale
 import java.util.UUID
@@ -65,13 +67,15 @@ import java.util.UUID
 fun AddEditScheduleScreen(
     modifier: Modifier = Modifier,
     scheduleId: String? = null,
+    viewModel: CalendarViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
-    val existingSchedule = remember(scheduleId) {
-        scheduleId?.let { PetRepository.getScheduleById(it) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val existingSchedule = remember(scheduleId, uiState.schedules) {
+        scheduleId?.let { id -> uiState.schedules.find { it.id == id } }
     }
-    val pets by PetRepository.pets.collectAsStateWithLifecycle()
+    val pets = uiState.pets
 
     var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
     var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
@@ -170,7 +174,7 @@ fun AddEditScheduleScreen(
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(
                         onClick = {
-                            scheduleId?.let { PetRepository.deleteSchedule(it) }
+                            scheduleId?.let { viewModel.deleteSchedule(it) }
                             onSaved()
                         }
                     ) {
@@ -313,7 +317,7 @@ fun AddEditScheduleScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFE5F1EE))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(16.dp)
                 ) {
                     Column(
@@ -324,7 +328,7 @@ fun AddEditScheduleScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(Color(0xFFD6E9E4))
+                                .background(MaterialTheme.colorScheme.secondaryContainer)
                                 .padding(horizontal = 24.dp, vertical = 10.dp)
                         ) {
                             Row(
@@ -490,9 +494,9 @@ fun AddEditScheduleScreen(
                             timeOrDateLabel = if (timeOrDateLabel.isBlank()) timeText else timeOrDateLabel
                         )
                         if (isEditing) {
-                            PetRepository.updateSchedule(finalSchedule)
+                            viewModel.updateSchedule(finalSchedule)
                         } else {
-                            PetRepository.addSchedule(finalSchedule)
+                            viewModel.addSchedule(finalSchedule)
                         }
                         onSaved()
                     },

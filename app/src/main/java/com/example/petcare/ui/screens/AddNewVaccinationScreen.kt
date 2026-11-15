@@ -37,8 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.VaccinationModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
@@ -46,11 +46,13 @@ import com.example.petcare.ui.theme.GreenLight
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
+import com.example.petcare.ui.viewmodel.HealthViewModel
 import java.util.UUID
 @Composable
 fun AddNewVaccinationScreen(
     modifier: Modifier = Modifier,
     petId: String = "1",
+    viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
@@ -244,7 +246,7 @@ fun AddNewVaccinationScreen(
                         val finalDateTime = dateTime.trim().ifEmpty { "15/09/2026" }
                         val finalStatus = status.trim().ifEmpty { "Đã tiêm" }
 
-                        PetRepository.addVaccination(
+                        viewModel.addVaccination(
                             VaccinationModel(
                                 id = UUID.randomUUID().toString(),
                                 petId = petId,
