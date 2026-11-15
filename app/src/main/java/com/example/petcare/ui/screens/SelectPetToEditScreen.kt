@@ -33,7 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.petcare.data.repository.PetRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.theme.BackgroundLight
@@ -42,14 +42,17 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.PetManagementViewModel
 
 @Composable
 fun SelectPetToEditScreen(
     modifier: Modifier = Modifier,
+    viewModel: PetManagementViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onPetSelected: (String) -> Unit = {},
 ) {
-    val pets by PetRepository.pets.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pets = uiState.pets
 
     Box(
         modifier = modifier

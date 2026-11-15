@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,8 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.PetModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
@@ -44,6 +45,7 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.HealthViewModel
 
 data class HealthHistoryItem(
     val id: String,
@@ -55,11 +57,13 @@ data class HealthHistoryItem(
 @Composable
 fun HealthScreen(
     modifier: Modifier = Modifier,
+    viewModel: HealthViewModel = viewModel(),
     onPetClick: (PetModel) -> Unit = {},
     onHistoryItemClick: ((HealthHistoryItem) -> Unit)? = null,
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val pets by PetRepository.pets.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pets = uiState.pets
 
     val healthHistoryList = listOf(
         HealthHistoryItem("h1", "Tiêm phòng", "15/09/2026", PetCareIcons.Syringe),
@@ -110,7 +114,7 @@ fun HealthScreen(
                     HealthPetCard(
                         pet = pet,
                         onClick = {
-                            PetRepository.selectPet(pet.id)
+                            viewModel.selectPet(pet.id)
                             onPetClick(pet)
                         }
                     )
@@ -183,7 +187,7 @@ fun HealthPetCard(
                 text = pet.statusText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = if (pet.statusText == "Khỏe mạnh") GreenPrimary else Color(0xFFE65100)
+                color = if (pet.statusText == "Khỏe mạnh") GreenPrimary else MaterialTheme.colorScheme.error
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -222,7 +226,7 @@ fun HealthHistoryCard(
                 Icon(
                     imageVector = item.icon,
                     contentDescription = item.title,
-                    tint = Color(0xFF6B7280),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.width(14.dp))

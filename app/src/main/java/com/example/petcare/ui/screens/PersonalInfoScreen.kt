@@ -38,7 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.petcare.data.repository.PetRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.BorderLight
@@ -46,14 +46,17 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.ProfileViewModel
 
 @Composable
 fun PersonalInfoScreen(
     modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
-    val userProfile by PetRepository.userProfile.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val userProfile = uiState.userProfile
 
     var fullName by remember { mutableStateOf(userProfile.name) }
     var email by remember { mutableStateOf(userProfile.email) }
@@ -154,7 +157,7 @@ fun PersonalInfoScreen(
             ) {
                 Button(
                     onClick = {
-                        PetRepository.updateUserProfile(
+                        viewModel.updateUserProfile(
                             name = fullName.ifBlank { "User" },
                             email = email,
                             phone = phone,

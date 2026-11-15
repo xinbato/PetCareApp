@@ -26,6 +26,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,8 +40,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.VaccinationModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.theme.BackgroundLight
@@ -50,19 +51,22 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.HealthViewModel
 
 @Composable
 fun VaccinationScreen(
     modifier: Modifier = Modifier,
     petId: String = "all",
+    viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onAddVaccinationClick: (String) -> Unit = {},
     onViewInCalendarClick: () -> Unit = {},
 ) {
     val isAllPets = petId == "all" || petId.isBlank()
-    val allPets by PetRepository.pets.collectAsStateWithLifecycle()
-    val vaccinations by PetRepository.vaccinations.collectAsStateWithLifecycle()
-    val singlePet = if (!isAllPets) PetRepository.getPetById(petId) ?: PetRepository.getSelectedPet() else null
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val allPets = uiState.pets
+    val vaccinations = uiState.vaccinations
+    val singlePet = if (!isAllPets) allPets.find { it.id == petId } ?: uiState.currentPet else null
 
     Box(
         modifier = modifier
@@ -184,7 +188,7 @@ fun VaccinationScreen(
                 ) {
                     // Button 1: + Thêm mũi tiêm
                     Button(
-                        onClick = { onAddVaccinationClick(singlePet?.id ?: PetRepository.getSelectedPet().id) },
+                        onClick = { onAddVaccinationClick(singlePet?.id ?: uiState.selectedPetId) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
@@ -348,14 +352,14 @@ fun VaccinationItemCard(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
-                    .background(if (item.status == "Đã tiêm") GreenLight else Color(0xFFFFF3E0))
+                    .background(if (item.status == "Đã tiêm") GreenLight else MaterialTheme.colorScheme.tertiaryContainer)
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = item.status,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (item.status == "Đã tiêm") GreenPrimary else Color(0xFFE65100)
+                    color = if (item.status == "Đã tiêm") GreenPrimary else MaterialTheme.colorScheme.tertiary
                 )
             }
         }

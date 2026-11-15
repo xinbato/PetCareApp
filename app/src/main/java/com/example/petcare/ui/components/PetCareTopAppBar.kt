@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -24,20 +26,7 @@ import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
 
-val KeyboardArrowLeftIcon: ImageVector by lazy {
-    ImageVector.Builder("KeyboardArrowLeft", 24.dp, 24.dp, 24f, 24f).apply {
-        path(fill = SolidColor(TextPrimary)) {
-            moveTo(15.41f, 16.59f)
-            lineTo(10.83f, 12f)
-            lineTo(15.41f, 7.41f)
-            lineTo(14f, 6f)
-            lineToRelative(-6f, 6f)
-            lineToRelative(6f, 6f)
-            lineTo(15.41f, 16.59f)
-            close()
-        }
-    }.build()
-}
+val KeyboardArrowLeftIcon: ImageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft
 
 @Composable
 fun PetCareTopAppBar(

@@ -22,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -133,7 +134,7 @@ fun HelpSupportScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFFE8F5E9))
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(14.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -191,7 +192,7 @@ private fun HelpSupportCardItem(
             .fillMaxWidth()
             .height(58.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isSelected) Color(0xFFE5F1EE) else Color.White)
+            .background(if (isSelected) MaterialTheme.colorScheme.surfaceVariant else Color.White)
             .border(
                 1.dp,
                 if (isSelected) GreenPrimary else BorderLight,

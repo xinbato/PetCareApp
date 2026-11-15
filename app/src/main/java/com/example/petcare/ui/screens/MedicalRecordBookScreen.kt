@@ -34,8 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.MedicalRecordEntryModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.components.PetCareTab
@@ -46,18 +46,20 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.HealthViewModel
 
 @Composable
 fun MedicalRecordBookScreen(
     modifier: Modifier = Modifier,
     petId: String = "1",
+    viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onAddNewRecordClick: (String) -> Unit = {},
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val pet = PetRepository.getPetById(petId) ?: PetRepository.getSelectedPet()
-    val allMedicalRecords by PetRepository.medicalRecords.collectAsStateWithLifecycle()
-    val records = allMedicalRecords.filter { it.petId == pet.id }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pet = uiState.pets.find { it.id == petId } ?: uiState.currentPet ?: viewModel.getSelectedPet()
+    val records = uiState.medicalRecords.filter { it.petId == pet.id }
 
     Box(
         modifier = modifier

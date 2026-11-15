@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.components.PetCareTopAppBar
@@ -48,12 +49,14 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.AuthViewModel
 import com.example.petcare.utils.InputType
 import com.example.petcare.utils.InputTypeUtils
 
 @Composable
 fun RegisterScreen(
     modifier: Modifier = Modifier,
+    viewModel: AuthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onRegisterSuccessClick: (String) -> Unit = {},
     onRegisterErrorClick: () -> Unit = {},

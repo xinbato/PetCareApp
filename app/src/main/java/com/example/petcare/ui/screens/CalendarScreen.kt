@@ -34,8 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.ScheduleModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
 import com.example.petcare.ui.theme.BackgroundLight
@@ -44,15 +44,18 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.CalendarViewModel
 
 @Composable
 fun CalendarScreen(
     modifier: Modifier = Modifier,
+    viewModel: CalendarViewModel = viewModel(),
     onAddScheduleClick: () -> Unit = {},
     onEditScheduleClick: (String) -> Unit = {},
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val schedules by PetRepository.schedules.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val schedules = uiState.schedules
 
     Box(
         modifier = modifier

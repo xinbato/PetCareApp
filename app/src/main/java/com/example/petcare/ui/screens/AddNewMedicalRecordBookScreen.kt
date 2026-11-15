@@ -35,8 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.MedicalRecordEntryModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.theme.BackgroundLight
@@ -45,18 +46,21 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.petcare.ui.viewmodel.HealthViewModel
 import java.util.UUID
+
 @Composable
 fun AddNewMedicalRecordBookScreen(
     modifier: Modifier = Modifier,
     initialPetId: String = "1",
+    viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
-    val allPets by PetRepository.pets.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val allPets = uiState.pets
     var selectedPetId by remember { mutableStateOf(initialPetId) }
-    val currentPet = allPets.find { it.id == selectedPetId } ?: PetRepository.getSelectedPet()
+    val currentPet = allPets.find { it.id == selectedPetId } ?: uiState.currentPet ?: viewModel.getSelectedPet()
 
     var petNameInput by remember { mutableStateOf(currentPet.name) }
     var dateTime by remember { mutableStateOf("") }
@@ -194,7 +198,7 @@ fun AddNewMedicalRecordBookScreen(
                         val finalActivity = activityType.trim().ifEmpty { "Theo dõi sức khỏe" }
                         val finalDesc = description.trim().ifEmpty { "Tình trạng ổn định" }
 
-                        PetRepository.addMedicalRecord(
+                        viewModel.addMedicalRecord(
                             MedicalRecordEntryModel(
                                 id = UUID.randomUUID().toString(),
                                 petId = selectedPetId,

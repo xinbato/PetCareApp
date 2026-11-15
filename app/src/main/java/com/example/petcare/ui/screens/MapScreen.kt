@@ -69,11 +69,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.PetPlaceModel
-import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
 import com.example.petcare.ui.theme.PetCareTheme
+import com.example.petcare.ui.viewmodel.MapViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -86,6 +87,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
+    viewModel: MapViewModel = viewModel(),
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
     var isMapView by remember { mutableStateOf(false) }
@@ -96,7 +98,8 @@ fun MapScreen(
     var showLocationDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val places by PetRepository.petPlaces.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val places = uiState.places
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -289,7 +292,7 @@ fun MapScreen(
                         filteredPlaces.forEach { place ->
                             NearbyPlaceCard(
                                 place = place,
-                                onSaveToggle = { PetRepository.toggleSavePlace(place.id) },
+                                onSaveToggle = { viewModel.toggleSavePlace(place.id) },
                                 onClick = {
                                     selectedPlaceId = place.id
                                     isMapView = true
@@ -411,7 +414,7 @@ fun MapScreen(
                                     context.startActivity(Intent.createChooser(shareIntent, "Chia sẻ cơ sở thú cưng"))
                                 },
                                 onSaveToggle = {
-                                    PetRepository.toggleSavePlace(place.id)
+                                    viewModel.toggleSavePlace(place.id)
                                 },
                             )
                         }
