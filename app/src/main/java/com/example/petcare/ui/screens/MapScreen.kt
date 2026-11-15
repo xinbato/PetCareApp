@@ -2,8 +2,6 @@ package com.example.petcare.ui.screens
 
 import android.content.Intent
 import android.net.Uri
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -59,7 +57,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.example.petcare.data.model.PetPlaceModel
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareTab
@@ -71,6 +68,13 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 private val StethoscopeIcon: ImageVector by lazy {
     ImageVector.Builder("StethoscopeIcon", 24.dp, 24.dp, 24f, 24f).apply {
@@ -489,14 +493,14 @@ fun MapScreen(
                     Spacer(modifier = Modifier.height(30.dp))
                 }
             } else {
-                // ================= MODE 2: REAL GOOGLE MAPS EMBEDDED VIEW (FULLSCREEN MAP 100%) =================
+                // ================= MODE 2: NATIVE GOOGLE MAPS SDK VIEW =================
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxSize()
                 ) {
-                    // REAL Google Maps Live Embed Render (OpenStreetMap / Google Maps Live Embed)
-                    RealGoogleMapView(
+                    // NATIVE Google Maps Android SDK Rendering (com.google.maps.android.compose)
+                    NativeGoogleMapView(
                         places = filteredPlaces,
                         selectedPlaceId = selectedPlaceId,
                         onSelectMarker = { placeId ->
@@ -609,41 +613,47 @@ fun MapScreen(
 }
 
 @Composable
-private fun RealGoogleMapView(
+private fun NativeGoogleMapView(
     places: List<PetPlaceModel>,
     selectedPlaceId: String?,
     onSelectMarker: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val selectedPlace = places.find { it.id == selectedPlaceId } ?: places.firstOrNull()
-    val lat = selectedPlace?.lat ?: 10.7769
-    val lng = selectedPlace?.lng ?: 106.7009
-    val queryName = selectedPlace?.name ?: "Phòng khám thú y TP.HCM"
+    val centerLatLng = LatLng(selectedPlace?.lat ?: 10.7769, selectedPlace?.lng ?: 106.7009)
 
-    // Real Google Maps Live Web Embed URL (Displays real Google Maps satellite & roadmap tiles)
-    val googleMapsUrl = remember(lat, lng, queryName) {
-        "https://maps.google.com/maps?q=${Uri.encode(queryName + " " + (selectedPlace?.address ?: ""))}&ll=$lat,$lng&z=15&output=embed"
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(centerLatLng, 14f)
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
-                WebView(ctx).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.loadWithOverviewMode = true
-                    settings.useWideViewPort = true
-                    settings.builtInZoomControls = true
-                    settings.displayZoomControls = false
-                    webViewClient = WebViewClient()
-                    loadUrl(googleMapsUrl)
-                }
-            },
-            update = { webView ->
-                webView.loadUrl(googleMapsUrl)
-            }
+    val uiSettings = remember {
+        MapUiSettings(
+            zoomControlsEnabled = false,
+            myLocationButtonEnabled = false,
+            compassEnabled = true
         )
+    }
+
+    GoogleMap(
+        modifier = modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        uiSettings = uiSettings
+    ) {
+        places.forEach { place ->
+            val markerState = remember(place.id) {
+                MarkerState(position = LatLng(place.lat, place.lng))
+            }
+            Marker(
+                state = markerState,
+                title = place.name,
+                snippet = "${place.category} • ${place.address}",
+                onClick = {
+                    onSelectMarker(place.id)
+                    false
+                }
+            )
+        }
+
     }
 }
 
