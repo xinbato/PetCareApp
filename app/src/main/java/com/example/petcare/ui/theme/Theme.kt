@@ -12,17 +12,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = GreenPrimary,
+    primary = LightGreenIcon,
+    onPrimary = Color.Black,
     secondary = GreenLight,
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E)
+    onSecondary = TextPrimary,
+    secondaryContainer = SurfaceVariantDark,
+    background = BackgroundDark,
+    onBackground = TextPrimaryDark,
+    surface = SurfaceDark,
+    onSurface = TextPrimaryDark,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = TextSecondaryDark,
+    outline = BorderDark,
+    error = RedError,
+    onError = Color.White,
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = GreenPrimary,
+    onPrimary = Color.White,
     secondary = GreenLight,
+    onSecondary = TextPrimary,
+    secondaryContainer = GreenLight,
     background = BackgroundLight,
-    surface = Color.White
+    onBackground = TextPrimary,
+    surface = Color.White,
+    onSurface = TextPrimary,
+    surfaceVariant = Color(0xFFF0F4EE),
+    onSurfaceVariant = TextSecondary,
+    outline = BorderLight,
+    error = RedError,
+    onError = Color.White,
 )
 
 @Composable

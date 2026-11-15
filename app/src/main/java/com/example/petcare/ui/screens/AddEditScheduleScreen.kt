@@ -56,6 +56,7 @@ import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.Calendar
 import java.util.Locale
 import java.util.UUID
@@ -70,6 +71,7 @@ fun AddEditScheduleScreen(
     val existingSchedule = remember(scheduleId) {
         scheduleId?.let { PetRepository.getScheduleById(it) }
     }
+    val pets by PetRepository.pets.collectAsStateWithLifecycle()
 
     var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
     var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
@@ -278,7 +280,7 @@ fun AddEditScheduleScreen(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        PetRepository.pets.forEach { pet ->
+                        pets.forEach { pet ->
                             val isSelected = selectedPetId == pet.id
                             Box(
                                 modifier = Modifier

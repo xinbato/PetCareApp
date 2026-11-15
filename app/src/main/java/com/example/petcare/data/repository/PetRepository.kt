@@ -1,13 +1,18 @@
 package com.example.petcare.data.repository
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import com.example.petcare.R
+import com.example.petcare.data.model.CheckupRecordModel
 import com.example.petcare.data.model.MedicalRecordEntryModel
 import com.example.petcare.data.model.MedicationModel
 import com.example.petcare.data.model.PetModel
+import com.example.petcare.data.model.PetPlaceModel
+import com.example.petcare.data.model.ScheduleModel
 import com.example.petcare.data.model.VaccinationModel
-
+import com.example.petcare.data.model.WeightRecordModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 data class UserProfileData(
     val name: String = "User",
@@ -30,27 +35,51 @@ data class AccountUser(
 )
 
 object PetRepository {
-    val userProfile = mutableStateOf(UserProfileData())
+    private val _userProfile = MutableStateFlow(UserProfileData())
+    val userProfile: StateFlow<UserProfileData> = _userProfile.asStateFlow()
 
-    val accounts = mutableStateListOf(
-        AccountUser("a1", "Dương đz", isCurrent = true),
-        AccountUser("a2", "Nguyên đz", isCurrent = false),
-    )
+    private val _accounts = MutableStateFlow(initialAccounts())
+    val accounts: StateFlow<List<AccountUser>> = _accounts.asStateFlow()
+
+    private val _pets = MutableStateFlow(initialPets())
+    val pets: StateFlow<List<PetModel>> = _pets.asStateFlow()
+
+    private val _vaccinations = MutableStateFlow(initialVaccinations())
+    val vaccinations: StateFlow<List<VaccinationModel>> = _vaccinations.asStateFlow()
+
+    private val _weightRecords = MutableStateFlow(initialWeightRecords())
+    val weightRecords: StateFlow<List<WeightRecordModel>> = _weightRecords.asStateFlow()
+
+    private val _checkupRecords = MutableStateFlow(initialCheckupRecords())
+    val checkupRecords: StateFlow<List<CheckupRecordModel>> = _checkupRecords.asStateFlow()
+
+    private val _medications = MutableStateFlow(initialMedications())
+    val medications: StateFlow<List<MedicationModel>> = _medications.asStateFlow()
+
+    private val _medicalRecords = MutableStateFlow(initialMedicalRecords())
+    val medicalRecords: StateFlow<List<MedicalRecordEntryModel>> = _medicalRecords.asStateFlow()
+
+    private val _schedules = MutableStateFlow(initialSchedules())
+    val schedules: StateFlow<List<ScheduleModel>> = _schedules.asStateFlow()
+
+    private val _petPlaces = MutableStateFlow(initialPetPlaces())
+    val petPlaces: StateFlow<List<PetPlaceModel>> = _petPlaces.asStateFlow()
+
+    private val _currentSelectedPetId = MutableStateFlow("1")
+    val currentSelectedPetId: StateFlow<String> = _currentSelectedPetId.asStateFlow()
 
     fun switchAccount(accountId: String) {
-        for (i in accounts.indices) {
-            val item = accounts[i]
-            accounts[i] = item.copy(isCurrent = item.id == accountId)
+        _accounts.update { list ->
+            list.map { it.copy(isCurrent = it.id == accountId) }
         }
-        val currentAcc = accounts.find { it.id == accountId }
-        currentAcc?.let {
-            userProfile.value = userProfile.value.copy(name = it.name)
+        _accounts.value.find { it.id == accountId }?.let { currentAcc ->
+            _userProfile.update { it.copy(name = currentAcc.name) }
         }
     }
 
     fun addAccount(name: String) {
         val newId = "a_${System.currentTimeMillis()}"
-        accounts.add(AccountUser(newId, name, isCurrent = false))
+        _accounts.update { it + AccountUser(newId, name, isCurrent = false) }
         switchAccount(newId)
     }
 
@@ -65,21 +94,149 @@ object PetRepository {
         headerBgColorHex: Long? = null,
         headerBgUri: String? = null,
     ) {
-        var current = userProfile.value
-        if (name != null) current = current.copy(name = name)
-        if (email != null) current = current.copy(email = email)
-        if (phone != null) current = current.copy(phone = phone)
-        if (dob != null) current = current.copy(dob = dob)
-        if (address != null) current = current.copy(address = address)
-        if (avatarUri != null) current = current.copy(avatarUri = avatarUri, avatarRes = null)
-        if (avatarRes != null) current = current.copy(avatarRes = avatarRes, avatarUri = null)
-        if (headerBgColorHex != null) current = current.copy(headerBgColorHex = headerBgColorHex, headerBgUri = null)
-        if (headerBgUri != null) current = current.copy(headerBgUri = headerBgUri)
-        userProfile.value = current
+        _userProfile.update { current ->
+            var updated = current
+            if (name != null) updated = updated.copy(name = name)
+            if (email != null) updated = updated.copy(email = email)
+            if (phone != null) updated = updated.copy(phone = phone)
+            if (dob != null) updated = updated.copy(dob = dob)
+            if (address != null) updated = updated.copy(address = address)
+            if (avatarUri != null) updated = updated.copy(avatarUri = avatarUri, avatarRes = null)
+            if (avatarRes != null) updated = updated.copy(avatarRes = avatarRes, avatarUri = null)
+            if (headerBgColorHex != null) updated = updated.copy(headerBgColorHex = headerBgColorHex, headerBgUri = null)
+            if (headerBgUri != null) updated = updated.copy(headerBgUri = headerBgUri)
+            updated
+        }
     }
 
+    fun toggleSavePlace(placeId: String) {
+        _petPlaces.update { places ->
+            places.map { if (it.id == placeId) it.copy(isSaved = !it.isSaved) else it }
+        }
+    }
 
-    val pets = mutableStateListOf(
+    fun selectPet(petId: String) {
+        _currentSelectedPetId.value = petId
+    }
+
+    fun setCurrentSelectedPetId(petId: String) = selectPet(petId)
+
+    fun getSelectedPet(): PetModel {
+        val currentPets = _pets.value
+        return currentPets.find { it.id == _currentSelectedPetId.value }
+            ?: currentPets.firstOrNull()
+            ?: PetModel(
+                id = "1",
+                name = "Momo",
+                iconRes = R.drawable.dog,
+            )
+    }
+
+    fun getPetById(id: String): PetModel? = _pets.value.find { it.id == id }
+
+    fun savePet(pet: PetModel) {
+        _pets.update { list ->
+            val index = list.indexOfFirst { it.id == pet.id }
+            if (index != -1) {
+                list.toMutableList().apply { set(index, pet) }
+            } else {
+                list + pet
+            }
+        }
+    }
+
+    fun deletePet(id: String) {
+        _pets.update { list -> list.filterNot { it.id == id } }
+        if (_currentSelectedPetId.value == id) {
+            _pets.value.firstOrNull()?.let { firstPet ->
+                _currentSelectedPetId.value = firstPet.id
+            }
+        }
+    }
+
+    fun toggleFavorite(id: String) {
+        _pets.update { list ->
+            list.map { if (it.id == id) it.copy(isFavorite = !it.isFavorite) else it }
+        }
+    }
+
+    fun getVaccinationsForPet(petId: String): List<VaccinationModel> =
+        _vaccinations.value.filter { it.petId == petId }
+
+    fun addVaccination(vaccination: VaccinationModel) {
+        _vaccinations.update { listOf(vaccination) + it }
+    }
+
+    fun getMedicationsForPet(petId: String): List<MedicationModel> =
+        _medications.value.filter { it.petId == petId }
+
+    fun addMedication(medication: MedicationModel) {
+        _medications.update { listOf(medication) + it }
+    }
+
+    fun getMedicalRecordsForPet(petId: String): List<MedicalRecordEntryModel> =
+        _medicalRecords.value.filter { it.petId == petId }
+
+    fun addMedicalRecord(record: MedicalRecordEntryModel) {
+        _medicalRecords.update { listOf(record) + it }
+    }
+
+    fun getScheduleById(id: String): ScheduleModel? =
+        _schedules.value.find { it.id == id }
+
+    fun addSchedule(schedule: ScheduleModel) {
+        _schedules.update { it + schedule }
+    }
+
+    fun updateSchedule(schedule: ScheduleModel) {
+        _schedules.update { list ->
+            val index = list.indexOfFirst { it.id == schedule.id }
+            if (index != -1) {
+                list.toMutableList().apply { set(index, schedule) }
+            } else {
+                list + schedule
+            }
+        }
+    }
+
+    fun deleteSchedule(id: String) {
+        _schedules.update { list -> list.filterNot { it.id == id } }
+    }
+
+    fun getWeightRecordsForPet(petId: String): List<WeightRecordModel> =
+        _weightRecords.value.filter { it.petId == petId }
+
+    fun addWeightRecord(record: WeightRecordModel) {
+        _weightRecords.update { listOf(record) + it }
+    }
+
+    fun getCheckupRecordsForPet(petId: String): List<CheckupRecordModel> =
+        _checkupRecords.value.filter { it.petId == petId }
+
+    fun addCheckupRecord(record: CheckupRecordModel) {
+        _checkupRecords.update { listOf(record) + it }
+    }
+
+    fun resetToDefaults() {
+        _userProfile.value = UserProfileData()
+        _accounts.value = initialAccounts()
+        _pets.value = initialPets()
+        _vaccinations.value = initialVaccinations()
+        _weightRecords.value = initialWeightRecords()
+        _checkupRecords.value = initialCheckupRecords()
+        _medications.value = initialMedications()
+        _medicalRecords.value = initialMedicalRecords()
+        _schedules.value = initialSchedules()
+        _petPlaces.value = initialPetPlaces()
+        _currentSelectedPetId.value = "1"
+    }
+
+    private fun initialAccounts() = listOf(
+        AccountUser("a1", "Dương đz", isCurrent = true),
+        AccountUser("a2", "Nguyên đz", isCurrent = false),
+    )
+
+    private fun initialPets() = listOf(
         PetModel(
             id = "1",
             name = "Momo",
@@ -136,7 +293,7 @@ object PetRepository {
         ),
     )
 
-    val vaccinations = mutableStateListOf(
+    private fun initialVaccinations() = listOf(
         VaccinationModel(
             id = "v1",
             petId = "1",
@@ -195,8 +352,8 @@ object PetRepository {
         ),
     )
 
-    val weightRecords = mutableStateListOf(
-        com.example.petcare.data.model.WeightRecordModel(
+    private fun initialWeightRecords() = listOf(
+        WeightRecordModel(
             id = "w1",
             petId = "1",
             petName = "Momo",
@@ -204,7 +361,7 @@ object PetRepository {
             dateTime = "01/09/2026",
             status = "Ổn định",
         ),
-        com.example.petcare.data.model.WeightRecordModel(
+        WeightRecordModel(
             id = "w2",
             petId = "1",
             petName = "Momo",
@@ -212,7 +369,7 @@ object PetRepository {
             dateTime = "15/08/2026",
             status = "Ổn định",
         ),
-        com.example.petcare.data.model.WeightRecordModel(
+        WeightRecordModel(
             id = "w3",
             petId = "1",
             petName = "Momo",
@@ -220,7 +377,7 @@ object PetRepository {
             dateTime = "01/08/2026",
             status = "Bình thường",
         ),
-        com.example.petcare.data.model.WeightRecordModel(
+        WeightRecordModel(
             id = "w4",
             petId = "2",
             petName = "Luna",
@@ -228,7 +385,7 @@ object PetRepository {
             dateTime = "01/09/2026",
             status = "Ăn ít hơn",
         ),
-        com.example.petcare.data.model.WeightRecordModel(
+        WeightRecordModel(
             id = "w5",
             petId = "2",
             petName = "Luna",
@@ -236,7 +393,7 @@ object PetRepository {
             dateTime = "15/08/2026",
             status = "Ổn định",
         ),
-        com.example.petcare.data.model.WeightRecordModel(
+        WeightRecordModel(
             id = "w6",
             petId = "3",
             petName = "Cậu Vàng",
@@ -244,7 +401,7 @@ object PetRepository {
             dateTime = "01/09/2026",
             status = "Khỏe mạnh",
         ),
-        com.example.petcare.data.model.WeightRecordModel(
+        WeightRecordModel(
             id = "w7",
             petId = "3",
             petName = "Cậu Vàng",
@@ -254,8 +411,8 @@ object PetRepository {
         ),
     )
 
-    val checkupRecords = mutableStateListOf(
-        com.example.petcare.data.model.CheckupRecordModel(
+    private fun initialCheckupRecords() = listOf(
+        CheckupRecordModel(
             id = "c1",
             petId = "1",
             petName = "Momo",
@@ -264,7 +421,7 @@ object PetRepository {
             dateTime = "12/08/2026",
             result = "Khỏe mạnh, thể trạng tốt",
         ),
-        com.example.petcare.data.model.CheckupRecordModel(
+        CheckupRecordModel(
             id = "c2",
             petId = "1",
             petName = "Momo",
@@ -273,7 +430,7 @@ object PetRepository {
             dateTime = "12/02/2026",
             result = "Răng sạch, nhịp tim đều",
         ),
-        com.example.petcare.data.model.CheckupRecordModel(
+        CheckupRecordModel(
             id = "c3",
             petId = "2",
             petName = "Luna",
@@ -282,7 +439,7 @@ object PetRepository {
             dateTime = "25/08/2026",
             result = "Cần theo dõi men vi sinh",
         ),
-        com.example.petcare.data.model.CheckupRecordModel(
+        CheckupRecordModel(
             id = "c4",
             petId = "3",
             petName = "Cậu Vàng",
@@ -293,7 +450,7 @@ object PetRepository {
         ),
     )
 
-    val medications = mutableStateListOf(
+    private fun initialMedications() = listOf(
         MedicationModel(
             id = "m1",
             petId = "1",
@@ -314,7 +471,7 @@ object PetRepository {
         ),
     )
 
-    val medicalRecords = mutableStateListOf(
+    private fun initialMedicalRecords() = listOf(
         MedicalRecordEntryModel(
             id = "r1",
             petId = "1",
@@ -344,8 +501,8 @@ object PetRepository {
         ),
     )
 
-    val schedules = mutableStateListOf(
-        com.example.petcare.data.model.ScheduleModel(
+    private fun initialSchedules() = listOf(
+        ScheduleModel(
             id = "s1",
             title = "Bữa tối",
             description = "Cho Momo ăn hạt và pate",
@@ -355,7 +512,7 @@ object PetRepository {
             timeText = "18:00",
             timeOrDateLabel = "18:00",
         ),
-        com.example.petcare.data.model.ScheduleModel(
+        ScheduleModel(
             id = "s2",
             title = "Tiêm phòng",
             description = "Tiêm ngừa dại định kỳ tại phòng khám",
@@ -365,7 +522,7 @@ object PetRepository {
             timeText = "09:00",
             timeOrDateLabel = "Ngày mai",
         ),
-        com.example.petcare.data.model.ScheduleModel(
+        ScheduleModel(
             id = "s3",
             title = "Tắm và vệ sinh",
             description = "Tắm sấy và cắt móng",
@@ -377,8 +534,8 @@ object PetRepository {
         ),
     )
 
-    val petPlaces = mutableStateListOf(
-        com.example.petcare.data.model.PetPlaceModel(
+    private fun initialPetPlaces() = listOf(
+        PetPlaceModel(
             id = "p1",
             name = "PawCare Veterinary",
             category = "Thú y",
@@ -394,7 +551,7 @@ object PetRepository {
             lat = 10.7769,
             lng = 106.7009,
         ),
-        com.example.petcare.data.model.PetPlaceModel(
+        PetPlaceModel(
             id = "p2",
             name = "An Tâm Pet Clinic",
             category = "Thú y",
@@ -409,7 +566,7 @@ object PetRepository {
             lat = 10.7800,
             lng = 106.6950,
         ),
-        com.example.petcare.data.model.PetPlaceModel(
+        PetPlaceModel(
             id = "p3",
             name = "Pet WOW Spa - Bình Thạnh",
             category = "Spa",
@@ -424,7 +581,7 @@ object PetRepository {
             lat = 10.8000,
             lng = 106.7100,
         ),
-        com.example.petcare.data.model.PetPlaceModel(
+        PetPlaceModel(
             id = "p4",
             name = "Shop Thú Cưng Sài Gòn",
             category = "Cửa hàng",
@@ -439,7 +596,7 @@ object PetRepository {
             lat = 10.7900,
             lng = 106.6800,
         ),
-        com.example.petcare.data.model.PetPlaceModel(
+        PetPlaceModel(
             id = "p5",
             name = "Phòng Khám Thú Y Gold Care",
             category = "Thú y",
@@ -455,98 +612,4 @@ object PetRepository {
             lng = 106.6750,
         ),
     )
-
-    fun toggleSavePlace(placeId: String) {
-        val index = petPlaces.indexOfFirst { it.id == placeId }
-        if (index != -1) {
-            val place = petPlaces[index]
-            petPlaces[index] = place.copy(isSaved = !place.isSaved)
-        }
-    }
-
-
-
-    val currentSelectedPetId = mutableStateOf("1")
-
-    fun getSelectedPet(): PetModel {
-        return pets.find { it.id == currentSelectedPetId.value } ?: pets.firstOrNull() ?: PetModel(
-            id = "1",
-            name = "Momo",
-            iconRes = R.drawable.dog,
-        )
-    }
-
-    fun getPetById(id: String): PetModel? {
-        return pets.find { it.id == id }
-    }
-
-    fun savePet(pet: PetModel) {
-        val index = pets.indexOfFirst { it.id == pet.id }
-        if (index != -1) {
-            pets[index] = pet
-        } else {
-            pets.add(pet)
-        }
-    }
-
-    fun deletePet(id: String) {
-        pets.removeAll { it.id == id }
-        if (currentSelectedPetId.value == id && pets.isNotEmpty()) {
-            currentSelectedPetId.value = pets.first().id
-        }
-    }
-
-    fun toggleFavorite(id: String) {
-        val index = pets.indexOfFirst { it.id == id }
-        if (index != -1) {
-            val pet = pets[index]
-            pets[index] = pet.copy(isFavorite = !pet.isFavorite)
-        }
-    }
-
-    fun getVaccinationsForPet(petId: String): List<VaccinationModel> {
-        return vaccinations.filter { it.petId == petId }
-    }
-
-    fun addVaccination(vaccination: VaccinationModel) {
-        vaccinations.add(0, vaccination)
-    }
-
-    fun getMedicationsForPet(petId: String): List<MedicationModel> {
-        return medications.filter { it.petId == petId }
-    }
-
-    fun addMedication(medication: MedicationModel) {
-        medications.add(0, medication)
-    }
-
-    fun getMedicalRecordsForPet(petId: String): List<MedicalRecordEntryModel> {
-        return medicalRecords.filter { it.petId == petId }
-    }
-
-    fun addMedicalRecord(record: MedicalRecordEntryModel) {
-        medicalRecords.add(0, record)
-    }
-
-    fun getScheduleById(id: String): com.example.petcare.data.model.ScheduleModel? {
-        return schedules.find { it.id == id }
-    }
-
-    fun addSchedule(schedule: com.example.petcare.data.model.ScheduleModel) {
-        schedules.add(schedule)
-    }
-
-    fun updateSchedule(schedule: com.example.petcare.data.model.ScheduleModel) {
-        val index = schedules.indexOfFirst { it.id == schedule.id }
-        if (index != -1) {
-            schedules[index] = schedule
-        } else {
-            schedules.add(schedule)
-        }
-    }
-
-    fun deleteSchedule(id: String) {
-        schedules.removeAll { it.id == id }
-    }
 }
-

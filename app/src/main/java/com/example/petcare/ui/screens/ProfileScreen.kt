@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
@@ -155,8 +157,9 @@ fun ProfileScreen(
     onMyPetsClick: () -> Unit = {},
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val userProfile = PetRepository.userProfile.value
-    val petCount = PetRepository.pets.size
+    val userProfile by PetRepository.userProfile.collectAsStateWithLifecycle()
+    val pets by PetRepository.pets.collectAsStateWithLifecycle()
+    val petCount = pets.size
 
     Box(
         modifier = modifier
@@ -303,8 +306,8 @@ fun ProfileScreen(
 
             // Bottom Navigation Bar
             PetCareTabBar(
-                currentTab = PetCareTab.PROFILE,
-                onTabSelected = onTabSelected
+                selectedTab = PetCareTab.PROFILE.ordinal,
+                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) }
             )
         }
     }

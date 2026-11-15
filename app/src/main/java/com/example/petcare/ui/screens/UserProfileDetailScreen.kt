@@ -61,6 +61,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petcare.R
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
@@ -81,9 +82,9 @@ fun UserProfileDetailScreen(
     onSettingsClick: () -> Unit = {},
     onPetClick: (String) -> Unit = {},
 ) {
-    val userProfile = PetRepository.userProfile.value
-    val pets = PetRepository.pets
-    val accounts = PetRepository.accounts
+    val userProfile by PetRepository.userProfile.collectAsStateWithLifecycle()
+    val pets by PetRepository.pets.collectAsStateWithLifecycle()
+    val accounts by PetRepository.accounts.collectAsStateWithLifecycle()
 
     var showAccountBottomSheet by remember { mutableStateOf(false) }
     var showEditChoiceDialog by remember { mutableStateOf(false) }
@@ -191,6 +192,7 @@ fun UserProfileDetailScreen(
                                 .background(Color(0xFFFDF8E2)),
                             contentAlignment = Alignment.Center
                         ) {
+                            val avatarRes = userProfile.avatarRes
                             if (avatarBitmap != null) {
                                 Image(
                                     bitmap = avatarBitmap,
@@ -198,9 +200,9 @@ fun UserProfileDetailScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
-                            } else if (userProfile.avatarRes != null) {
+                            } else if (avatarRes != null) {
                                 Image(
-                                    painter = painterResource(id = userProfile.avatarRes),
+                                    painter = painterResource(id = avatarRes),
                                     contentDescription = "Avatar",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop

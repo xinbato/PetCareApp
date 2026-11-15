@@ -23,6 +23,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petcare.data.model.PetModel
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareIcons
@@ -57,7 +59,7 @@ fun HealthScreen(
     onHistoryItemClick: ((HealthHistoryItem) -> Unit)? = null,
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val pets = PetRepository.pets
+    val pets by PetRepository.pets.collectAsStateWithLifecycle()
 
     val healthHistoryList = listOf(
         HealthHistoryItem("h1", "Tiêm phòng", "15/09/2026", PetCareIcons.Syringe),
@@ -108,7 +110,7 @@ fun HealthScreen(
                     HealthPetCard(
                         pet = pet,
                         onClick = {
-                            PetRepository.currentSelectedPetId.value = pet.id
+                            PetRepository.selectPet(pet.id)
                             onPetClick(pet)
                         }
                     )
@@ -143,8 +145,8 @@ fun HealthScreen(
 
             // Bottom Navigation Bar chuẩn Figma với tab Sức khỏe active
             PetCareTabBar(
-                currentTab = PetCareTab.HEALTH,
-                onTabSelected = onTabSelected,
+                selectedTab = PetCareTab.HEALTH.ordinal,
+                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) },
                 modifier = Modifier.fillMaxWidth()
             )
         }

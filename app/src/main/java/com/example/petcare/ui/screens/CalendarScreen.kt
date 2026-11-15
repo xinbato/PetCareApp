@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.petcare.data.model.ScheduleModel
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareTab
@@ -50,7 +52,7 @@ fun CalendarScreen(
     onEditScheduleClick: (String) -> Unit = {},
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
-    val schedules = PetRepository.schedules
+    val schedules by PetRepository.schedules.collectAsStateWithLifecycle()
 
     Box(
         modifier = modifier
@@ -141,8 +143,8 @@ fun CalendarScreen(
 
             // Bottom Navigation Bar
             PetCareTabBar(
-                currentTab = PetCareTab.CALENDAR,
-                onTabSelected = onTabSelected
+                selectedTab = PetCareTab.CALENDAR.ordinal,
+                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) }
             )
         }
 

@@ -269,7 +269,7 @@ fun AddPetHandmadeScreen(
                                 lastUpdated = "vừa xong"
                             )
                             PetRepository.savePet(newPet)
-                            PetRepository.currentSelectedPetId.value = newId
+                            PetRepository.selectPet(newId)
                             onPetAdded()
                         }
                     },

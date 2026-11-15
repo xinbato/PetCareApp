@@ -45,6 +45,7 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.UUID
 @Composable
 fun AddNewMedicalRecordBookScreen(
@@ -53,7 +54,7 @@ fun AddNewMedicalRecordBookScreen(
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
-    val allPets = PetRepository.pets
+    val allPets by PetRepository.pets.collectAsStateWithLifecycle()
     var selectedPetId by remember { mutableStateOf(initialPetId) }
     val currentPet = allPets.find { it.id == selectedPetId } ?: PetRepository.getSelectedPet()
 
