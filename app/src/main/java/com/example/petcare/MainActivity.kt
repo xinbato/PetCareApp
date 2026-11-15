@@ -15,32 +15,43 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.navigation.AppScreen
+import com.example.petcare.ui.screens.AddEditScheduleScreen
 import com.example.petcare.ui.screens.AddNewMedicationScreen
 import com.example.petcare.ui.screens.AddNewMedicalRecordBookScreen
 import com.example.petcare.ui.screens.AddNewVaccinationScreen
 import com.example.petcare.ui.screens.AddPetCameraScreen
 import com.example.petcare.ui.screens.AddPetHandmadeScreen
 import com.example.petcare.ui.screens.AddPetOptionScreen
+import com.example.petcare.ui.screens.CalendarScreen
 import com.example.petcare.ui.screens.CheckupHistoryScreen
 import com.example.petcare.ui.screens.EditPetScreen
 import com.example.petcare.ui.screens.ErrorScreen
 import com.example.petcare.ui.screens.ForgotPasswordScreen
 import com.example.petcare.ui.screens.HealthDetailScreen
 import com.example.petcare.ui.screens.HealthScreen
+import com.example.petcare.ui.screens.HelpSupportScreen
 import com.example.petcare.ui.screens.HomeScreen
 import com.example.petcare.ui.screens.ListPetScreen
 import com.example.petcare.ui.screens.LoginScreen
+import com.example.petcare.ui.screens.MapScreen
 import com.example.petcare.ui.screens.MedicalRecordBookScreen
+
 import com.example.petcare.ui.screens.MedicationScreen
+import com.example.petcare.ui.screens.NotificationReminderScreen
 import com.example.petcare.ui.screens.OnboardingScreen
 import com.example.petcare.ui.screens.OtpVerificationScreen
+import com.example.petcare.ui.screens.PersonalInfoScreen
+import com.example.petcare.ui.screens.ProfileScreen
 import com.example.petcare.ui.screens.RegisterScreen
 import com.example.petcare.ui.screens.ResetPasswordScreen
 import com.example.petcare.ui.screens.SelectPetToEditScreen
+import com.example.petcare.ui.screens.SettingsScreen
 import com.example.petcare.ui.screens.SuccessScreen
+import com.example.petcare.ui.screens.UserProfileDetailScreen
 import com.example.petcare.ui.screens.VaccinationScreen
 import com.example.petcare.ui.screens.WeightHistoryScreen
 import com.example.petcare.ui.theme.PetCareTheme
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,8 +64,10 @@ class MainActivity : ComponentActivity() {
                 var otpTargetDestination by remember { mutableStateOf("dat@example.com") }
                 var scannedPetBreed by remember { mutableStateOf("") }
                 var selectedPetId by remember { mutableStateOf("1") }
+                var selectedScheduleId by remember { mutableStateOf<String?>(null) }
                 var listPetTab by remember { mutableStateOf(PetCareTab.HOME) }
                 var healthDetailBackScreen by remember { mutableStateOf(AppScreen.HOME) }
+
 
                 when (currentScreen) {
                     AppScreen.ONBOARDING -> {
@@ -178,8 +191,20 @@ class MainActivity : ComponentActivity() {
                             onHealthTabClick = {
                                 currentScreen = AppScreen.HEALTH
                             },
+                            onCalendarTabClick = {
+                                currentScreen = AppScreen.CALENDAR
+                            },
+                            onMapTabClick = {
+                                currentScreen = AppScreen.MAP
+                            },
+                            onProfileTabClick = {
+                                currentScreen = AppScreen.PROFILE
+                            },
                         )
                     }
+
+
+
 
                     AppScreen.ADD_PET_OPTION -> {
                         AddPetOptionScreen(
@@ -249,6 +274,15 @@ class MainActivity : ComponentActivity() {
                                     PetCareTab.HEALTH -> {
                                         currentScreen = AppScreen.HEALTH
                                     }
+                                    PetCareTab.CALENDAR -> {
+                                        currentScreen = AppScreen.CALENDAR
+                                    }
+                                    PetCareTab.MAP -> {
+                                        currentScreen = AppScreen.MAP
+                                    }
+                                    PetCareTab.PROFILE -> {
+                                        currentScreen = AppScreen.PROFILE
+                                    }
                                     else -> {}
                                 }
                             },
@@ -288,11 +322,22 @@ class MainActivity : ComponentActivity() {
                                     PetCareTab.HEALTH -> {
                                         // Đang ở màn hình Sức khỏe
                                     }
+                                    PetCareTab.CALENDAR -> {
+                                        currentScreen = AppScreen.CALENDAR
+                                    }
+                                    PetCareTab.MAP -> {
+                                        currentScreen = AppScreen.MAP
+                                    }
+                                    PetCareTab.PROFILE -> {
+                                        currentScreen = AppScreen.PROFILE
+                                    }
                                     else -> {}
                                 }
                             },
                         )
                     }
+
+
 
                     AppScreen.SELECT_PET_TO_EDIT -> {
                         SelectPetToEditScreen(
@@ -356,11 +401,18 @@ class MainActivity : ComponentActivity() {
                                     PetCareTab.HEALTH -> {
                                         currentScreen = AppScreen.HEALTH
                                     }
+                                    PetCareTab.CALENDAR -> {
+                                        currentScreen = AppScreen.CALENDAR
+                                    }
+                                    PetCareTab.PROFILE -> {
+                                        currentScreen = AppScreen.PROFILE
+                                    }
                                     else -> {}
                                 }
                             },
                         )
                     }
+
 
                     AppScreen.VACCINATION -> {
                         VaccinationScreen(
@@ -374,7 +426,7 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = AppScreen.ADD_NEW_VACCINATION
                             },
                             onViewInCalendarClick = {
-                                // Calendar view
+                                currentScreen = AppScreen.CALENDAR
                             },
                         )
                     }
@@ -421,7 +473,7 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = AppScreen.ADD_NEW_MEDICATION
                             },
                             onViewInCalendarClick = {
-                                // Calendar view
+                                currentScreen = AppScreen.CALENDAR
                             },
                         )
                     }
@@ -458,11 +510,18 @@ class MainActivity : ComponentActivity() {
                                     PetCareTab.HEALTH -> {
                                         currentScreen = AppScreen.HEALTH
                                     }
+                                    PetCareTab.CALENDAR -> {
+                                        currentScreen = AppScreen.CALENDAR
+                                    }
+                                    PetCareTab.PROFILE -> {
+                                        currentScreen = AppScreen.PROFILE
+                                    }
                                     else -> {}
                                 }
                             },
                         )
                     }
+
 
                     AppScreen.ADD_NEW_MEDICATION_RECORD_BOOK -> {
                         AddNewMedicalRecordBookScreen(
@@ -477,7 +536,196 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    AppScreen.CALENDAR -> {
+                        CalendarScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onAddScheduleClick = {
+                                selectedScheduleId = null
+                                currentScreen = AppScreen.ADD_EDIT_SCHEDULE
+                            },
+                            onEditScheduleClick = { scheduleId ->
+                                selectedScheduleId = scheduleId
+                                currentScreen = AppScreen.ADD_EDIT_SCHEDULE
+                            },
+                            onTabSelected = { tab ->
+                                when (tab) {
+                                    PetCareTab.HOME -> {
+                                        listPetTab = PetCareTab.HOME
+                                        currentScreen = AppScreen.HOME
+                                    }
+                                    PetCareTab.HEALTH -> {
+                                        currentScreen = AppScreen.HEALTH
+                                    }
+                                    PetCareTab.CALENDAR -> {
+                                        // Đang ở màn hình Lịch
+                                    }
+                                    PetCareTab.MAP -> {
+                                        currentScreen = AppScreen.MAP
+                                    }
+                                    PetCareTab.PROFILE -> {
+                                        currentScreen = AppScreen.PROFILE
+                                    }
+                                }
+                            },
+                        )
+                    }
+
+
+                    AppScreen.ADD_EDIT_SCHEDULE -> {
+                        AddEditScheduleScreen(
+                            scheduleId = selectedScheduleId,
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.CALENDAR
+                            },
+                            onSaved = {
+                                currentScreen = AppScreen.CALENDAR
+                            },
+                        )
+                    }
+
+                    AppScreen.PROFILE -> {
+                        ProfileScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onUserProfileDetailClick = {
+                                currentScreen = AppScreen.USER_PROFILE_DETAIL
+                            },
+                            onPersonalInfoClick = {
+                                currentScreen = AppScreen.PERSONAL_INFO
+                            },
+                            onNotificationRemindersClick = {
+                                currentScreen = AppScreen.NOTIFICATION_REMINDERS
+                            },
+                            onSettingsClick = {
+                                currentScreen = AppScreen.SETTINGS
+                            },
+                            onHelpSupportClick = {
+                                currentScreen = AppScreen.HELP_SUPPORT
+                            },
+                            onMyPetsClick = {
+                                listPetTab = PetCareTab.HOME
+                                currentScreen = AppScreen.LIST_PET
+                            },
+                            onTabSelected = { tab ->
+                                when (tab) {
+                                    PetCareTab.HOME -> {
+                                        listPetTab = PetCareTab.HOME
+                                        currentScreen = AppScreen.HOME
+                                    }
+                                    PetCareTab.HEALTH -> {
+                                        currentScreen = AppScreen.HEALTH
+                                    }
+                                    PetCareTab.CALENDAR -> {
+                                        currentScreen = AppScreen.CALENDAR
+                                    }
+                                    PetCareTab.MAP -> {
+                                        currentScreen = AppScreen.MAP
+                                    }
+                                    PetCareTab.PROFILE -> {
+                                        // Đang ở màn hình Tôi
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+
+                    AppScreen.USER_PROFILE_DETAIL -> {
+                        UserProfileDetailScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.PROFILE
+                            },
+                            onSettingsClick = {
+                                currentScreen = AppScreen.SETTINGS
+                            },
+                            onPetClick = { petId ->
+                                selectedPetId = petId
+                                PetRepository.currentSelectedPetId.value = petId
+                                healthDetailBackScreen = AppScreen.USER_PROFILE_DETAIL
+                                currentScreen = AppScreen.HEALTH_DETAIL
+                            }
+                        )
+                    }
+
+                    AppScreen.PERSONAL_INFO -> {
+                        PersonalInfoScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.PROFILE
+                            },
+                            onSaved = {
+                                currentScreen = AppScreen.PROFILE
+                            }
+                        )
+                    }
+
+                    AppScreen.SETTINGS -> {
+                        SettingsScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.PROFILE
+                            },
+                            onSwitchAccountClick = {
+                                currentScreen = AppScreen.USER_PROFILE_DETAIL
+                            },
+                            onLogoutClick = {
+                                currentScreen = AppScreen.LOGIN
+                            }
+                        )
+                    }
+
+                    AppScreen.HELP_SUPPORT -> {
+                        HelpSupportScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.PROFILE
+                            },
+                            onRequestSent = {
+                                // Request sent action
+                            }
+                        )
+                    }
+
+                    AppScreen.NOTIFICATION_REMINDERS -> {
+                        NotificationReminderScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onBackClick = {
+                                currentScreen = AppScreen.PROFILE
+                            }
+                        )
+                    }
+
+                    AppScreen.MAP -> {
+                        MapScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            onTabSelected = { tab ->
+                                when (tab) {
+                                    PetCareTab.HOME -> {
+                                        listPetTab = PetCareTab.HOME
+                                        currentScreen = AppScreen.HOME
+                                    }
+                                    PetCareTab.HEALTH -> {
+                                        currentScreen = AppScreen.HEALTH
+                                    }
+                                    PetCareTab.CALENDAR -> {
+                                        currentScreen = AppScreen.CALENDAR
+                                    }
+                                    PetCareTab.MAP -> {
+                                        // Đang ở màn hình Bản đồ
+                                    }
+                                    PetCareTab.PROFILE -> {
+                                        currentScreen = AppScreen.PROFILE
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+
+
                     AppScreen.SUCCESS -> {
+
                         SuccessScreen(
                             modifier = Modifier.fillMaxSize(),
                             title = "Thao tác thành công!",

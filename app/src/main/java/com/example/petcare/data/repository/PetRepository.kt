@@ -8,7 +8,77 @@ import com.example.petcare.data.model.MedicationModel
 import com.example.petcare.data.model.PetModel
 import com.example.petcare.data.model.VaccinationModel
 
+
+data class UserProfileData(
+    val name: String = "User",
+    val memberSince: String = "Thành viên từ 2026",
+    val rank: String = "rank hội viên: kim cương",
+    val avatarUri: String? = null,
+    val avatarRes: Int? = null,
+    val headerBgColorHex: Long = 0xFF338C63,
+    val headerBgUri: String? = null,
+    val email: String = "user@example.com",
+    val phone: String = "0987654321",
+    val dob: String = "15/08/1998",
+    val address: String = "Hà Nội, Việt Nam",
+)
+
+data class AccountUser(
+    val id: String,
+    val name: String,
+    val isCurrent: Boolean = false,
+)
+
 object PetRepository {
+    val userProfile = mutableStateOf(UserProfileData())
+
+    val accounts = mutableStateListOf(
+        AccountUser("a1", "Dương đz", isCurrent = true),
+        AccountUser("a2", "Nguyên đz", isCurrent = false),
+    )
+
+    fun switchAccount(accountId: String) {
+        for (i in accounts.indices) {
+            val item = accounts[i]
+            accounts[i] = item.copy(isCurrent = item.id == accountId)
+        }
+        val currentAcc = accounts.find { it.id == accountId }
+        currentAcc?.let {
+            userProfile.value = userProfile.value.copy(name = it.name)
+        }
+    }
+
+    fun addAccount(name: String) {
+        val newId = "a_${System.currentTimeMillis()}"
+        accounts.add(AccountUser(newId, name, isCurrent = false))
+        switchAccount(newId)
+    }
+
+    fun updateUserProfile(
+        name: String? = null,
+        email: String? = null,
+        phone: String? = null,
+        dob: String? = null,
+        address: String? = null,
+        avatarUri: String? = null,
+        avatarRes: Int? = null,
+        headerBgColorHex: Long? = null,
+        headerBgUri: String? = null,
+    ) {
+        var current = userProfile.value
+        if (name != null) current = current.copy(name = name)
+        if (email != null) current = current.copy(email = email)
+        if (phone != null) current = current.copy(phone = phone)
+        if (dob != null) current = current.copy(dob = dob)
+        if (address != null) current = current.copy(address = address)
+        if (avatarUri != null) current = current.copy(avatarUri = avatarUri, avatarRes = null)
+        if (avatarRes != null) current = current.copy(avatarRes = avatarRes, avatarUri = null)
+        if (headerBgColorHex != null) current = current.copy(headerBgColorHex = headerBgColorHex, headerBgUri = null)
+        if (headerBgUri != null) current = current.copy(headerBgUri = headerBgUri)
+        userProfile.value = current
+    }
+
+
     val pets = mutableStateListOf(
         PetModel(
             id = "1",
@@ -274,6 +344,128 @@ object PetRepository {
         ),
     )
 
+    val schedules = mutableStateListOf(
+        com.example.petcare.data.model.ScheduleModel(
+            id = "s1",
+            title = "Bữa tối",
+            description = "Cho Momo ăn hạt và pate",
+            petId = "1",
+            petName = "Momo",
+            dateText = "12/10/2026",
+            timeText = "18:00",
+            timeOrDateLabel = "18:00",
+        ),
+        com.example.petcare.data.model.ScheduleModel(
+            id = "s2",
+            title = "Tiêm phòng",
+            description = "Tiêm ngừa dại định kỳ tại phòng khám",
+            petId = "2",
+            petName = "Luna",
+            dateText = "13/10/2026",
+            timeText = "09:00",
+            timeOrDateLabel = "Ngày mai",
+        ),
+        com.example.petcare.data.model.ScheduleModel(
+            id = "s3",
+            title = "Tắm và vệ sinh",
+            description = "Tắm sấy và cắt móng",
+            petId = "1",
+            petName = "Momo",
+            dateText = "17/10/2026",
+            timeText = "15:00",
+            timeOrDateLabel = "Thứ 7",
+        ),
+    )
+
+    val petPlaces = mutableStateListOf(
+        com.example.petcare.data.model.PetPlaceModel(
+            id = "p1",
+            name = "PawCare Veterinary",
+            category = "Thú y",
+            subtitle = "Khám tổng quát • Tiêm phòng • Xét nghiệm",
+            rating = "4.9",
+            reviewCount = 328,
+            distance = "1,2 km",
+            address = "123 Đường Nam Kỳ Khởi Nghĩa, Quận 3, TP.HCM",
+            phone = "0901234567",
+            isFeatured = true,
+            isSaved = true,
+            imageRes = R.drawable.dog,
+            lat = 10.7769,
+            lng = 106.7009,
+        ),
+        com.example.petcare.data.model.PetPlaceModel(
+            id = "p2",
+            name = "An Tâm Pet Clinic",
+            category = "Thú y",
+            subtitle = "Khám • Siêu âm • Thuốc",
+            rating = "4.7",
+            reviewCount = 215,
+            distance = "2,1 km",
+            address = "456 Đường Nguyễn Thị Minh Khai, Quận 3, TP.HCM",
+            phone = "0909876543",
+            isSaved = false,
+            imageRes = R.drawable.cat,
+            lat = 10.7800,
+            lng = 106.6950,
+        ),
+        com.example.petcare.data.model.PetPlaceModel(
+            id = "p3",
+            name = "Pet WOW Spa - Bình Thạnh",
+            category = "Spa",
+            subtitle = "Tắm sấy • Cắt tỉa lông • Vệ sinh tai móng",
+            rating = "4.9",
+            reviewCount = 446,
+            distance = "3,5 km",
+            address = "789 Đường Điện Biên Phủ, Bình Thạnh, TP.HCM",
+            phone = "0934567890",
+            isSaved = false,
+            imageRes = R.drawable.dog,
+            lat = 10.8000,
+            lng = 106.7100,
+        ),
+        com.example.petcare.data.model.PetPlaceModel(
+            id = "p4",
+            name = "Shop Thú Cưng Sài Gòn",
+            category = "Cửa hàng",
+            subtitle = "Thức ăn • Phụ kiện • Đồ chơi thú cưng",
+            rating = "4.3",
+            reviewCount = 446,
+            distance = "1,8 km",
+            address = "321 Đường Lê Văn Sỹ, Quận 3, TP.HCM",
+            phone = "0912345678",
+            isSaved = false,
+            imageRes = R.drawable.cat,
+            lat = 10.7900,
+            lng = 106.6800,
+        ),
+        com.example.petcare.data.model.PetPlaceModel(
+            id = "p5",
+            name = "Phòng Khám Thú Y Gold Care",
+            category = "Thú y",
+            subtitle = "Cấp cứu 24/7 • Phẫu thuật • Spa",
+            rating = "4.9",
+            reviewCount = 42,
+            distance = "2,8 km",
+            address = "555 Đường CMT8, Quận 10, TP.HCM",
+            phone = "0988776655",
+            isSaved = false,
+            imageRes = R.drawable.dog,
+            lat = 10.7700,
+            lng = 106.6750,
+        ),
+    )
+
+    fun toggleSavePlace(placeId: String) {
+        val index = petPlaces.indexOfFirst { it.id == placeId }
+        if (index != -1) {
+            val place = petPlaces[index]
+            petPlaces[index] = place.copy(isSaved = !place.isSaved)
+        }
+    }
+
+
+
     val currentSelectedPetId = mutableStateOf("1")
 
     fun getSelectedPet(): PetModel {
@@ -335,4 +527,26 @@ object PetRepository {
     fun addMedicalRecord(record: MedicalRecordEntryModel) {
         medicalRecords.add(0, record)
     }
+
+    fun getScheduleById(id: String): com.example.petcare.data.model.ScheduleModel? {
+        return schedules.find { it.id == id }
+    }
+
+    fun addSchedule(schedule: com.example.petcare.data.model.ScheduleModel) {
+        schedules.add(schedule)
+    }
+
+    fun updateSchedule(schedule: com.example.petcare.data.model.ScheduleModel) {
+        val index = schedules.indexOfFirst { it.id == schedule.id }
+        if (index != -1) {
+            schedules[index] = schedule
+        } else {
+            schedules.add(schedule)
+        }
+    }
+
+    fun deleteSchedule(id: String) {
+        schedules.removeAll { it.id == id }
+    }
 }
+

@@ -68,3 +68,36 @@ data class CheckupRecordModel(
     val status: String = "Hoàn thành",
 )
 
+data class ScheduleModel(
+    val id: String,
+    val title: String,
+    val description: String = "",
+    val petId: String = "1",
+    val petName: String = "Momo",
+    val dateText: String = "12/10/2026",
+    val timeText: String = "18:00",
+    val timeOrDateLabel: String = "18:00",
+    val isCompleted: Boolean = false,
+)
+
+data class PetPlaceModel(
+    val id: String,
+    val name: String,
+    val category: String, // "Thú y", "Spa", "Cửa hàng"
+    val subtitle: String,
+    val rating: String,
+    val reviewCount: Int,
+    val distance: String,
+    val address: String,
+    val phone: String,
+    val isFeatured: Boolean = false,
+    val isSaved: Boolean = false,
+    val imageRes: Int,
+    val lat: Double = 10.7769,
+    val lng: Double = 106.7009,
+    val isOpen: Boolean = true,
+    val statusText: String = "Open • 5 min • Highway Road",
+)
+
+
+

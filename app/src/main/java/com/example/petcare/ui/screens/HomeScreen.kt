@@ -385,6 +385,9 @@ fun HomeScreen(
     onPetDetailClick: (String) -> Unit = {},
     onViewAllPetsClick: () -> Unit = {},
     onHealthTabClick: () -> Unit = {},
+    onCalendarTabClick: () -> Unit = {},
+    onMapTabClick: () -> Unit = {},
+    onProfileTabClick: () -> Unit = {},
 ) {
     var uiState by remember(userName) { mutableStateOf(HomeUiState(userName = userName)) }
     var selectedBottomTab by remember { mutableIntStateOf(0) }
@@ -407,11 +410,19 @@ fun HomeScreen(
                 selectedBottomTab = intent.tabIndex
                 if (intent.tabIndex == 1) {
                     onHealthTabClick()
+                } else if (intent.tabIndex == 2) {
+                    onCalendarTabClick()
+                } else if (intent.tabIndex == 3) {
+                    onMapTabClick()
+                } else if (intent.tabIndex == 4) {
+                    onProfileTabClick()
                 }
             }
 
             is HomeUiIntent.ClickService -> {
-                if (intent.serviceId == "srv2") {
+                if (intent.serviceId == "srv1") {
+                    onCalendarTabClick()
+                } else if (intent.serviceId == "srv2") {
                     onHealthTabClick()
                 }
             }
@@ -421,6 +432,9 @@ fun HomeScreen(
             }
         }
     }
+
+
+
 
     Box(
         modifier = modifier
