@@ -108,7 +108,13 @@ fun ForgotPasswordScreen(
 
         // Send OTP Button
         Button(
-            onClick = { onSendOtpClick(emailOrPhone) },
+            onClick = {
+                viewModel.sendForgotPasswordOtp(
+                    destination = emailOrPhone,
+                    onSuccess = { onSendOtpClick(it) },
+                    onError = {}
+                )
+            },
             enabled = emailOrPhoneType != InputType.UNKNOWN,
             modifier = Modifier
                 .fillMaxWidth()

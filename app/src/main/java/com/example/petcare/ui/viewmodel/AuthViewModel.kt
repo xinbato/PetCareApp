@@ -2,8 +2,13 @@ package com.example.petcare.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.petcare.data.repository.PetRepository
 import com.example.petcare.utils.InputType
 import com.example.petcare.utils.InputTypeUtils
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +39,9 @@ data class AuthUiState(
 )
 
 class AuthViewModel : ViewModel() {
+
+    private val auth by lazy { FirebaseAuth.getInstance() }
+    private val firestore by lazy { FirebaseFirestore.getInstance() }
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -85,45 +93,68 @@ class AuthViewModel : ViewModel() {
     }
 
     fun login(
+        emailOrPhoneInput: String? = null,
+        passwordInput: String? = null,
         onSuccess: (String) -> Unit = {},
         onError: (String) -> Unit = {},
     ) {
         val state = _uiState.value
-        val trimmedInput = state.emailOrPhone.trim()
+        val trimmedInput = (emailOrPhoneInput ?: state.emailOrPhone).trim()
+        val pass = (passwordInput ?: state.password).trim()
 
         if (trimmedInput.isEmpty()) {
-            val error = "Vui lòng nhập email, số điện thoại hoặc tên đăng nhập"
+            val error = "Vui lòng nhập email hoặc tài khoản"
             _uiState.update { it.copy(errorMessage = error) }
             onError(error)
             return
         }
 
-        if (state.detectedInputType == InputType.UNKNOWN) {
-            val error = "Định dạng đăng nhập không hợp lệ"
-            _uiState.update { it.copy(errorMessage = error) }
-            onError(error)
-            return
-        }
-
-        if (state.password.isEmpty()) {
+        if (pass.isEmpty()) {
             val error = "Vui lòng nhập mật khẩu"
             _uiState.update { it.copy(errorMessage = error) }
             onError(error)
             return
         }
 
-        _uiState.update { it.copy(isLoginSuccess = true, errorMessage = null) }
-        onSuccess(trimmedInput)
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+        if (trimmedInput.contains("@")) {
+            auth.signInWithEmailAndPassword(trimmedInput, pass)
+                .addOnSuccessListener { result ->
+                    val user = result.user
+                    val displayName = user?.displayName?.ifBlank { null }
+                        ?: user?.email?.substringBefore("@")
+                        ?: trimmedInput
+                    PetRepository.updateUserProfile(name = displayName, email = user?.email)
+                    PetRepository.attachUser(user?.uid)
+                    _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
+                    onSuccess(displayName)
+                }
+                .addOnFailureListener { e ->
+                    val error = e.localizedMessage ?: "Đăng nhập thất bại"
+                    _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                    onError(error)
+                }
+        } else {
+            PetRepository.updateUserProfile(name = trimmedInput)
+            _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
+            onSuccess(trimmedInput)
+        }
     }
 
     fun register(
+        emailOrPhoneInput: String? = null,
+        passwordInput: String? = null,
+        fullNameInput: String? = null,
         onSuccess: (String) -> Unit = {},
         onError: (String) -> Unit = {},
     ) {
         val state = _uiState.value
-        val trimmedInput = state.emailOrPhone.trim()
+        val name = (fullNameInput ?: state.fullName).trim()
+        val trimmedInput = (emailOrPhoneInput ?: state.emailOrPhone).trim()
+        val pass = (passwordInput ?: state.password).trim()
 
-        if (state.fullName.trim().isEmpty()) {
+        if (name.isEmpty()) {
             val error = "Vui lòng nhập họ và tên"
             _uiState.update { it.copy(errorMessage = error) }
             onError(error)
@@ -131,42 +162,50 @@ class AuthViewModel : ViewModel() {
         }
 
         if (trimmedInput.isEmpty()) {
-            val error = "Vui lòng nhập email hoặc số điện thoại"
+            val error = "Vui lòng nhập email"
             _uiState.update { it.copy(errorMessage = error) }
             onError(error)
             return
         }
 
-        if (state.detectedInputType == InputType.UNKNOWN) {
-            val error = "Email hoặc số điện thoại không hợp lệ"
-            _uiState.update { it.copy(errorMessage = error) }
-            onError(error)
-            return
-        }
-
-        if (state.password.length < 6) {
+        if (pass.length < 6) {
             val error = "Mật khẩu phải có ít nhất 6 ký tự"
             _uiState.update { it.copy(errorMessage = error) }
             onError(error)
             return
         }
 
-        if (state.password != state.confirmPassword) {
-            val error = "Mật khẩu xác nhận không khớp"
-            _uiState.update { it.copy(errorMessage = error) }
-            onError(error)
-            return
-        }
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-        if (!state.isAgreementAccepted) {
-            val error = "Vui lòng đồng ý với điều khoản sử dụng"
-            _uiState.update { it.copy(errorMessage = error) }
-            onError(error)
-            return
+        if (trimmedInput.contains("@")) {
+            auth.createUserWithEmailAndPassword(trimmedInput, pass)
+                .addOnSuccessListener { result ->
+                    val user = result.user
+                    val uid = user?.uid.orEmpty()
+                    if (uid.isNotEmpty()) {
+                        firestore.collection("users").document(uid).set(
+                            mapOf(
+                                "name" to name,
+                                "email" to trimmedInput,
+                                "createdAt" to System.currentTimeMillis()
+                            )
+                        )
+                    }
+                    PetRepository.updateUserProfile(name = name, email = trimmedInput)
+                    PetRepository.attachUser(uid)
+                    _uiState.update { it.copy(isLoading = false, isRegisterSuccess = true) }
+                    onSuccess(name)
+                }
+                .addOnFailureListener { e ->
+                    val error = e.localizedMessage ?: "Đăng ký thất bại"
+                    _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                    onError(error)
+                }
+        } else {
+            PetRepository.updateUserProfile(name = name)
+            _uiState.update { it.copy(isLoading = false, isRegisterSuccess = true) }
+            onSuccess(name)
         }
-
-        _uiState.update { it.copy(isRegisterSuccess = true, errorMessage = null) }
-        onSuccess(trimmedInput)
     }
 
     fun sendForgotPasswordOtp(
@@ -175,18 +214,99 @@ class AuthViewModel : ViewModel() {
         onError: (String) -> Unit = {},
     ) {
         val target = destination.ifEmpty { _uiState.value.emailOrPhone }.trim()
-        val type = InputTypeUtils.determineEmailOrPhone(target)
-
-        if (type == InputType.UNKNOWN) {
-            val error = "Vui lòng nhập email hoặc số điện thoại hợp lệ"
+        if (target.isEmpty() || !target.contains("@")) {
+            val error = "Vui lòng nhập email hợp lệ để nhận liên kết khôi phục"
             _uiState.update { it.copy(errorMessage = error) }
             onError(error)
             return
         }
 
-        _uiState.update { it.copy(otpTarget = target, errorMessage = null) }
-        startResendCountdown()
-        onSuccess(target)
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        auth.sendPasswordResetEmail(target)
+            .addOnSuccessListener {
+                _uiState.update { it.copy(isLoading = false, otpTarget = target) }
+                startResendCountdown()
+                onSuccess(target)
+            }
+            .addOnFailureListener { e ->
+                val error = e.localizedMessage ?: "Không thể gửi email khôi phục mật khẩu"
+                _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                onError(error)
+            }
+    }
+
+    fun logout() {
+        auth.signOut()
+        PetRepository.detachUser()
+        resetState()
+    }
+
+    fun deleteAccount(
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {},
+    ) {
+        val user = auth.currentUser
+        if (user == null) {
+            PetRepository.detachUser()
+            resetState()
+            onSuccess()
+            return
+        }
+        val uid = user.uid
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        firestore.collection("users").document(uid).delete()
+            .addOnCompleteListener {
+                user.delete()
+                    .addOnSuccessListener {
+                        PetRepository.detachUser()
+                        _uiState.update { it.copy(isLoading = false) }
+                        resetState()
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        val err = e.localizedMessage ?: "Không thể xóa tài khoản. Vui lòng đăng nhập lại trước khi xóa."
+                        _uiState.update { it.copy(isLoading = false, errorMessage = err) }
+                        onError(err)
+                    }
+            }
+    }
+
+    fun signInWithGoogle(
+        idToken: String,
+        onSuccess: (String) -> Unit = {},
+        onError: (String) -> Unit = {},
+    ) {
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnSuccessListener { result ->
+                val user = result.user
+                val displayName = user?.displayName?.ifBlank { null }
+                    ?: user?.email?.substringBefore("@")
+                    ?: "User"
+                val email = user?.email.orEmpty()
+                val uid = user?.uid.orEmpty()
+
+                if (uid.isNotEmpty()) {
+                    firestore.collection("users").document(uid).set(
+                        mapOf(
+                            "name" to displayName,
+                            "email" to email,
+                            "lastLogin" to System.currentTimeMillis()
+                        ),
+                        SetOptions.merge()
+                    )
+                }
+                PetRepository.updateUserProfile(name = displayName, email = email)
+                PetRepository.attachUser(uid)
+                _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
+                onSuccess(displayName)
+            }
+            .addOnFailureListener { e ->
+                val error = e.localizedMessage ?: "Đăng nhập Google thất bại"
+                _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                onError(error)
+            }
     }
 
     fun verifyOtp(
