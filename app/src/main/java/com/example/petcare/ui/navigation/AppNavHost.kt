@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -48,6 +49,7 @@ import com.example.petcare.ui.screens.SuccessScreen
 import com.example.petcare.ui.screens.UserProfileDetailScreen
 import com.example.petcare.ui.screens.VaccinationScreen
 import com.example.petcare.ui.screens.WeightHistoryScreen
+import com.example.petcare.ui.viewmodel.AuthViewModel
 
 fun NavHostController.navigateToTab(tab: PetCareTab) {
     val route = when (tab) {
@@ -423,14 +425,25 @@ fun AppNavHost(
         }
 
         composable(AppRoute.Settings.route) {
+            val authViewModel: AuthViewModel = viewModel()
             SettingsScreen(
                 modifier = Modifier.fillMaxSize(),
                 onBackClick = { navController.popBackStack() },
                 onSwitchAccountClick = { navController.navigate(AppRoute.UserProfileDetail.route) },
                 onLogoutClick = {
+                    authViewModel.logout()
                     navController.navigate(AppRoute.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onDeleteAccountClick = {
+                    authViewModel.deleteAccount(
+                        onSuccess = {
+                            navController.navigate(AppRoute.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
                 }
             )
         }

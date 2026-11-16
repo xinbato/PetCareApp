@@ -25,9 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -48,6 +50,7 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.viewmodel.AuthViewModel
+import com.example.petcare.utils.GoogleSignInHelper
 import com.example.petcare.utils.InputType
 import com.example.petcare.utils.InputTypeUtils
 
@@ -64,6 +67,9 @@ fun LoginScreen(
     var emailOrPhone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // Input type detection logic
     val detectedInputType = remember(emailOrPhone) {
@@ -171,7 +177,12 @@ fun LoginScreen(
                     if (detectedInputType == InputType.UNKNOWN && emailOrPhone.isNotBlank()) {
                         onLoginErrorClick()
                     } else {
-                        onLoginSuccessClick(emailOrPhone)
+                        viewModel.login(
+                            emailOrPhoneInput = emailOrPhone,
+                            passwordInput = password,
+                            onSuccess = onLoginSuccessClick,
+                            onError = { onLoginErrorClick() }
+                        )
                     }
                 },
                 modifier = Modifier
@@ -214,7 +225,17 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(28.dp))
 
         // Social Login Section
-        SocialLoginSection()
+        SocialLoginSection(
+            onGoogleClick = {
+                GoogleSignInHelper.launchGoogleSignIn(
+                    context = context,
+                    coroutineScope = coroutineScope,
+                    viewModel = viewModel,
+                    onSuccess = onLoginSuccessClick,
+                    onError = { onLoginErrorClick() }
+                )
+            }
+        )
     }
 }
 

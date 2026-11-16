@@ -23,9 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +52,7 @@ import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.AuthViewModel
+import com.example.petcare.utils.GoogleSignInHelper
 import com.example.petcare.utils.InputType
 import com.example.petcare.utils.InputTypeUtils
 
@@ -67,6 +70,9 @@ fun RegisterScreen(
     var emailOrPhone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // Validation & Input Type detection logic
     val isUsernameValid = remember(username) { InputTypeUtils.isUsername(username) }
@@ -201,8 +207,13 @@ fun RegisterScreen(
                 if (!isUsernameValid || emailOrPhoneType == InputType.UNKNOWN) {
                     onRegisterErrorClick()
                 } else {
-                    val displayName = fullName.ifBlank { username.ifBlank { emailOrPhone } }
-                    onRegisterSuccessClick(displayName)
+                    viewModel.register(
+                        emailOrPhoneInput = emailOrPhone,
+                        passwordInput = password,
+                        fullNameInput = fullName.ifBlank { username },
+                        onSuccess = onRegisterSuccessClick,
+                        onError = { onRegisterErrorClick() }
+                    )
                 }
             },
             modifier = Modifier
@@ -224,7 +235,17 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Social Login Section
-        SocialLoginSection()
+        SocialLoginSection(
+            onGoogleClick = {
+                GoogleSignInHelper.launchGoogleSignIn(
+                    context = context,
+                    coroutineScope = coroutineScope,
+                    viewModel = viewModel,
+                    onSuccess = onRegisterSuccessClick,
+                    onError = { onRegisterErrorClick() }
+                )
+            }
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 

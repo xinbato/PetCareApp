@@ -53,7 +53,9 @@ fun SettingsScreen(
     onBackClick: () -> Unit = {},
     onSwitchAccountClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
+    onDeleteAccountClick: () -> Unit = {},
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
     Box(
@@ -140,7 +142,27 @@ fun SettingsScreen(
                     )
                 }
 
-                // Bottom Option 2: Xóa tài khoản (Color: RED as requested)
+                // Bottom Option 2: Đăng xuất
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(58.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White)
+                        .border(1.5.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .clickable { showLogoutDialog = true }
+                        .padding(horizontal = 20.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
+                        text = "Đăng xuất",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
+
+                // Bottom Option 3: Xóa tài khoản (Color: RED as requested)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -164,6 +186,31 @@ fun SettingsScreen(
             }
         }
 
+        // Logout Confirmation Dialog
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+                title = { Text("Đăng xuất", fontWeight = FontWeight.Bold, color = TextPrimary) },
+                text = { Text("Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này không?") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showLogoutDialog = false
+                            onLogoutClick()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary, contentColor = Color.White)
+                    ) {
+                        Text("Đăng xuất", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(onClick = { showLogoutDialog = false }) {
+                        Text("Hủy")
+                    }
+                }
+            )
+        }
+
         // Delete Account Confirmation Dialog
         if (showDeleteAccountDialog) {
             AlertDialog(
@@ -174,7 +221,7 @@ fun SettingsScreen(
                     Button(
                         onClick = {
                             showDeleteAccountDialog = false
-                            onLogoutClick()
+                            onDeleteAccountClick()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = RedError, contentColor = Color.White)
                     ) {

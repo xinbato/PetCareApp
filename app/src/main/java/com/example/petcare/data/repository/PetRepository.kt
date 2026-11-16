@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
 data class UserProfileData(
     val name: String = "User",
@@ -35,6 +38,10 @@ data class AccountUser(
 )
 
 object PetRepository {
+    private val auth by lazy { FirebaseAuth.getInstance() }
+    private val firestore by lazy { FirebaseFirestore.getInstance() }
+    private var petsListener: ListenerRegistration? = null
+
     private val _userProfile = MutableStateFlow(UserProfileData())
     val userProfile: StateFlow<UserProfileData> = _userProfile.asStateFlow()
 
@@ -67,6 +74,52 @@ object PetRepository {
 
     private val _currentSelectedPetId = MutableStateFlow("1")
     val currentSelectedPetId: StateFlow<String> = _currentSelectedPetId.asStateFlow()
+
+    init {
+        auth.currentUser?.let { user ->
+            updateUserProfile(name = user.displayName ?: user.email, email = user.email)
+            attachUser(user.uid)
+        }
+    }
+
+    fun attachUser(userId: String?) {
+        petsListener?.remove()
+        if (userId.isNullOrEmpty()) return
+
+        firestore.collection("users").document(userId).get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    val name = doc.getString("name") ?: _userProfile.value.name
+                    val email = doc.getString("email") ?: _userProfile.value.email
+                    val phone = doc.getString("phone") ?: _userProfile.value.phone
+                    val address = doc.getString("address") ?: _userProfile.value.address
+                    val dob = doc.getString("dob") ?: _userProfile.value.dob
+                    updateUserProfile(name = name, email = email, phone = phone, address = address, dob = dob)
+                }
+            }
+
+        petsListener = firestore.collection("users")
+            .document(userId)
+            .collection("pets")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val remotePets = snapshot.documents.mapNotNull { doc ->
+                    doc.toObject(PetModel::class.java)?.copy(id = doc.id)
+                }
+                if (remotePets.isNotEmpty()) {
+                    _pets.value = remotePets
+                    if (_pets.value.none { it.id == _currentSelectedPetId.value }) {
+                        _currentSelectedPetId.value = remotePets.first().id
+                    }
+                }
+            }
+    }
+
+    fun detachUser() {
+        petsListener?.remove()
+        petsListener = null
+        resetToDefaults()
+    }
 
     fun switchAccount(accountId: String) {
         _accounts.update { list ->
@@ -107,6 +160,16 @@ object PetRepository {
             if (headerBgUri != null) updated = updated.copy(headerBgUri = headerBgUri)
             updated
         }
+        val uid = auth.currentUser?.uid ?: return
+        val updates = mutableMapOf<String, Any>()
+        name?.let { updates["name"] = it }
+        email?.let { updates["email"] = it }
+        phone?.let { updates["phone"] = it }
+        dob?.let { updates["dob"] = it }
+        address?.let { updates["address"] = it }
+        if (updates.isNotEmpty()) {
+            firestore.collection("users").document(uid).update(updates)
+        }
     }
 
     fun toggleSavePlace(placeId: String) {
@@ -143,6 +206,12 @@ object PetRepository {
                 list + pet
             }
         }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users")
+            .document(uid)
+            .collection("pets")
+            .document(pet.id)
+            .set(pet)
     }
 
     fun deletePet(id: String) {
@@ -152,6 +221,12 @@ object PetRepository {
                 _currentSelectedPetId.value = firstPet.id
             }
         }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users")
+            .document(uid)
+            .collection("pets")
+            .document(id)
+            .delete()
     }
 
     fun toggleFavorite(id: String) {
