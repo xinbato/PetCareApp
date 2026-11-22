@@ -132,7 +132,7 @@ fun VaccinationScreen(
                             PetVaccinationSectionHeader(
                                 petName = pet.name,
                                 species = pet.species,
-                                iconRes = pet.iconRes,
+                                iconRes = pet.safeIconRes,
                                 count = petVaccinations.size
                             )
                         }
@@ -264,7 +264,7 @@ fun PetVaccinationSectionHeader(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = iconRes),
+                    painter = painterResource(id = if (iconRes != 0) iconRes else com.example.petcare.R.drawable.dog),
                     contentDescription = petName,
                     modifier = Modifier.size(22.dp)
                 )

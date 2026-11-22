@@ -246,7 +246,7 @@ fun PetListItemCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = pet.iconRes),
+                        painter = painterResource(id = pet.safeIconRes),
                         contentDescription = pet.name,
                         modifier = Modifier.size(36.dp)
                     )

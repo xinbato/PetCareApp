@@ -14,21 +14,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 
 data class UserProfileData(
-    val name: String = "User",
+    val name: String = "",
     val memberSince: String = "Thành viên từ 2026",
-    val rank: String = "rank hội viên: kim cương",
+    val rank: String = "Hội viên mới",
     val avatarUri: String? = null,
     val avatarRes: Int? = null,
     val headerBgColorHex: Long = 0xFF338C63,
     val headerBgUri: String? = null,
-    val email: String = "user@example.com",
-    val phone: String = "0987654321",
-    val dob: String = "15/08/1998",
-    val address: String = "Hà Nội, Việt Nam",
+    val email: String = "",
+    val phone: String? = null,
+    val dob: String? = null,
+    val address: String? = null,
 )
 
 data class AccountUser(
@@ -41,6 +42,12 @@ object PetRepository {
     private val auth by lazy { FirebaseAuth.getInstance() }
     private val firestore by lazy { FirebaseFirestore.getInstance() }
     private var petsListener: ListenerRegistration? = null
+    private var vaccinationsListener: ListenerRegistration? = null
+    private var medicationsListener: ListenerRegistration? = null
+    private var medicalRecordsListener: ListenerRegistration? = null
+    private var weightRecordsListener: ListenerRegistration? = null
+    private var checkupRecordsListener: ListenerRegistration? = null
+    private var schedulesListener: ListenerRegistration? = null
 
     private val _userProfile = MutableStateFlow(UserProfileData())
     val userProfile: StateFlow<UserProfileData> = _userProfile.asStateFlow()
@@ -84,40 +91,141 @@ object PetRepository {
 
     fun attachUser(userId: String?) {
         petsListener?.remove()
+        vaccinationsListener?.remove()
+        medicationsListener?.remove()
+        medicalRecordsListener?.remove()
+        weightRecordsListener?.remove()
+        checkupRecordsListener?.remove()
+        schedulesListener?.remove()
         if (userId.isNullOrEmpty()) return
 
-        firestore.collection("users").document(userId).get()
-            .addOnSuccessListener { doc ->
-                if (doc.exists()) {
-                    val name = doc.getString("name") ?: _userProfile.value.name
-                    val email = doc.getString("email") ?: _userProfile.value.email
-                    val phone = doc.getString("phone") ?: _userProfile.value.phone
-                    val address = doc.getString("address") ?: _userProfile.value.address
-                    val dob = doc.getString("dob") ?: _userProfile.value.dob
-                    updateUserProfile(name = name, email = email, phone = phone, address = address, dob = dob)
+        _pets.value = emptyList()
+        _vaccinations.value = emptyList()
+        _medications.value = emptyList()
+        _medicalRecords.value = emptyList()
+        _weightRecords.value = emptyList()
+        _checkupRecords.value = emptyList()
+        _schedules.value = emptyList()
+        _currentSelectedPetId.value = ""
+
+        val userDoc = firestore.collection("users").document(userId)
+
+        userDoc.get().addOnSuccessListener { doc ->
+            if (doc.exists()) {
+                val name = doc.getString("name")
+                    ?: auth.currentUser?.displayName?.ifBlank { null }
+                    ?: auth.currentUser?.email?.substringBefore("@")
+                    ?: "Bạn"
+                val email = doc.getString("email") ?: auth.currentUser?.email.orEmpty()
+                val phone = doc.getString("phone") ?: auth.currentUser?.phoneNumber
+                val address = doc.getString("address")
+                val dob = doc.getString("dob")
+                val avatarUri = doc.getString("avatarUri") ?: auth.currentUser?.photoUrl?.toString()
+                _userProfile.update { current ->
+                    current.copy(
+                        name = name,
+                        email = email,
+                        phone = phone,
+                        address = address,
+                        dob = dob,
+                        avatarUri = avatarUri ?: current.avatarUri
+                    )
+                }
+            } else {
+                val user = auth.currentUser
+                val name = user?.displayName?.ifBlank { null }
+                    ?: user?.email?.substringBefore("@")
+                    ?: "Bạn"
+                val email = user?.email.orEmpty()
+                val phone = user?.phoneNumber
+                val avatarUri = user?.photoUrl?.toString()
+                _userProfile.update { current ->
+                    current.copy(
+                        name = name,
+                        email = email,
+                        phone = phone,
+                        address = null,
+                        dob = null,
+                        avatarUri = avatarUri
+                    )
                 }
             }
+        }
 
-        petsListener = firestore.collection("users")
-            .document(userId)
-            .collection("pets")
+        petsListener = userDoc.collection("pets")
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
                 val remotePets = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(PetModel::class.java)?.copy(id = doc.id)
+                    doc.toPetModelSafe()
                 }
+                _pets.value = remotePets
                 if (remotePets.isNotEmpty()) {
-                    _pets.value = remotePets
                     if (_pets.value.none { it.id == _currentSelectedPetId.value }) {
                         _currentSelectedPetId.value = remotePets.first().id
                     }
+                } else {
+                    _currentSelectedPetId.value = ""
                 }
+            }
+
+        vaccinationsListener = userDoc.collection("vaccinations")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val items = snapshot.documents.mapNotNull { it.toVaccinationModelSafe() }
+                _vaccinations.value = items
+            }
+
+        medicationsListener = userDoc.collection("medications")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val items = snapshot.documents.mapNotNull { it.toMedicationModelSafe() }
+                _medications.value = items
+            }
+
+        medicalRecordsListener = userDoc.collection("medicalRecords")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val items = snapshot.documents.mapNotNull { it.toMedicalRecordSafe() }
+                _medicalRecords.value = items
+            }
+
+        weightRecordsListener = userDoc.collection("weightRecords")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val items = snapshot.documents.mapNotNull { it.toWeightRecordSafe() }
+                _weightRecords.value = items
+            }
+
+        checkupRecordsListener = userDoc.collection("checkupRecords")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val items = snapshot.documents.mapNotNull { it.toCheckupRecordSafe() }
+                _checkupRecords.value = items
+            }
+
+        schedulesListener = userDoc.collection("schedules")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val items = snapshot.documents.mapNotNull { it.toScheduleModelSafe() }
+                _schedules.value = items
             }
     }
 
     fun detachUser() {
         petsListener?.remove()
+        vaccinationsListener?.remove()
+        medicationsListener?.remove()
+        medicalRecordsListener?.remove()
+        weightRecordsListener?.remove()
+        checkupRecordsListener?.remove()
+        schedulesListener?.remove()
         petsListener = null
+        vaccinationsListener = null
+        medicationsListener = null
+        medicalRecordsListener = null
+        weightRecordsListener = null
+        checkupRecordsListener = null
+        schedulesListener = null
         resetToDefaults()
     }
 
@@ -162,11 +270,12 @@ object PetRepository {
         }
         val uid = auth.currentUser?.uid ?: return
         val updates = mutableMapOf<String, Any>()
-        name?.let { updates["name"] = it }
-        email?.let { updates["email"] = it }
-        phone?.let { updates["phone"] = it }
-        dob?.let { updates["dob"] = it }
-        address?.let { updates["address"] = it }
+        name?.takeIf { it.isNotBlank() }?.let { updates["name"] = it }
+        email?.takeIf { it.isNotBlank() }?.let { updates["email"] = it }
+        phone?.takeIf { it.isNotBlank() }?.let { updates["phone"] = it }
+        dob?.takeIf { it.isNotBlank() }?.let { updates["dob"] = it }
+        address?.takeIf { it.isNotBlank() }?.let { updates["address"] = it }
+        avatarUri?.let { updates["avatarUri"] = it }
         if (updates.isNotEmpty()) {
             firestore.collection("users").document(uid).update(updates)
         }
@@ -240,6 +349,9 @@ object PetRepository {
 
     fun addVaccination(vaccination: VaccinationModel) {
         _vaccinations.update { listOf(vaccination) + it }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("vaccinations").document(vaccination.id).set(vaccination)
     }
 
     fun getMedicationsForPet(petId: String): List<MedicationModel> =
@@ -247,6 +359,9 @@ object PetRepository {
 
     fun addMedication(medication: MedicationModel) {
         _medications.update { listOf(medication) + it }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("medications").document(medication.id).set(medication)
     }
 
     fun getMedicalRecordsForPet(petId: String): List<MedicalRecordEntryModel> =
@@ -254,6 +369,9 @@ object PetRepository {
 
     fun addMedicalRecord(record: MedicalRecordEntryModel) {
         _medicalRecords.update { listOf(record) + it }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("medicalRecords").document(record.id).set(record)
     }
 
     fun getScheduleById(id: String): ScheduleModel? =
@@ -261,6 +379,9 @@ object PetRepository {
 
     fun addSchedule(schedule: ScheduleModel) {
         _schedules.update { it + schedule }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("schedules").document(schedule.id).set(schedule)
     }
 
     fun updateSchedule(schedule: ScheduleModel) {
@@ -272,10 +393,16 @@ object PetRepository {
                 list + schedule
             }
         }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("schedules").document(schedule.id).set(schedule)
     }
 
     fun deleteSchedule(id: String) {
         _schedules.update { list -> list.filterNot { it.id == id } }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("schedules").document(id).delete()
     }
 
     fun getWeightRecordsForPet(petId: String): List<WeightRecordModel> =
@@ -283,6 +410,9 @@ object PetRepository {
 
     fun addWeightRecord(record: WeightRecordModel) {
         _weightRecords.update { listOf(record) + it }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("weightRecords").document(record.id).set(record)
     }
 
     fun getCheckupRecordsForPet(petId: String): List<CheckupRecordModel> =
@@ -290,20 +420,23 @@ object PetRepository {
 
     fun addCheckupRecord(record: CheckupRecordModel) {
         _checkupRecords.update { listOf(record) + it }
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .collection("checkupRecords").document(record.id).set(record)
     }
 
     fun resetToDefaults() {
-        _userProfile.value = UserProfileData()
-        _accounts.value = initialAccounts()
-        _pets.value = initialPets()
-        _vaccinations.value = initialVaccinations()
-        _weightRecords.value = initialWeightRecords()
-        _checkupRecords.value = initialCheckupRecords()
-        _medications.value = initialMedications()
-        _medicalRecords.value = initialMedicalRecords()
-        _schedules.value = initialSchedules()
+        _userProfile.value = UserProfileData(name = "", email = "", phone = null, address = null, dob = null)
+        _accounts.value = emptyList()
+        _pets.value = emptyList()
+        _vaccinations.value = emptyList()
+        _weightRecords.value = emptyList()
+        _checkupRecords.value = emptyList()
+        _medications.value = emptyList()
+        _medicalRecords.value = emptyList()
+        _schedules.value = emptyList()
         _petPlaces.value = initialPetPlaces()
-        _currentSelectedPetId.value = "1"
+        _currentSelectedPetId.value = ""
     }
 
     private fun initialAccounts() = listOf(
@@ -687,4 +820,130 @@ object PetRepository {
             lng = 106.6750,
         ),
     )
+}
+
+private fun DocumentSnapshot.toPetModelSafe(): PetModel? = runCatching {
+    val pet = toObject(PetModel::class.java)?.copy(id = id)
+    if (pet != null) {
+        val safeIcon = if (pet.iconRes != 0) pet.iconRes else R.drawable.dog
+        pet.copy(iconRes = safeIcon)
+    } else null
+}.getOrElse {
+    runCatching {
+        PetModel(
+            id = id,
+            name = getString("name") ?: "Thú cưng",
+            species = getString("species") ?: "Chó",
+            breed = getString("breed") ?: "",
+            dateOfBirth = getString("dateOfBirth") ?: "14/05/2023",
+            age = getString("age") ?: "3 tuổi",
+            weight = getString("weight") ?: "12.4 kg",
+            gender = getString("gender") ?: "Đực",
+            iconRes = getLong("iconRes")?.toInt()?.takeIf { it != 0 } ?: R.drawable.dog,
+            statusText = getString("statusText") ?: "Khỏe mạnh",
+            statusDetail = getString("statusDetail") ?: "Cân nặng 12.4 kg",
+            isFavorite = getBoolean("isFavorite") ?: false,
+            temperature = getString("temperature") ?: "38.4°C",
+            activity = getString("activity") ?: "8,240 bước",
+            diet = getString("diet") ?: "Tốt • 2/2 bữa",
+            lastUpdated = getString("lastUpdated") ?: "hôm nay",
+        )
+    }.getOrNull()
+}
+
+private fun DocumentSnapshot.toVaccinationModelSafe(): VaccinationModel? = runCatching {
+    toObject(VaccinationModel::class.java)?.copy(id = id)
+}.getOrElse {
+    runCatching {
+        VaccinationModel(
+            id = id,
+            petId = getString("petId") ?: "",
+            title = getString("title") ?: "",
+            dateTime = getString("dateTime") ?: "",
+            status = getString("status") ?: "Đã tiêm",
+        )
+    }.getOrNull()
+}
+
+private fun DocumentSnapshot.toMedicationModelSafe(): MedicationModel? = runCatching {
+    toObject(MedicationModel::class.java)?.copy(id = id)
+}.getOrElse {
+    runCatching {
+        MedicationModel(
+            id = id,
+            petId = getString("petId") ?: "",
+            name = getString("name") ?: "",
+            dosage = getString("dosage") ?: "",
+            scheduleTime = getString("scheduleTime") ?: "",
+            quantity = getString("quantity") ?: "30 viên",
+            status = getString("status") ?: "Đang dùng",
+        )
+    }.getOrNull()
+}
+
+private fun DocumentSnapshot.toMedicalRecordSafe(): MedicalRecordEntryModel? = runCatching {
+    toObject(MedicalRecordEntryModel::class.java)?.copy(id = id)
+}.getOrElse {
+    runCatching {
+        MedicalRecordEntryModel(
+            id = id,
+            petId = getString("petId") ?: "",
+            petName = getString("petName") ?: "",
+            dateTime = getString("dateTime") ?: "",
+            activityType = getString("activityType") ?: "",
+            description = getString("description") ?: "",
+            photoUri = getString("photoUri"),
+            emotion = getString("emotion") ?: "Bình thường",
+        )
+    }.getOrNull()
+}
+
+private fun DocumentSnapshot.toWeightRecordSafe(): WeightRecordModel? = runCatching {
+    toObject(WeightRecordModel::class.java)?.copy(id = id)
+}.getOrElse {
+    runCatching {
+        WeightRecordModel(
+            id = id,
+            petId = getString("petId") ?: "",
+            petName = getString("petName") ?: "",
+            weight = getString("weight") ?: "",
+            dateTime = getString("dateTime") ?: "",
+            status = getString("status") ?: "Ổn định",
+        )
+    }.getOrNull()
+}
+
+private fun DocumentSnapshot.toCheckupRecordSafe(): CheckupRecordModel? = runCatching {
+    toObject(CheckupRecordModel::class.java)?.copy(id = id)
+}.getOrElse {
+    runCatching {
+        CheckupRecordModel(
+            id = id,
+            petId = getString("petId") ?: "",
+            petName = getString("petName") ?: "",
+            title = getString("title") ?: "",
+            doctorOrClinic = getString("doctorOrClinic") ?: "Phòng khám thú y PetCare",
+            dateTime = getString("dateTime") ?: "",
+            result = getString("result") ?: "Bình thường",
+            status = getString("status") ?: "Hoàn thành",
+        )
+    }.getOrNull()
+}
+
+private fun DocumentSnapshot.toScheduleModelSafe(): ScheduleModel? = runCatching {
+    toObject(ScheduleModel::class.java)?.copy(id = id)
+}.getOrElse {
+    runCatching {
+        ScheduleModel(
+            id = id,
+            title = getString("title") ?: "",
+            description = getString("description") ?: "",
+            petId = getString("petId") ?: "1",
+            petName = getString("petName") ?: "Momo",
+            dateText = getString("dateText") ?: "",
+            timeText = getString("timeText") ?: "",
+            timeOrDateLabel = getString("timeOrDateLabel") ?: "",
+            isCompleted = getBoolean("isCompleted") ?: false,
+        )
+    }.getOrNull()
 }

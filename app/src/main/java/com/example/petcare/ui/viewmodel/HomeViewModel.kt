@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 data class HomeUiState(
-    val userName: String = "User",
+    val userName: String = "",
     val pets: List<PetModel> = emptyList(),
-    val selectedPetId: String = "1",
+    val selectedPetId: String = "",
     val schedules: List<ScheduleModel> = emptyList(),
     val isLoading: Boolean = false,
 ) {

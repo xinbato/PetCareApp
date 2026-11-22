@@ -13,6 +13,7 @@ playServicesMaps = "19.0.0"
 mapsCompose = "6.1.2"
 googleServices = "4.4.2"
 firebaseBom = "33.10.0"
+firebaseCrashlyticsPlugin = "3.0.3"
 credentials = "1.3.0"
 googleid = "1.1.1"
 
@@ -41,6 +42,7 @@ maps-compose = { group = "com.google.maps.android", name = "maps-compose", versi
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
@@ -49,4 +51,5 @@ googleid = { group = "com.google.android.libraries.identity.googleid", name = "g
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-crashlytics-plugin = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
 
