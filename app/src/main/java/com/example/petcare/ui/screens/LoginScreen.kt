@@ -67,11 +67,12 @@ fun LoginScreen(
     var emailOrPhone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+    var inlineError by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Input type detection logic
+    // Input type detection logic — chỉ email mới được đăng nhập Firebase
     val detectedInputType = remember(emailOrPhone) {
         InputTypeUtils.determineInputType(emailOrPhone)
     }
@@ -168,22 +169,29 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Hiển thị lỗi nội tuyến thay vì navigate sang ErrorScreen
+        if (inlineError != null) {
+            Text(
+                text = inlineError!!,
+                fontSize = 13.sp,
+                color = RedError,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
+
         // Login & Register Buttons
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Button(
                 onClick = {
-                    if (detectedInputType == InputType.UNKNOWN && emailOrPhone.isNotBlank()) {
-                        onLoginErrorClick()
-                    } else {
-                        viewModel.login(
-                            emailOrPhoneInput = emailOrPhone,
-                            passwordInput = password,
-                            onSuccess = onLoginSuccessClick,
-                            onError = { onLoginErrorClick() }
-                        )
-                    }
+                    inlineError = null
+                    viewModel.login(
+                        emailOrPhoneInput = emailOrPhone,
+                        passwordInput = password,
+                        onSuccess = onLoginSuccessClick,
+                        onError = { msg -> inlineError = msg }
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -227,12 +235,13 @@ fun LoginScreen(
         // Social Login Section
         SocialLoginSection(
             onGoogleClick = {
+                inlineError = null
                 GoogleSignInHelper.launchGoogleSignIn(
                     context = context,
                     coroutineScope = coroutineScope,
                     viewModel = viewModel,
                     onSuccess = onLoginSuccessClick,
-                    onError = { onLoginErrorClick() }
+                    onError = { msg -> inlineError = msg }
                 )
             }
         )

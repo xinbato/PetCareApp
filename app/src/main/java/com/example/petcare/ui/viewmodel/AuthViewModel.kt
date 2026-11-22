@@ -119,6 +119,7 @@ class AuthViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
         if (trimmedInput.contains("@")) {
+            // Đăng nhập trực tiếp bằng Email
             auth.signInWithEmailAndPassword(trimmedInput, pass)
                 .addOnSuccessListener { result ->
                     val user = result.user
@@ -136,9 +137,41 @@ class AuthViewModel : ViewModel() {
                     onError(error)
                 }
         } else {
-            PetRepository.updateUserProfile(name = trimmedInput)
-            _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
-            onSuccess(trimmedInput)
+            firestore.collection("users")
+                .whereEqualTo("username", trimmedInput.lowercase())
+                .limit(1)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    val userDoc = snapshot.documents.firstOrNull()
+                    val email = userDoc?.getString("email")
+                    if (!email.isNullOrBlank()) {
+                        auth.signInWithEmailAndPassword(email, pass)
+                            .addOnSuccessListener { result ->
+                                val user = result.user
+                                val displayName = userDoc.getString("name")
+                                    ?: user?.displayName?.ifBlank { null }
+                                    ?: trimmedInput
+                                PetRepository.updateUserProfile(name = displayName, email = email)
+                                PetRepository.attachUser(user?.uid)
+                                _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
+                                onSuccess(displayName)
+                            }
+                            .addOnFailureListener { e ->
+                                val error = e.localizedMessage ?: "Mật khẩu không chính xác"
+                                _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                                onError(error)
+                            }
+                    } else {
+                        val error = "Không tìm thấy tài khoản với tên đăng nhập này. Vui lòng thử dùng email."
+                        _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                        onError(error)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    val error = e.localizedMessage ?: "Không thể kết nối đến máy chủ"
+                    _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                    onError(error)
+                }
         }
     }
 
@@ -146,6 +179,7 @@ class AuthViewModel : ViewModel() {
         emailOrPhoneInput: String? = null,
         passwordInput: String? = null,
         fullNameInput: String? = null,
+        usernameInput: String? = null,
         onSuccess: (String) -> Unit = {},
         onError: (String) -> Unit = {},
     ) {
@@ -153,6 +187,7 @@ class AuthViewModel : ViewModel() {
         val name = (fullNameInput ?: state.fullName).trim()
         val trimmedInput = (emailOrPhoneInput ?: state.emailOrPhone).trim()
         val pass = (passwordInput ?: state.password).trim()
+        val username = usernameInput?.trim()?.lowercase().orEmpty()
 
         if (name.isEmpty()) {
             val error = "Vui lòng nhập họ và tên"
@@ -183,13 +218,15 @@ class AuthViewModel : ViewModel() {
                     val user = result.user
                     val uid = user?.uid.orEmpty()
                     if (uid.isNotEmpty()) {
-                        firestore.collection("users").document(uid).set(
-                            mapOf(
-                                "name" to name,
-                                "email" to trimmedInput,
-                                "createdAt" to System.currentTimeMillis()
-                            )
+                        val userData = mutableMapOf<String, Any>(
+                            "name" to name,
+                            "email" to trimmedInput,
+                            "createdAt" to System.currentTimeMillis()
                         )
+                        if (username.isNotEmpty()) {
+                            userData["username"] = username
+                        }
+                        firestore.collection("users").document(uid).set(userData)
                     }
                     PetRepository.updateUserProfile(name = name, email = trimmedInput)
                     PetRepository.attachUser(uid)
@@ -202,9 +239,9 @@ class AuthViewModel : ViewModel() {
                     onError(error)
                 }
         } else {
-            PetRepository.updateUserProfile(name = name)
-            _uiState.update { it.copy(isLoading = false, isRegisterSuccess = true) }
-            onSuccess(name)
+            val error = "Vui lòng đăng ký bằng địa chỉ email hợp lệ"
+            _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+            onError(error)
         }
     }
 
@@ -286,18 +323,29 @@ class AuthViewModel : ViewModel() {
                     ?: "User"
                 val email = user?.email.orEmpty()
                 val uid = user?.uid.orEmpty()
+                val photoUrl = user?.photoUrl?.toString()
+                val phone = user?.phoneNumber
 
                 if (uid.isNotEmpty()) {
+                    val userData = mutableMapOf<String, Any>(
+                        "name" to displayName,
+                        "email" to email,
+                        "lastLogin" to System.currentTimeMillis()
+                    )
+                    if (photoUrl != null) userData["avatarUri"] = photoUrl
+                    if (!phone.isNullOrBlank()) userData["phone"] = phone
+
                     firestore.collection("users").document(uid).set(
-                        mapOf(
-                            "name" to displayName,
-                            "email" to email,
-                            "lastLogin" to System.currentTimeMillis()
-                        ),
+                        userData,
                         SetOptions.merge()
                     )
                 }
-                PetRepository.updateUserProfile(name = displayName, email = email)
+                PetRepository.updateUserProfile(
+                    name = displayName,
+                    email = email,
+                    avatarUri = photoUrl,
+                    phone = phone
+                )
                 PetRepository.attachUser(uid)
                 _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
                 onSuccess(displayName)

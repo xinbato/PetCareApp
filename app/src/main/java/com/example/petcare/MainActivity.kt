@@ -9,10 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.petcare.ui.navigation.AppNavHost
 import com.example.petcare.ui.theme.PetCareTheme
+import com.google.firebase.Firebase
+import com.google.firebase.crashlytics.crashlytics
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Bật Firebase Crashlytics
+        Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
         enableEdgeToEdge()
         setContent {
             PetCareTheme {

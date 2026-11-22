@@ -74,7 +74,7 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     startDestination: String = AppRoute.Onboarding.route,
 ) {
-    var loggedInUserName by remember { mutableStateOf("Nguyễn Văn A") }
+    var loggedInUserName by remember { mutableStateOf("") }
 
     NavHost(
         navController = navController,
@@ -119,12 +119,7 @@ fun AppNavHost(
                         popUpTo(AppRoute.Onboarding.route) { inclusive = true }
                     }
                 },
-                onRegisterErrorClick = { navController.navigate(AppRoute.Error.route) },
-                onDoctorRegisterClick = {
-                    navController.navigate(AppRoute.Home.route) {
-                        popUpTo(AppRoute.Onboarding.route) { inclusive = true }
-                    }
-                }
+                onRegisterErrorClick = { navController.navigate(AppRoute.Error.route) }
             )
         }
 

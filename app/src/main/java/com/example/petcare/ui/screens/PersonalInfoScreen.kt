@@ -60,9 +60,17 @@ fun PersonalInfoScreen(
 
     var fullName by remember { mutableStateOf(userProfile.name) }
     var email by remember { mutableStateOf(userProfile.email) }
-    var phone by remember { mutableStateOf(userProfile.phone) }
-    var dob by remember { mutableStateOf(userProfile.dob) }
-    var address by remember { mutableStateOf(userProfile.address) }
+    var phone by remember { mutableStateOf(userProfile.phone.orEmpty()) }
+    var dob by remember { mutableStateOf(userProfile.dob.orEmpty()) }
+    var address by remember { mutableStateOf(userProfile.address.orEmpty()) }
+
+    androidx.compose.runtime.LaunchedEffect(userProfile) {
+        fullName = userProfile.name
+        email = userProfile.email
+        phone = userProfile.phone.orEmpty()
+        dob = userProfile.dob.orEmpty()
+        address = userProfile.address.orEmpty()
+    }
 
     Box(
         modifier = modifier

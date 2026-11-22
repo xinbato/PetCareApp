@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -78,7 +79,7 @@ val defaultServices = listOf(
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(),
-    userName: String = "Nguyễn Văn A",
+    userName: String = "",
     onAddPetClick: () -> Unit = {},
     onPetDetailClick: (String) -> Unit = {},
     onViewAllPetsClick: () -> Unit = {},
@@ -89,7 +90,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedBottomTab by remember { mutableIntStateOf(0) }
-    val displayName = uiState.userName.ifEmpty { userName }
+    val displayName = uiState.userName.ifBlank { userName.ifBlank { "Bạn" } }
 
     Box(
         modifier = modifier
@@ -358,7 +359,7 @@ private fun PetCardItem(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        painter = painterResource(id = pet.iconRes),
+                        painter = painterResource(id = pet.safeIconRes),
                         contentDescription = pet.name,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp),
@@ -567,15 +568,22 @@ private fun UpcomingScheduleSection(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(16.dp),
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                        RoundedCornerShape(16.dp)
+                    )
+                    .padding(vertical = 22.dp, horizontal = 20.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Không có lịch trình nào hôm nay",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "Pet bạn cần gì?",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
                 )
             }
         } else {

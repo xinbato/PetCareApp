@@ -9,7 +9,7 @@ data class PetModel(
     val age: String = "3 tuổi",
     val weight: String = "12.4 kg",
     val gender: String = "Đực",
-    val iconRes: Int = 0,
+    val iconRes: Int = com.example.petcare.R.drawable.dog,
     val statusText: String = "Khỏe mạnh",
     val statusDetail: String = "Cân nặng 12.4 kg",
     val isFavorite: Boolean = false,
@@ -17,7 +17,10 @@ data class PetModel(
     val activity: String = "8,240 bước",
     val diet: String = "Tốt • 2/2 bữa",
     val lastUpdated: String = "hôm nay",
-)
+) {
+    val safeIconRes: Int
+        get() = if (iconRes != 0) iconRes else com.example.petcare.R.drawable.dog
+}
 
 data class VaccinationModel(
     val id: String = "",

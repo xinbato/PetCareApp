@@ -46,7 +46,6 @@ import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.components.PetCareTopAppBar
 import com.example.petcare.ui.components.SocialLoginSection
 import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.DoctorLinkBlue
 import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
@@ -63,13 +62,13 @@ fun RegisterScreen(
     onBackClick: () -> Unit = {},
     onRegisterSuccessClick: (String) -> Unit = {},
     onRegisterErrorClick: () -> Unit = {},
-    onDoctorRegisterClick: () -> Unit = {},
 ) {
     var username by remember { mutableStateOf("") }
     var fullName by remember { mutableStateOf("") }
     var emailOrPhone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
+    var inlineError by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -201,19 +200,40 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // Hiển thị lỗi nội tuyến thay vì navigate sang ErrorScreen
+        if (inlineError != null) {
+            Text(
+                text = inlineError!!,
+                fontSize = 13.sp,
+                color = RedError,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
+
         // Create Account Button
         Button(
             onClick = {
-                if (!isUsernameValid || emailOrPhoneType == InputType.UNKNOWN) {
-                    onRegisterErrorClick()
-                } else {
-                    viewModel.register(
-                        emailOrPhoneInput = emailOrPhone,
-                        passwordInput = password,
-                        fullNameInput = fullName.ifBlank { username },
-                        onSuccess = onRegisterSuccessClick,
-                        onError = { onRegisterErrorClick() }
-                    )
+                inlineError = null
+                when {
+                    !isUsernameValid && username.isNotBlank() -> {
+                        inlineError = "Tên đăng nhập phải ít nhất 3 ký tự, chỉ dùng chữ cái, số, _ hoặc ."
+                    }
+                    emailOrPhone.isBlank() -> {
+                        inlineError = "Vui lòng nhập email"
+                    }
+                    emailOrPhoneType != InputType.EMAIL -> {
+                        inlineError = "Vui lòng đăng ký bằng địa chỉ email hợp lệ"
+                    }
+                    else -> {
+                        viewModel.register(
+                            emailOrPhoneInput = emailOrPhone,
+                            passwordInput = password,
+                            fullNameInput = fullName.ifBlank { username },
+                            usernameInput = username,
+                            onSuccess = onRegisterSuccessClick,
+                            onError = { msg -> inlineError = msg }
+                        )
+                    }
                 }
             },
             modifier = Modifier
@@ -237,30 +257,15 @@ fun RegisterScreen(
         // Social Login Section
         SocialLoginSection(
             onGoogleClick = {
+                inlineError = null
                 GoogleSignInHelper.launchGoogleSignIn(
                     context = context,
                     coroutineScope = coroutineScope,
                     viewModel = viewModel,
                     onSuccess = onRegisterSuccessClick,
-                    onError = { onRegisterErrorClick() }
+                    onError = { msg -> inlineError = msg }
                 )
             }
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Doctor Register Link
-        Text(
-            text = stringResource(R.string.btn_doctor_register),
-            fontSize = 11.sp,
-            fontStyle = FontStyle.Italic,
-            color = DoctorLinkBlue,
-            textDecoration = TextDecoration.Underline,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onDoctorRegisterClick() }
-                .padding(vertical = 8.dp),
         )
     }
 }
