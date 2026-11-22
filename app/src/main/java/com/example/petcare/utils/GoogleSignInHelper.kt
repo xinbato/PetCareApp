@@ -1,0 +1,60 @@
+package com.example.petcare.utils
+
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import com.example.petcare.R
+import com.example.petcare.ui.viewmodel.AuthViewModel
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+object GoogleSignInHelper {
+    fun launchGoogleSignIn(
+        context: Context,
+        coroutineScope: CoroutineScope,
+        viewModel: AuthViewModel,
+        onSuccess: (String) -> Unit = {},
+        onError: (String) -> Unit = {},
+    ) {
+        val serverClientId = runCatching {
+            context.getString(R.string.default_web_client_id)
+        }.getOrNull()?.ifEmpty { null }
+            ?: "128631296492-1q8qcofdj7cjochg47vt2geenomobk0p.apps.googleusercontent.com"
+
+        val credentialManager = CredentialManager.create(context)
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setServerClientId(serverClientId)
+            .setAutoSelectEnabled(false)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        coroutineScope.launch {
+            try {
+                val result = credentialManager.getCredential(context = context, request = request)
+                val credential = result.credential
+                if (credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    viewModel.signInWithGoogle(
+                        idToken = googleIdTokenCredential.idToken,
+                        onSuccess = onSuccess,
+                        onError = onError,
+                    )
+                } else {
+                    onError("Phương thức đăng nhập không hợp lệ")
+                }
+            } catch (e: Exception) {
+                val message = e.localizedMessage ?: "Đăng nhập Google bị hủy"
+                onError(message)
+            }
+        }
+    }
+}
