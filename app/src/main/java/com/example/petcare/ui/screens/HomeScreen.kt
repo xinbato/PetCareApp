@@ -579,7 +579,7 @@ private fun UpcomingScheduleSection(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Pet bạn cần gì?",
+                    text = "Chưa có lịch trình nào cho hôm nay",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,

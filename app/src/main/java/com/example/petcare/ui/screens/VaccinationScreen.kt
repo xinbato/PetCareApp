@@ -124,52 +124,90 @@ fun VaccinationScreen(
                 }
 
                 if (isAllPets) {
-                    // Hiển thị lịch sử tiêm
-                    allPets.forEach { pet ->
-                        val petVaccinations = vaccinations.filter { it.petId == pet.id }
-
-                        item(key = "header_${pet.id}") {
-                            PetVaccinationSectionHeader(
-                                petName = pet.name,
-                                species = pet.species,
-                                iconRes = pet.safeIconRes,
-                                count = petVaccinations.size
-                            )
+                    if (allPets.isEmpty()) {
+                        item {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                            ) {
+                                Text(
+                                    text = "Chưa có thông tin thú cưng nào. Vui lòng thêm thú cưng để theo dõi lịch tiêm phòng.",
+                                    fontSize = 14.sp,
+                                    color = TextSecondary,
+                                    modifier = Modifier.padding(20.dp)
+                                )
+                            }
                         }
+                    } else {
+                        // Hiển thị lịch sử tiêm
+                        allPets.forEach { pet ->
+                            val petVaccinations = vaccinations.filter { it.petId == pet.id }
 
-                        if (petVaccinations.isEmpty()) {
-                            item(key = "empty_${pet.id}") {
-                                Card(
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
-                                        .padding(vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Chưa có lịch tiêm chủng cho ${pet.name}",
-                                        fontSize = 13.sp,
-                                        color = TextSecondary,
-                                        modifier = Modifier.padding(16.dp)
-                                    )
+                            item(key = "header_${pet.id}") {
+                                PetVaccinationSectionHeader(
+                                    petName = pet.name,
+                                    species = pet.species,
+                                    iconRes = pet.safeIconRes,
+                                    count = petVaccinations.size
+                                )
+                            }
+
+                            if (petVaccinations.isEmpty()) {
+                                item(key = "empty_${pet.id}") {
+                                    Card(
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
+                                            .padding(vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Chưa có lịch tiêm chủng cho ${pet.name}",
+                                            fontSize = 13.sp,
+                                            color = TextSecondary,
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                }
+                            } else {
+                                items(petVaccinations, key = { it.id }) { item ->
+                                    VaccinationItemCard(item = item)
                                 }
                             }
-                        } else {
-                            items(petVaccinations, key = { it.id }) { item ->
-                                VaccinationItemCard(item = item)
-                            }
-                        }
 
-                        item(key = "space_${pet.id}") {
-                            Spacer(modifier = Modifier.height(10.dp))
+                            item(key = "space_${pet.id}") {
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
                         }
                     }
                 } else {
                     // Xem của riêng 1 bé
                     val petVaccinations = vaccinations.filter { it.petId == singlePet?.id }
-                    items(petVaccinations, key = { it.id }) { item ->
-                        VaccinationItemCard(item = item)
+                    if (petVaccinations.isEmpty()) {
+                        item {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                            ) {
+                                Text(
+                                    text = "Chưa có lịch tiêm chủng cho ${singlePet?.name ?: "bé"}.",
+                                    fontSize = 14.sp,
+                                    color = TextSecondary,
+                                    modifier = Modifier.padding(20.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        items(petVaccinations, key = { it.id }) { item ->
+                            VaccinationItemCard(item = item)
+                        }
                     }
                 }
 

@@ -80,14 +80,14 @@ class CalendarViewModel(
     fun addSchedule(
         title: String,
         description: String = "",
-        petId: String = "1",
+        petId: String = "",
         petName: String = "",
-        dateText: String = "12/10/2026",
-        timeText: String = "18:00",
-        timeOrDateLabel: String = "18:00",
+        dateText: String = "",
+        timeText: String = "",
+        timeOrDateLabel: String = "",
     ) {
         val resolvedPetName = if (petName.isBlank()) {
-            repository.getPetById(petId)?.name ?: "Momo"
+            repository.getPetById(petId)?.name ?: repository.pets.value.firstOrNull()?.name.orEmpty()
         } else {
             petName
         }

@@ -115,8 +115,27 @@ fun MedicationScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
 
-                items(medications, key = { it.id }) { item ->
-                    MedicationItemCard(item = item)
+                if (medications.isEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        ) {
+                            Text(
+                                text = "Chưa có đơn thuốc nào cho ${pet.name.ifBlank { "bé" }}. Nhấn 'Thêm lịch thuốc' để thêm mới.",
+                                fontSize = 14.sp,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(20.dp)
+                            )
+                        }
+                    }
+                } else {
+                    items(medications, key = { it.id }) { item ->
+                        MedicationItemCard(item = item)
+                    }
                 }
 
                 item {

@@ -60,7 +60,7 @@ fun AddPetHandmadeScreen(
     modifier: Modifier = Modifier,
     initialSpecies: String = "Chó",
     initialBreed: String = "",
-    initialWeight: String = "5.0 kg",
+    initialWeight: String = "",
     viewModel: PetManagementViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onPetAdded: () -> Unit = {},
@@ -68,8 +68,8 @@ fun AddPetHandmadeScreen(
     var name by remember { mutableStateOf("") }
     var species by remember(initialSpecies) { mutableStateOf(initialSpecies.ifBlank { "Chó" }) }
     var breed by remember(initialBreed) { mutableStateOf(initialBreed) }
-    var dateOfBirth by remember { mutableStateOf("01/01/2024") }
-    var weight by remember(initialWeight) { mutableStateOf(initialWeight.ifBlank { "5.0 kg" }) }
+    var dateOfBirth by remember { mutableStateOf("") }
+    var weight by remember(initialWeight) { mutableStateOf(initialWeight) }
     var gender by remember { mutableStateOf("Đực") }
     var iconRes by remember(species) {
         val res = when {
@@ -262,22 +262,23 @@ fun AddPetHandmadeScreen(
                     onClick = {
                         if (name.isNotBlank()) {
                             val newId = UUID.randomUUID().toString()
+                            val calculatedAge = calculatePetAge(dateOfBirth.trim())
                             val newPet = PetModel(
                                 id = newId,
                                 name = name.trim(),
                                 species = species.trim(),
                                 breed = breed.trim().ifEmpty { "Chưa rõ giống" },
                                 dateOfBirth = dateOfBirth.trim(),
-                                age = "1 tuổi",
-                                weight = weight.trim().ifEmpty { "5.0 kg" },
+                                age = calculatedAge,
+                                weight = weight.trim().ifEmpty { "Chưa có" },
                                 gender = gender,
                                 iconRes = iconRes,
                                 statusText = "Khỏe mạnh",
-                                statusDetail = "Cân nặng ${weight.trim()}",
+                                statusDetail = if (weight.isNotBlank()) "Cân nặng ${weight.trim()}" else "Chưa có cân nặng",
                                 isFavorite = false,
-                                temperature = "38.5°C",
-                                activity = "5,000 bước",
-                                diet = "Tốt • 2/2 bữa",
+                                temperature = "",
+                                activity = "",
+                                diet = "",
                                 lastUpdated = "vừa xong"
                             )
                             viewModel.savePet(newPet)
@@ -310,4 +311,17 @@ fun AddPetHandmadeScreenPreview() {
     PetCareTheme {
         AddPetHandmadeScreen()
     }
+}
+
+private fun calculatePetAge(dob: String): String {
+    if (dob.isBlank()) return "Chưa rõ tuổi"
+    return runCatching {
+        val parts = dob.split("/")
+        if (parts.size == 3) {
+            val birthYear = parts[2].toInt()
+            val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+            val years = currentYear - birthYear
+            if (years > 0) "$years tuổi" else "Dưới 1 tuổi"
+        } else "Chưa rõ tuổi"
+    }.getOrDefault("Chưa rõ tuổi")
 }

@@ -77,16 +77,24 @@ fun AddEditScheduleScreen(
     }
     val pets = uiState.pets
 
-    var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
-    var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
-    var selectedPetId by remember { mutableStateOf(existingSchedule?.petId ?: "1") }
-    var selectedPetName by remember { mutableStateOf(existingSchedule?.petName ?: "Momo") }
-    var dateText by remember { mutableStateOf(existingSchedule?.dateText ?: "12/10/2026") }
-    var timeText by remember { mutableStateOf(existingSchedule?.timeText ?: "18:00") }
-    var timeOrDateLabel by remember { mutableStateOf(existingSchedule?.timeOrDateLabel ?: "18:00") }
-
     val context = LocalContext.current
     val calendar = remember { Calendar.getInstance() }
+    val todayDate = remember {
+        val cal = Calendar.getInstance()
+        String.format(Locale.getDefault(), "%02d/%02d/%04d", cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR))
+    }
+    val defaultTime = remember {
+        val cal = Calendar.getInstance()
+        String.format(Locale.getDefault(), "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+    }
+
+    var title by remember { mutableStateOf(existingSchedule?.title ?: "") }
+    var description by remember { mutableStateOf(existingSchedule?.description ?: "") }
+    var selectedPetId by remember(pets) { mutableStateOf(existingSchedule?.petId ?: pets.firstOrNull()?.id.orEmpty()) }
+    var selectedPetName by remember(pets) { mutableStateOf(existingSchedule?.petName ?: pets.firstOrNull()?.name.orEmpty()) }
+    var dateText by remember { mutableStateOf(existingSchedule?.dateText ?: todayDate) }
+    var timeText by remember { mutableStateOf(existingSchedule?.timeText ?: defaultTime) }
+    var timeOrDateLabel by remember { mutableStateOf(existingSchedule?.timeOrDateLabel ?: defaultTime) }
 
     // Date Picker Dialog
     val datePickerDialog = remember {
@@ -95,9 +103,7 @@ fun AddEditScheduleScreen(
             { _, year, month, dayOfMonth ->
                 val formattedDate = String.format(Locale.getDefault(), "%02d/%02d/%04d", dayOfMonth, month + 1, year)
                 dateText = formattedDate
-                if (timeOrDateLabel.isEmpty() || timeOrDateLabel == "18:00" || timeOrDateLabel == "09:00") {
-                    timeOrDateLabel = formattedDate
-                }
+                timeOrDateLabel = formattedDate
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -114,8 +120,8 @@ fun AddEditScheduleScreen(
                 timeText = formattedTime
                 timeOrDateLabel = formattedTime
             },
-            18,
-            0,
+            calendar.get(Calendar.HOUR_OF_DAY),
+            calendar.get(Calendar.MINUTE),
             true,
         )
     }

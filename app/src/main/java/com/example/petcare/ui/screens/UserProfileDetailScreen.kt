@@ -487,7 +487,7 @@ fun UserProfileDetailScreen(
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.dog),
-                                    contentDescription = "Chó Momo",
+                                    contentDescription = "Ảnh đại diện cún",
                                     modifier = Modifier.size(40.dp)
                                 )
                             }

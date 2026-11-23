@@ -51,17 +51,22 @@ import java.util.UUID
 @Composable
 fun AddNewVaccinationScreen(
     modifier: Modifier = Modifier,
-    petId: String = "1",
+    petId: String = "",
     viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
+    val todayFormatted = remember {
+        val c = java.util.Calendar.getInstance()
+        String.format(java.util.Locale.getDefault(), "%02d/%02d/%04d", c.get(java.util.Calendar.DAY_OF_MONTH), c.get(java.util.Calendar.MONTH) + 1, c.get(java.util.Calendar.YEAR))
+    }
+
     var content by remember { mutableStateOf("") }
-    var dateTime by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf("") }
+    var dateTime by remember { mutableStateOf(todayFormatted) }
+    var status by remember { mutableStateOf("Đã tiêm") }
 
     val commonVaccines = listOf("Dại", "5 bệnh", "7 bệnh", "Kennel Cough", "Giảm bạch cầu")
-    val commonDateTimes = listOf("15/09/2026", "Hôm nay", "Ngày mai", "Tuần sau", "Tháng sau")
+    val commonDateTimes = listOf(todayFormatted, "Hôm nay", "Ngày mai", "Tuần sau", "Tháng sau")
     val commonStatuses = listOf("Đã tiêm", "Sắp tới", "Đến hẹn", "Chờ nhắc")
 
     Box(
@@ -243,7 +248,7 @@ fun AddNewVaccinationScreen(
                 Button(
                     onClick = {
                         val finalContent = content.trim().ifEmpty { "Vaccine mới" }
-                        val finalDateTime = dateTime.trim().ifEmpty { "15/09/2026" }
+                        val finalDateTime = dateTime.trim().ifEmpty { todayFormatted }
                         val finalStatus = status.trim().ifEmpty { "Đã tiêm" }
 
                         viewModel.addVaccination(

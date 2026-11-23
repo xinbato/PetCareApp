@@ -116,7 +116,25 @@ fun WeightHistoryScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
 
-                allPets.forEach { pet ->
+                if (allPets.isEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        ) {
+                            Text(
+                                text = "Chưa có thông tin thú cưng nào. Vui lòng thêm thú cưng để theo dõi cân nặng.",
+                                fontSize = 14.sp,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(20.dp)
+                            )
+                        }
+                    }
+                } else {
+                    allPets.forEach { pet ->
                     val petRecords = weightRecords.filter { it.petId == pet.id }
 
                     item(key = "header_${pet.id}") {
@@ -193,6 +211,7 @@ fun WeightHistoryScreen(
                         Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
+            }
 
                 item {
                     Spacer(modifier = Modifier.height(16.dp))

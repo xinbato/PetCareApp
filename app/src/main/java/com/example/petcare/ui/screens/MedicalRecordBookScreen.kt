@@ -116,8 +116,27 @@ fun MedicalRecordBookScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
 
-                items(records, key = { it.id }) { record ->
-                    MedicalRecordCard(record = record)
+                if (records.isEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        ) {
+                            Text(
+                                text = "Chưa có nhật ký bệnh án nào cho ${pet.name.ifBlank { "bé" }}. Nhấn 'Thêm mới' để ghi nhận.",
+                                fontSize = 14.sp,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(20.dp)
+                            )
+                        }
+                    }
+                } else {
+                    items(records, key = { it.id }) { record ->
+                        MedicalRecordCard(record = record)
+                    }
                 }
 
                 // Button: + Thêm mới

@@ -54,7 +54,7 @@ import java.util.UUID
 @Composable
 fun AddNewMedicationScreen(
     modifier: Modifier = Modifier,
-    petId: String = "1",
+    petId: String = "",
     viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
