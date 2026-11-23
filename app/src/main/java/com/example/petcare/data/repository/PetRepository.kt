@@ -83,9 +83,11 @@ object PetRepository {
     val currentSelectedPetId: StateFlow<String> = _currentSelectedPetId.asStateFlow()
 
     init {
-        auth.currentUser?.let { user ->
-            updateUserProfile(name = user.displayName ?: user.email, email = user.email)
-            attachUser(user.uid)
+        runCatching {
+            auth.currentUser?.let { user ->
+                updateUserProfile(name = user.displayName ?: user.email, email = user.email)
+                attachUser(user.uid)
+            }
         }
     }
 

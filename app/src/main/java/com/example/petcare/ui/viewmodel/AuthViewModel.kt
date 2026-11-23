@@ -217,6 +217,12 @@ class AuthViewModel : ViewModel() {
                 .addOnSuccessListener { result ->
                     val user = result.user
                     val uid = user?.uid.orEmpty()
+                    if (user != null && name.isNotBlank()) {
+                        val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                            .setDisplayName(name)
+                            .build()
+                        user.updateProfile(profileUpdates)
+                    }
                     if (uid.isNotEmpty()) {
                         val userData = mutableMapOf<String, Any>(
                             "name" to name,
@@ -251,23 +257,77 @@ class AuthViewModel : ViewModel() {
         onError: (String) -> Unit = {},
     ) {
         val target = destination.ifEmpty { _uiState.value.emailOrPhone }.trim()
-        if (target.isEmpty() || !target.contains("@")) {
-            val error = "Vui lòng nhập email hợp lệ để nhận liên kết khôi phục"
+        if (target.isEmpty()) {
+            val error = "Vui lòng nhập email hoặc tên đăng nhập"
             _uiState.update { it.copy(errorMessage = error) }
             onError(error)
             return
         }
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-        auth.sendPasswordResetEmail(target)
+
+        if (target.contains("@")) {
+            auth.sendPasswordResetEmail(target)
+                .addOnSuccessListener {
+                    _uiState.update { it.copy(isLoading = false, otpTarget = target) }
+                    startResendCountdown()
+                    onSuccess(target)
+                }
+                .addOnFailureListener { e ->
+                    val error = e.localizedMessage ?: "Không thể gửi email khôi phục mật khẩu"
+                    _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                    onError(error)
+                }
+        } else {
+            firestore.collection("users")
+                .whereEqualTo("username", target.lowercase())
+                .limit(1)
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    val userDoc = snapshot.documents.firstOrNull()
+                    val email = userDoc?.getString("email")
+                    if (!email.isNullOrBlank()) {
+                        auth.sendPasswordResetEmail(email)
+                            .addOnSuccessListener {
+                                _uiState.update { it.copy(isLoading = false, otpTarget = email) }
+                                startResendCountdown()
+                                onSuccess(email)
+                            }
+                            .addOnFailureListener { e ->
+                                val error = e.localizedMessage ?: "Không thể gửi email khôi phục mật khẩu"
+                                _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                                onError(error)
+                            }
+                    } else {
+                        val error = "Không tìm thấy tài khoản với tên đăng nhập này"
+                        _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                        onError(error)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    val error = e.localizedMessage ?: "Lỗi kết nối cơ sở dữ liệu"
+                    _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                    onError(error)
+                }
+        }
+    }
+
+    fun sendVerificationEmail(
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {},
+    ) {
+        val user = auth.currentUser
+        if (user == null) {
+            onError("Chưa đăng nhập tài khoản")
+            return
+        }
+
+        user.sendEmailVerification()
             .addOnSuccessListener {
-                _uiState.update { it.copy(isLoading = false, otpTarget = target) }
-                startResendCountdown()
-                onSuccess(target)
+                onSuccess()
             }
             .addOnFailureListener { e ->
-                val error = e.localizedMessage ?: "Không thể gửi email khôi phục mật khẩu"
-                _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+                val error = e.localizedMessage ?: "Không thể gửi email xác thực"
                 onError(error)
             }
     }

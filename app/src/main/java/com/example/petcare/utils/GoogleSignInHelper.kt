@@ -8,6 +8,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import com.example.petcare.R
 import com.example.petcare.ui.viewmodel.AuthViewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -71,8 +72,16 @@ object GoogleSignInHelper {
                 }
             } catch (e: GetCredentialCancellationException) {
                 Log.d("GoogleSignInHelper", "Người dùng đã hủy chọn tài khoản Google")
+            } catch (e: NoCredentialException) {
+                val msg = "Không tìm thấy tài khoản Google trên thiết bị. Vui lòng thêm tài khoản Google trong Cài đặt (Settings) của máy hoặc đăng nhập bằng Email / Mật khẩu."
+                Log.w("GoogleSignInHelper", msg, e)
+                onError(msg)
             } catch (e: Exception) {
-                val errorMsg = e.localizedMessage ?: "Đăng nhập Google thất bại"
+                val errorMsg = if (e.message?.contains("No credentials", ignoreCase = true) == true) {
+                    "Không tìm thấy tài khoản Google trên thiết bị. Vui lòng thêm tài khoản Google trong Cài đặt (Settings) của máy hoặc đăng nhập bằng Email / Mật khẩu."
+                } else {
+                    e.localizedMessage ?: "Đăng nhập Google thất bại"
+                }
                 Log.e("GoogleSignInHelper", "Google Sign-in error: $errorMsg", e)
                 onError(errorMsg)
             }

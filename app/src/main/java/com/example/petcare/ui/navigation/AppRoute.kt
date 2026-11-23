@@ -15,7 +15,22 @@ sealed class AppRoute(val route: String) {
     data object Home : AppRoute("home")
     data object AddPetOption : AppRoute("add_pet_option")
     data object AddPetCamera : AppRoute("add_pet_camera")
-    data object AddPetHandmade : AppRoute("add_pet_handmade")
+    data object AddPetHandmade : AppRoute("add_pet_handmade?breed={breed}&species={species}&weight={weight}") {
+        const val ARG_BREED = "breed"
+        const val ARG_SPECIES = "species"
+        const val ARG_WEIGHT = "weight"
+
+        fun createRoute(
+            breed: String = "",
+            species: String = "Chó",
+            weight: String = "5.0 kg",
+        ): String {
+            val encodedBreed = android.net.Uri.encode(breed)
+            val encodedSpecies = android.net.Uri.encode(species)
+            val encodedWeight = android.net.Uri.encode(weight)
+            return "add_pet_handmade?breed=$encodedBreed&species=$encodedSpecies&weight=$encodedWeight"
+        }
+    }
     data object ListPet : AppRoute("list_pet")
     data object Health : AppRoute("health")
     data object SelectPetToEdit : AppRoute("select_pet_to_edit")
@@ -87,7 +102,7 @@ fun AppScreen.toRoute(
     AppScreen.HOME -> AppRoute.Home.route
     AppScreen.ADD_PET_OPTION -> AppRoute.AddPetOption.route
     AppScreen.ADD_PET_CAMERA -> AppRoute.AddPetCamera.route
-    AppScreen.ADD_PET_HANDMADE -> AppRoute.AddPetHandmade.route
+    AppScreen.ADD_PET_HANDMADE -> AppRoute.AddPetHandmade.createRoute()
     AppScreen.LIST_PET -> AppRoute.ListPet.route
     AppScreen.HEALTH -> AppRoute.Health.route
     AppScreen.SELECT_PET_TO_EDIT -> AppRoute.SelectPetToEdit.route

@@ -72,9 +72,21 @@ fun NavHostController.navigateToTab(tab: PetCareTab) {
 fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    startDestination: String = AppRoute.Onboarding.route,
+    startDestination: String = remember {
+        val user = runCatching { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }.getOrNull()
+        if (user != null) AppRoute.Home.route else AppRoute.Onboarding.route
+    },
 ) {
-    var loggedInUserName by remember { mutableStateOf("") }
+    val currentUser = remember {
+        runCatching { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }.getOrNull()
+    }
+    var loggedInUserName by remember {
+        mutableStateOf(
+            currentUser?.displayName?.ifBlank { null }
+                ?: currentUser?.email?.substringBefore("@")
+                ?: ""
+        )
+    }
 
     NavHost(
         navController = navController,
@@ -127,10 +139,6 @@ fun AppNavHost(
             ForgotPasswordScreen(
                 modifier = Modifier.fillMaxSize(),
                 onBackClick = { navController.popBackStack() },
-                onSendOtpClick = { target ->
-                    val destination = target.ifBlank { "default" }
-                    navController.navigate(AppRoute.OtpVerification.createRoute(destination))
-                },
                 onBackToLoginClick = { navController.popBackStack() }
             )
         }
@@ -175,7 +183,7 @@ fun AppNavHost(
             AddPetOptionScreen(
                 modifier = Modifier.fillMaxSize(),
                 onBackClick = { navController.popBackStack() },
-                onHandmadeClick = { navController.navigate(AppRoute.AddPetHandmade.route) },
+                onHandmadeClick = { navController.navigate(AppRoute.AddPetHandmade.createRoute()) },
                 onCameraClick = { navController.navigate(AppRoute.AddPetCamera.route) }
             )
         }
@@ -184,13 +192,47 @@ fun AppNavHost(
             AddPetCameraScreen(
                 modifier = Modifier.fillMaxSize(),
                 onBackClick = { navController.popBackStack() },
-                onScannedProceed = { navController.navigate(AppRoute.AddPetHandmade.route) }
+                onScannedProceed = { species, breed, weight ->
+                    navController.navigate(
+                        AppRoute.AddPetHandmade.createRoute(
+                            breed = breed,
+                            species = species,
+                            weight = weight
+                        )
+                    )
+                }
             )
         }
 
-        composable(AppRoute.AddPetHandmade.route) {
+        composable(
+            route = AppRoute.AddPetHandmade.route,
+            arguments = listOf(
+                navArgument(AppRoute.AddPetHandmade.ARG_BREED) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = ""
+                },
+                navArgument(AppRoute.AddPetHandmade.ARG_SPECIES) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = "Chó"
+                },
+                navArgument(AppRoute.AddPetHandmade.ARG_WEIGHT) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = "5.0 kg"
+                },
+            )
+        ) { backStackEntry ->
+            val initialBreed = backStackEntry.arguments?.getString(AppRoute.AddPetHandmade.ARG_BREED).orEmpty()
+            val initialSpecies = backStackEntry.arguments?.getString(AppRoute.AddPetHandmade.ARG_SPECIES).orEmpty().ifBlank { "Chó" }
+            val initialWeight = backStackEntry.arguments?.getString(AppRoute.AddPetHandmade.ARG_WEIGHT).orEmpty().ifBlank { "5.0 kg" }
+
             AddPetHandmadeScreen(
                 modifier = Modifier.fillMaxSize(),
+                initialSpecies = initialSpecies,
+                initialBreed = initialBreed,
+                initialWeight = initialWeight,
                 onBackClick = { navController.popBackStack() },
                 onPetAdded = {
                     navController.navigate(AppRoute.ListPet.route) {
@@ -207,7 +249,7 @@ fun AppNavHost(
                 onBackClick = { navController.popBackStack() },
                 onPetClick = { pet -> navController.navigate(AppRoute.HealthDetail.createRoute(pet.id)) },
                 onEditPetClick = { navController.navigate(AppRoute.SelectPetToEdit.route) },
-                onAddPetClick = { navController.navigate(AppRoute.AddPetHandmade.route) },
+                onAddPetClick = { navController.navigate(AppRoute.AddPetHandmade.createRoute()) },
                 onTabSelected = { tab -> navController.navigateToTab(tab) }
             )
         }
