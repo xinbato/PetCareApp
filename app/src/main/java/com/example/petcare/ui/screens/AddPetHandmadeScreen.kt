@@ -58,17 +58,27 @@ import java.util.UUID
 @Composable
 fun AddPetHandmadeScreen(
     modifier: Modifier = Modifier,
+    initialSpecies: String = "Chó",
+    initialBreed: String = "",
+    initialWeight: String = "5.0 kg",
     viewModel: PetManagementViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onPetAdded: () -> Unit = {},
 ) {
     var name by remember { mutableStateOf("") }
-    var species by remember { mutableStateOf("Chó") }
-    var breed by remember { mutableStateOf("") }
+    var species by remember(initialSpecies) { mutableStateOf(initialSpecies.ifBlank { "Chó" }) }
+    var breed by remember(initialBreed) { mutableStateOf(initialBreed) }
     var dateOfBirth by remember { mutableStateOf("01/01/2024") }
-    var weight by remember { mutableStateOf("5.0 kg") }
+    var weight by remember(initialWeight) { mutableStateOf(initialWeight.ifBlank { "5.0 kg" }) }
     var gender by remember { mutableStateOf("Đực") }
-    var iconRes by remember { mutableIntStateOf(R.drawable.dog) }
+    var iconRes by remember(species) {
+        val res = when {
+            species.contains("Mèo", ignoreCase = true) -> R.drawable.cat
+            species.contains("Thỏ", ignoreCase = true) -> R.drawable.rabbit
+            else -> R.drawable.dog
+        }
+        mutableIntStateOf(res)
+    }
 
     Box(
         modifier = modifier

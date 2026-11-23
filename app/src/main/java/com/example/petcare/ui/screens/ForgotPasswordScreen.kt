@@ -10,14 +10,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,12 +37,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.components.PetCareTopAppBar
 import com.example.petcare.ui.theme.BackgroundLight
 import com.example.petcare.ui.theme.GreenPrimary
+import com.example.petcare.ui.theme.PetCareTheme
+import com.example.petcare.ui.theme.RedError
+import com.example.petcare.ui.theme.TextPrimary
+import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.viewmodel.AuthViewModel
@@ -53,7 +62,10 @@ fun ForgotPasswordScreen(
     onSendOtpClick: (String) -> Unit = {},
     onBackToLoginClick: () -> Unit = {},
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var emailOrPhone by remember { mutableStateOf("") }
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var sentEmailTarget by remember { mutableStateOf("") }
 
     val emailOrPhoneType = remember(emailOrPhone) {
         InputTypeUtils.determineEmailOrPhone(emailOrPhone)
@@ -104,18 +116,31 @@ fun ForgotPasswordScreen(
             ),
         )
 
+        // Error message if any
+        if (uiState.errorMessage != null) {
+            Text(
+                text = uiState.errorMessage.orEmpty(),
+                color = RedError,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(28.dp))
 
-        // Send OTP Button
+        // Send Link Button
         Button(
             onClick = {
                 viewModel.sendForgotPasswordOtp(
                     destination = emailOrPhone,
-                    onSuccess = { onSendOtpClick(it) },
+                    onSuccess = { email ->
+                        sentEmailTarget = email
+                        showSuccessDialog = true
+                    },
                     onError = {}
                 )
             },
-            enabled = emailOrPhoneType != InputType.UNKNOWN,
+            enabled = emailOrPhone.isNotBlank() && !uiState.isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
@@ -127,11 +152,19 @@ fun ForgotPasswordScreen(
                 disabledContentColor = Color.White.copy(alpha = 0.7f),
             ),
         ) {
-            Text(
-                text = stringResource(R.string.btn_send_otp),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 2.5.dp,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text(
+                    text = "Gửi liên kết khôi phục",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -148,6 +181,39 @@ fun ForgotPasswordScreen(
                 .clickable { onBackToLoginClick() }
                 .padding(vertical = 8.dp),
         )
+
+        // Success Confirmation Dialog
+        if (showSuccessDialog) {
+            AlertDialog(
+                onDismissRequest = { showSuccessDialog = false },
+                title = {
+                    Text(
+                        text = "Đã gửi liên kết khôi phục",
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Liên kết đặt lại mật khẩu đã được gửi đến email:\n$sentEmailTarget\n\nVui lòng mở hộp thư đến (kiểm tra cả mục Spam/Thư rác) và nhấn vào liên kết để tạo mật khẩu mới.",
+                        color = TextSecondary,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showSuccessDialog = false
+                            onBackToLoginClick()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+                    ) {
+                        Text(text = "Quay lại Đăng nhập", fontWeight = FontWeight.Bold)
+                    }
+                }
+            )
+        }
     }
 }
 
