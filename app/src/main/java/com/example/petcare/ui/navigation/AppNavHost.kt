@@ -220,13 +220,13 @@ fun AppNavHost(
                 navArgument(AppRoute.AddPetHandmade.ARG_WEIGHT) {
                     type = NavType.StringType
                     nullable = true
-                    defaultValue = "5.0 kg"
+                    defaultValue = ""
                 },
             )
         ) { backStackEntry ->
             val initialBreed = backStackEntry.arguments?.getString(AppRoute.AddPetHandmade.ARG_BREED).orEmpty()
             val initialSpecies = backStackEntry.arguments?.getString(AppRoute.AddPetHandmade.ARG_SPECIES).orEmpty().ifBlank { "Chó" }
-            val initialWeight = backStackEntry.arguments?.getString(AppRoute.AddPetHandmade.ARG_WEIGHT).orEmpty().ifBlank { "5.0 kg" }
+            val initialWeight = backStackEntry.arguments?.getString(AppRoute.AddPetHandmade.ARG_WEIGHT).orEmpty()
 
             AddPetHandmadeScreen(
                 modifier = Modifier.fillMaxSize(),

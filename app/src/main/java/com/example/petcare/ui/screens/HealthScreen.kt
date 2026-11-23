@@ -65,10 +65,14 @@ fun HealthScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pets = uiState.pets
 
+    val lastVaccineDate = uiState.vaccinations.firstOrNull()?.dateTime?.ifBlank { null } ?: "Chưa có bản ghi"
+    val lastWeightInfo = uiState.weightRecords.firstOrNull()?.let { "${it.weight} • ${it.dateTime}" } ?: "Chưa có bản ghi"
+    val lastCheckupDate = uiState.checkupRecords.firstOrNull()?.dateTime?.ifBlank { null } ?: "Chưa có bản ghi"
+
     val healthHistoryList = listOf(
-        HealthHistoryItem("h1", "Tiêm phòng", "15/09/2026", PetCareIcons.Syringe),
-        HealthHistoryItem("h2", "Cân nặng", "01/09/2026", PetCareIcons.WeightScale),
-        HealthHistoryItem("h3", "Khám định kỳ", "12/08/2026", PetCareIcons.Stethoscope),
+        HealthHistoryItem("h1", "Tiêm phòng", lastVaccineDate, PetCareIcons.Syringe),
+        HealthHistoryItem("h2", "Cân nặng", lastWeightInfo, PetCareIcons.WeightScale),
+        HealthHistoryItem("h3", "Khám định kỳ", lastCheckupDate, PetCareIcons.Stethoscope),
     )
 
     Box(
@@ -110,14 +114,33 @@ fun HealthScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // Danh sách thú cưng hiện có
-                items(pets, key = { it.id }) { pet ->
-                    HealthPetCard(
-                        pet = pet,
-                        onClick = {
-                            viewModel.selectPet(pet.id)
-                            onPetClick(pet)
+                if (pets.isEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        ) {
+                            Text(
+                                text = "Chưa có thông tin thú cưng nào. Vui lòng thêm thú cưng để theo dõi sức khỏe.",
+                                fontSize = 14.sp,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(20.dp)
+                            )
                         }
-                    )
+                    }
+                } else {
+                    items(pets, key = { it.id }) { pet ->
+                        HealthPetCard(
+                            pet = pet,
+                            onClick = {
+                                viewModel.selectPet(pet.id)
+                                onPetClick(pet)
+                            }
+                        )
+                    }
                 }
 
                 // Tiêu đề Lịch sử sức khỏe

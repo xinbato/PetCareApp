@@ -54,7 +54,7 @@ import com.example.petcare.ui.viewmodel.HealthViewModel
 @Composable
 fun HealthDetailScreen(
     modifier: Modifier = Modifier,
-    petId: String = "1",
+    petId: String = "",
     viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onVaccinationClick: (String) -> Unit = {},
@@ -65,6 +65,7 @@ fun HealthDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pet = uiState.pets.find { it.id == petId } ?: uiState.currentPet ?: viewModel.getSelectedPet()
+    val petDisplayName = pet.name.ifBlank { "Thú cưng" }
 
     Box(
         modifier = modifier
@@ -103,7 +104,7 @@ fun HealthDetailScreen(
                         color = TextPrimary
                     )
                     Text(
-                        text = "Theo dõi chỉ số của ${pet.name}",
+                        text = "Theo dõi chỉ số của $petDisplayName",
                         fontSize = 13.sp,
                         color = TextSecondary
                     )
@@ -145,21 +146,21 @@ fun HealthDetailScreen(
                             ) {
                                 Image(
                                     painter = painterResource(id = pet.safeIconRes),
-                                    contentDescription = pet.name,
+                                    contentDescription = petDisplayName,
                                     modifier = Modifier.size(34.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = "${pet.name} • ${pet.statusText}",
+                                    text = "$petDisplayName • ${pet.statusText.ifBlank { "Bình thường" }}",
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Cập nhật gần nhất: ${pet.lastUpdated}",
+                                    text = "Cập nhật gần nhất: ${pet.lastUpdated.ifBlank { "Chưa cập nhật" }}",
                                     fontSize = 13.sp,
                                     color = TextSecondary
                                 )
@@ -171,25 +172,25 @@ fun HealthDetailScreen(
                 // Metric Card 1: Cân nặng
                 HealthMetricRowCard(
                     label = "Cân nặng",
-                    value = "${pet.weight} • ổn định"
+                    value = if (pet.weight.isNotBlank()) "${pet.weight} • ổn định" else "Chưa có dữ liệu"
                 )
 
                 // Metric Card 2: Nhiệt độ
                 HealthMetricRowCard(
                     label = "Nhiệt độ",
-                    value = pet.temperature
+                    value = pet.temperature.ifBlank { "Chưa có dữ liệu" }
                 )
 
                 // Metric Card 3: Hoạt động
                 HealthMetricRowCard(
                     label = "Hoạt động",
-                    value = pet.activity
+                    value = pet.activity.ifBlank { "Chưa có dữ liệu" }
                 )
 
                 // Metric Card 4: Ăn uống
                 HealthMetricRowCard(
                     label = "Ăn uống",
-                    value = pet.diet
+                    value = pet.diet.ifBlank { "Chưa có dữ liệu" }
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))

@@ -52,18 +52,33 @@ import java.util.UUID
 @Composable
 fun AddNewMedicalRecordBookScreen(
     modifier: Modifier = Modifier,
-    initialPetId: String = "1",
+    initialPetId: String = "",
     viewModel: HealthViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val allPets = uiState.pets
-    var selectedPetId by remember { mutableStateOf(initialPetId) }
+    var selectedPetId by remember(initialPetId, allPets) {
+        mutableStateOf(initialPetId.ifBlank { allPets.firstOrNull()?.id.orEmpty() })
+    }
     val currentPet = allPets.find { it.id == selectedPetId } ?: uiState.currentPet ?: viewModel.getSelectedPet()
 
-    var petNameInput by remember { mutableStateOf(currentPet.name) }
-    var dateTime by remember { mutableStateOf("") }
+    val nowFormatted = remember {
+        val c = java.util.Calendar.getInstance()
+        String.format(
+            java.util.Locale.getDefault(),
+            "%02d/%02d/%04d-%02dh%02d",
+            c.get(java.util.Calendar.DAY_OF_MONTH),
+            c.get(java.util.Calendar.MONTH) + 1,
+            c.get(java.util.Calendar.YEAR),
+            c.get(java.util.Calendar.HOUR_OF_DAY),
+            c.get(java.util.Calendar.MINUTE)
+        )
+    }
+
+    var petNameInput by remember(currentPet.name) { mutableStateOf(currentPet.name) }
+    var dateTime by remember { mutableStateOf(nowFormatted) }
     var activityType by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var photoAttached by remember { mutableStateOf(false) }
@@ -194,7 +209,7 @@ fun AddNewMedicalRecordBookScreen(
                 Button(
                     onClick = {
                         val finalPetName = petNameInput.trim().ifEmpty { currentPet.name }
-                        val finalDateTime = dateTime.trim().ifEmpty { "26/9/2026-12h30" }
+                        val finalDateTime = dateTime.trim().ifEmpty { nowFormatted }
                         val finalActivity = activityType.trim().ifEmpty { "Theo dõi sức khỏe" }
                         val finalDesc = description.trim().ifEmpty { "Tình trạng ổn định" }
 

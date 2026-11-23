@@ -25,43 +25,38 @@ class PetRepositoryTest {
 
     @Test
     fun testInitialState() {
-        assertEquals("User", PetRepository.userProfile.value.name)
-        assertEquals(3, PetRepository.pets.value.size)
-        assertEquals("1", PetRepository.currentSelectedPetId.value)
-        assertEquals("Momo", PetRepository.getSelectedPet().name)
-        assertEquals(2, PetRepository.accounts.value.size)
-        assertEquals(8, PetRepository.vaccinations.value.size)
-        assertEquals(7, PetRepository.weightRecords.value.size)
-        assertEquals(4, PetRepository.checkupRecords.value.size)
-        assertEquals(2, PetRepository.medications.value.size)
-        assertEquals(3, PetRepository.medicalRecords.value.size)
-        assertEquals(3, PetRepository.schedules.value.size)
+        assertEquals("", PetRepository.userProfile.value.name)
+        assertTrue(PetRepository.pets.value.isEmpty())
+        assertEquals("", PetRepository.currentSelectedPetId.value)
+        assertEquals("", PetRepository.getSelectedPet().name)
+        assertTrue(PetRepository.accounts.value.isEmpty())
+        assertTrue(PetRepository.vaccinations.value.isEmpty())
+        assertTrue(PetRepository.weightRecords.value.isEmpty())
+        assertTrue(PetRepository.checkupRecords.value.isEmpty())
+        assertTrue(PetRepository.medications.value.isEmpty())
+        assertTrue(PetRepository.medicalRecords.value.isEmpty())
+        assertTrue(PetRepository.schedules.value.isEmpty())
         assertEquals(5, PetRepository.petPlaces.value.size)
     }
 
     @Test
-    fun testSwitchAccount() {
-        PetRepository.switchAccount("a2")
-        val currentAcc = PetRepository.accounts.value.find { it.id == "a2" }
-        assertNotNull(currentAcc)
-        assertTrue(currentAcc!!.isCurrent)
-
-        val previousAcc = PetRepository.accounts.value.find { it.id == "a1" }
-        assertFalse(previousAcc!!.isCurrent)
-
-        assertEquals("Nguyên đz", PetRepository.userProfile.value.name)
-    }
-
-    @Test
-    fun testAddAccount() {
-        val initialCount = PetRepository.accounts.value.size
+    fun testAddAndSwitchAccount() {
         PetRepository.addAccount("Tester")
+        assertEquals(1, PetRepository.accounts.value.size)
+        val firstAcc = PetRepository.accounts.value.first()
+        assertEquals("Tester", firstAcc.name)
+        assertTrue(firstAcc.isCurrent)
+        assertEquals("Tester", PetRepository.userProfile.value.name)
 
-        val accounts = PetRepository.accounts.value
-        assertEquals(initialCount + 1, accounts.size)
-        val newAcc = accounts.last()
-        assertEquals("Tester", newAcc.name)
-        assertTrue(newAcc.isCurrent)
+        PetRepository.addAccount("Second")
+        assertEquals(2, PetRepository.accounts.value.size)
+        val secondAcc = PetRepository.accounts.value.last()
+        assertTrue(secondAcc.isCurrent)
+        assertEquals("Second", PetRepository.userProfile.value.name)
+
+        PetRepository.switchAccount(firstAcc.id)
+        val updatedFirst = PetRepository.accounts.value.first { it.id == firstAcc.id }
+        assertTrue(updatedFirst.isCurrent)
         assertEquals("Tester", PetRepository.userProfile.value.name)
     }
 
@@ -84,74 +79,45 @@ class PetRepositoryTest {
     }
 
     @Test
-    fun testSelectPet() {
+    fun testPetOperations() {
+        val pet1 = PetModel(id = "1", name = "Momo", species = "Dog", iconRes = R.drawable.dog)
+        val pet2 = PetModel(id = "2", name = "Luna", species = "Cat", iconRes = R.drawable.cat)
+
+        PetRepository.savePet(pet1)
+        assertEquals(1, PetRepository.pets.value.size)
+        assertEquals("1", PetRepository.currentSelectedPetId.value)
+        assertEquals("Momo", PetRepository.getSelectedPet().name)
+
+        PetRepository.savePet(pet2)
+        assertEquals(2, PetRepository.pets.value.size)
+
         PetRepository.selectPet("2")
         assertEquals("2", PetRepository.currentSelectedPetId.value)
         assertEquals("Luna", PetRepository.getSelectedPet().name)
 
-        PetRepository.setCurrentSelectedPetId("3")
-        assertEquals("3", PetRepository.currentSelectedPetId.value)
-        assertEquals("Cậu Vàng", PetRepository.getSelectedPet().name)
-    }
-
-    @Test
-    fun testGetPetById() {
-        val pet = PetRepository.getPetById("1")
-        assertNotNull(pet)
-        assertEquals("Momo", pet?.name)
+        val fetched = PetRepository.getPetById("1")
+        assertNotNull(fetched)
+        assertEquals("Momo", fetched?.name)
 
         val nonExistent = PetRepository.getPetById("999")
         assertNull(nonExistent)
-    }
 
-    @Test
-    fun testSavePetUpdateExisting() {
-        val originalPet = PetRepository.getPetById("1")!!
-        val updatedPet = originalPet.copy(name = "Momo Updated", weight = "14.0 kg")
-        PetRepository.savePet(updatedPet)
+        val updatedPet1 = pet1.copy(name = "Momo Updated", weight = "14.0 kg")
+        PetRepository.savePet(updatedPet1)
+        assertEquals("Momo Updated", PetRepository.getPetById("1")?.name)
+        assertEquals("14.0 kg", PetRepository.getPetById("1")?.weight)
 
-        val fetched = PetRepository.getPetById("1")
-        assertEquals("Momo Updated", fetched?.name)
-        assertEquals("14.0 kg", fetched?.weight)
-    }
+        val pet2BeforeFav = PetRepository.getPetById("2")!!
+        val initialFav = pet2BeforeFav.isFavorite
+        PetRepository.toggleFavorite("2")
+        val pet2AfterFav = PetRepository.getPetById("2")!!
+        assertEquals(!initialFav, pet2AfterFav.isFavorite)
 
-    @Test
-    fun testSavePetAddNew() {
-        val initialSize = PetRepository.pets.value.size
-        val newPet = PetModel(id = "pet_99", name = "Bé Bự", species = "Hamster", iconRes = R.drawable.dog)
-        PetRepository.savePet(newPet)
-
-        assertEquals(initialSize + 1, PetRepository.pets.value.size)
-        val fetched = PetRepository.getPetById("pet_99")
-        assertNotNull(fetched)
-        assertEquals("Bé Bự", fetched?.name)
-    }
-
-    @Test
-    fun testDeletePet() {
         PetRepository.deletePet("2")
         assertNull(PetRepository.getPetById("2"))
-        assertEquals(2, PetRepository.pets.value.size)
-    }
-
-    @Test
-    fun testDeleteSelectedPetUpdatesCurrentSelectedPetId() {
-        PetRepository.selectPet("1")
-        PetRepository.deletePet("1")
-
-        // Once pet 1 is deleted, selected pet id should fall back to first remaining pet
-        assertEquals("2", PetRepository.currentSelectedPetId.value)
-        assertEquals("Luna", PetRepository.getSelectedPet().name)
-    }
-
-    @Test
-    fun testToggleFavorite() {
-        val pet = PetRepository.getPetById("2")!!
-        val initialFav = pet.isFavorite
-        PetRepository.toggleFavorite("2")
-
-        val updatedPet = PetRepository.getPetById("2")!!
-        assertEquals(!initialFav, updatedPet.isFavorite)
+        assertEquals(1, PetRepository.pets.value.size)
+        assertEquals("1", PetRepository.currentSelectedPetId.value)
+        assertEquals("Momo Updated", PetRepository.getSelectedPet().name)
     }
 
     @Test
@@ -170,8 +136,7 @@ class PetRepositoryTest {
 
     @Test
     fun testVaccinationOperations() {
-        val pet1Vax = PetRepository.getVaccinationsForPet("1")
-        assertEquals(3, pet1Vax.size)
+        assertTrue(PetRepository.getVaccinationsForPet("1").isEmpty())
 
         val newVax = VaccinationModel(
             id = "v_new",
@@ -182,15 +147,15 @@ class PetRepositoryTest {
         )
         PetRepository.addVaccination(newVax)
 
-        val updatedPet1Vax = PetRepository.getVaccinationsForPet("1")
-        assertEquals(4, updatedPet1Vax.size)
-        assertEquals("v_new", updatedPet1Vax.first().id)
+        val pet1Vax = PetRepository.getVaccinationsForPet("1")
+        assertEquals(1, pet1Vax.size)
+        assertEquals("v_new", pet1Vax.first().id)
+        assertEquals("Rabies Booster", pet1Vax.first().title)
     }
 
     @Test
     fun testMedicationOperations() {
-        val pet1Meds = PetRepository.getMedicationsForPet("1")
-        assertEquals(2, pet1Meds.size)
+        assertTrue(PetRepository.getMedicationsForPet("1").isEmpty())
 
         val newMed = MedicationModel(
             id = "m_new",
@@ -204,14 +169,13 @@ class PetRepositoryTest {
         PetRepository.addMedication(newMed)
 
         val updatedMeds = PetRepository.getMedicationsForPet("1")
-        assertEquals(3, updatedMeds.size)
+        assertEquals(1, updatedMeds.size)
         assertEquals("m_new", updatedMeds.first().id)
     }
 
     @Test
     fun testMedicalRecordOperations() {
-        val pet1Records = PetRepository.getMedicalRecordsForPet("1")
-        assertEquals(3, pet1Records.size)
+        assertTrue(PetRepository.getMedicalRecordsForPet("1").isEmpty())
 
         val newRecord = MedicalRecordEntryModel(
             id = "r_new",
@@ -225,16 +189,12 @@ class PetRepositoryTest {
         PetRepository.addMedicalRecord(newRecord)
 
         val updatedRecords = PetRepository.getMedicalRecordsForPet("1")
-        assertEquals(4, updatedRecords.size)
+        assertEquals(1, updatedRecords.size)
         assertEquals("r_new", updatedRecords.first().id)
     }
 
     @Test
     fun testScheduleOperations() {
-        val schedule = PetRepository.getScheduleById("s1")
-        assertNotNull(schedule)
-        assertEquals("Bữa tối", schedule?.title)
-
         val newSchedule = ScheduleModel(
             id = "s_new",
             title = "Đi dạo",
@@ -268,6 +228,7 @@ class PetRepositoryTest {
         )
         PetRepository.addWeightRecord(newWeight)
         val pet1Weights = PetRepository.getWeightRecordsForPet("1")
+        assertEquals(1, pet1Weights.size)
         assertEquals("w_new", pet1Weights.first().id)
 
         val newCheckup = CheckupRecordModel(
@@ -281,6 +242,7 @@ class PetRepositoryTest {
         )
         PetRepository.addCheckupRecord(newCheckup)
         val pet1Checkups = PetRepository.getCheckupRecordsForPet("1")
+        assertEquals(1, pet1Checkups.size)
         assertEquals("c_new", pet1Checkups.first().id)
     }
 }

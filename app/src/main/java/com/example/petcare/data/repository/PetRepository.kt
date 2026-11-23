@@ -52,34 +52,34 @@ object PetRepository {
     private val _userProfile = MutableStateFlow(UserProfileData())
     val userProfile: StateFlow<UserProfileData> = _userProfile.asStateFlow()
 
-    private val _accounts = MutableStateFlow(initialAccounts())
+    private val _accounts = MutableStateFlow(emptyList<AccountUser>())
     val accounts: StateFlow<List<AccountUser>> = _accounts.asStateFlow()
 
-    private val _pets = MutableStateFlow(initialPets())
+    private val _pets = MutableStateFlow(emptyList<PetModel>())
     val pets: StateFlow<List<PetModel>> = _pets.asStateFlow()
 
-    private val _vaccinations = MutableStateFlow(initialVaccinations())
+    private val _vaccinations = MutableStateFlow(emptyList<VaccinationModel>())
     val vaccinations: StateFlow<List<VaccinationModel>> = _vaccinations.asStateFlow()
 
-    private val _weightRecords = MutableStateFlow(initialWeightRecords())
+    private val _weightRecords = MutableStateFlow(emptyList<WeightRecordModel>())
     val weightRecords: StateFlow<List<WeightRecordModel>> = _weightRecords.asStateFlow()
 
-    private val _checkupRecords = MutableStateFlow(initialCheckupRecords())
+    private val _checkupRecords = MutableStateFlow(emptyList<CheckupRecordModel>())
     val checkupRecords: StateFlow<List<CheckupRecordModel>> = _checkupRecords.asStateFlow()
 
-    private val _medications = MutableStateFlow(initialMedications())
+    private val _medications = MutableStateFlow(emptyList<MedicationModel>())
     val medications: StateFlow<List<MedicationModel>> = _medications.asStateFlow()
 
-    private val _medicalRecords = MutableStateFlow(initialMedicalRecords())
+    private val _medicalRecords = MutableStateFlow(emptyList<MedicalRecordEntryModel>())
     val medicalRecords: StateFlow<List<MedicalRecordEntryModel>> = _medicalRecords.asStateFlow()
 
-    private val _schedules = MutableStateFlow(initialSchedules())
+    private val _schedules = MutableStateFlow(emptyList<ScheduleModel>())
     val schedules: StateFlow<List<ScheduleModel>> = _schedules.asStateFlow()
 
     private val _petPlaces = MutableStateFlow(initialPetPlaces())
     val petPlaces: StateFlow<List<PetPlaceModel>> = _petPlaces.asStateFlow()
 
-    private val _currentSelectedPetId = MutableStateFlow("1")
+    private val _currentSelectedPetId = MutableStateFlow("")
     val currentSelectedPetId: StateFlow<String> = _currentSelectedPetId.asStateFlow()
 
     init {
@@ -113,7 +113,7 @@ object PetRepository {
         val userDoc = firestore.collection("users").document(userId)
 
         userDoc.get().addOnSuccessListener { doc ->
-            if (doc.exists()) {
+            val resolvedName = if (doc.exists()) {
                 val name = doc.getString("name")
                     ?: auth.currentUser?.displayName?.ifBlank { null }
                     ?: auth.currentUser?.email?.substringBefore("@")
@@ -133,6 +133,7 @@ object PetRepository {
                         avatarUri = avatarUri ?: current.avatarUri
                     )
                 }
+                name
             } else {
                 val user = auth.currentUser
                 val name = user?.displayName?.ifBlank { null }
@@ -151,7 +152,9 @@ object PetRepository {
                         avatarUri = avatarUri
                     )
                 }
+                name
             }
+            _accounts.value = listOf(AccountUser(id = userId, name = resolvedName, isCurrent = true))
         }
 
         petsListener = userDoc.collection("pets")
@@ -270,16 +273,18 @@ object PetRepository {
             if (headerBgUri != null) updated = updated.copy(headerBgUri = headerBgUri)
             updated
         }
-        val uid = auth.currentUser?.uid ?: return
-        val updates = mutableMapOf<String, Any>()
-        name?.takeIf { it.isNotBlank() }?.let { updates["name"] = it }
-        email?.takeIf { it.isNotBlank() }?.let { updates["email"] = it }
-        phone?.takeIf { it.isNotBlank() }?.let { updates["phone"] = it }
-        dob?.takeIf { it.isNotBlank() }?.let { updates["dob"] = it }
-        address?.takeIf { it.isNotBlank() }?.let { updates["address"] = it }
-        avatarUri?.let { updates["avatarUri"] = it }
-        if (updates.isNotEmpty()) {
-            firestore.collection("users").document(uid).update(updates)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            val updates = mutableMapOf<String, Any>()
+            name?.takeIf { it.isNotBlank() }?.let { updates["name"] = it }
+            email?.takeIf { it.isNotBlank() }?.let { updates["email"] = it }
+            phone?.takeIf { it.isNotBlank() }?.let { updates["phone"] = it }
+            dob?.takeIf { it.isNotBlank() }?.let { updates["dob"] = it }
+            address?.takeIf { it.isNotBlank() }?.let { updates["address"] = it }
+            avatarUri?.let { updates["avatarUri"] = it }
+            if (updates.isNotEmpty()) {
+                firestore.collection("users").document(uid).update(updates)
+            }
         }
     }
 
@@ -299,11 +304,7 @@ object PetRepository {
         val currentPets = _pets.value
         return currentPets.find { it.id == _currentSelectedPetId.value }
             ?: currentPets.firstOrNull()
-            ?: PetModel(
-                id = "1",
-                name = "Momo",
-                iconRes = R.drawable.dog,
-            )
+            ?: PetModel()
     }
 
     fun getPetById(id: String): PetModel? = _pets.value.find { it.id == id }
@@ -317,27 +318,32 @@ object PetRepository {
                 list + pet
             }
         }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users")
-            .document(uid)
-            .collection("pets")
-            .document(pet.id)
-            .set(pet)
+        if (_currentSelectedPetId.value.isBlank()) {
+            _currentSelectedPetId.value = pet.id
+        }
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users")
+                .document(uid)
+                .collection("pets")
+                .document(pet.id)
+                .set(pet)
+        }
     }
 
     fun deletePet(id: String) {
         _pets.update { list -> list.filterNot { it.id == id } }
         if (_currentSelectedPetId.value == id) {
-            _pets.value.firstOrNull()?.let { firstPet ->
-                _currentSelectedPetId.value = firstPet.id
-            }
+            _currentSelectedPetId.value = _pets.value.firstOrNull()?.id.orEmpty()
         }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users")
-            .document(uid)
-            .collection("pets")
-            .document(id)
-            .delete()
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users")
+                .document(uid)
+                .collection("pets")
+                .document(id)
+                .delete()
+        }
     }
 
     fun toggleFavorite(id: String) {
@@ -351,9 +357,11 @@ object PetRepository {
 
     fun addVaccination(vaccination: VaccinationModel) {
         _vaccinations.update { listOf(vaccination) + it }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("vaccinations").document(vaccination.id).set(vaccination)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("vaccinations").document(vaccination.id).set(vaccination)
+        }
     }
 
     fun getMedicationsForPet(petId: String): List<MedicationModel> =
@@ -361,9 +369,11 @@ object PetRepository {
 
     fun addMedication(medication: MedicationModel) {
         _medications.update { listOf(medication) + it }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("medications").document(medication.id).set(medication)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("medications").document(medication.id).set(medication)
+        }
     }
 
     fun getMedicalRecordsForPet(petId: String): List<MedicalRecordEntryModel> =
@@ -371,9 +381,11 @@ object PetRepository {
 
     fun addMedicalRecord(record: MedicalRecordEntryModel) {
         _medicalRecords.update { listOf(record) + it }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("medicalRecords").document(record.id).set(record)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("medicalRecords").document(record.id).set(record)
+        }
     }
 
     fun getScheduleById(id: String): ScheduleModel? =
@@ -381,9 +393,11 @@ object PetRepository {
 
     fun addSchedule(schedule: ScheduleModel) {
         _schedules.update { it + schedule }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("schedules").document(schedule.id).set(schedule)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("schedules").document(schedule.id).set(schedule)
+        }
     }
 
     fun updateSchedule(schedule: ScheduleModel) {
@@ -395,16 +409,20 @@ object PetRepository {
                 list + schedule
             }
         }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("schedules").document(schedule.id).set(schedule)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("schedules").document(schedule.id).set(schedule)
+        }
     }
 
     fun deleteSchedule(id: String) {
         _schedules.update { list -> list.filterNot { it.id == id } }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("schedules").document(id).delete()
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("schedules").document(id).delete()
+        }
     }
 
     fun getWeightRecordsForPet(petId: String): List<WeightRecordModel> =
@@ -412,9 +430,11 @@ object PetRepository {
 
     fun addWeightRecord(record: WeightRecordModel) {
         _weightRecords.update { listOf(record) + it }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("weightRecords").document(record.id).set(record)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("weightRecords").document(record.id).set(record)
+        }
     }
 
     fun getCheckupRecordsForPet(petId: String): List<CheckupRecordModel> =
@@ -422,9 +442,11 @@ object PetRepository {
 
     fun addCheckupRecord(record: CheckupRecordModel) {
         _checkupRecords.update { listOf(record) + it }
-        val uid = auth.currentUser?.uid ?: return
-        firestore.collection("users").document(uid)
-            .collection("checkupRecords").document(record.id).set(record)
+        runCatching {
+            val uid = auth.currentUser?.uid ?: return@runCatching
+            firestore.collection("users").document(uid)
+                .collection("checkupRecords").document(record.id).set(record)
+        }
     }
 
     fun resetToDefaults() {
@@ -440,309 +462,6 @@ object PetRepository {
         _petPlaces.value = initialPetPlaces()
         _currentSelectedPetId.value = ""
     }
-
-    private fun initialAccounts() = listOf(
-        AccountUser("a1", "Dương đz", isCurrent = true),
-        AccountUser("a2", "Nguyên đz", isCurrent = false),
-    )
-
-    private fun initialPets() = listOf(
-        PetModel(
-            id = "1",
-            name = "Momo",
-            species = "Chó",
-            breed = "Golden Retriever",
-            dateOfBirth = "14/05/2023",
-            age = "3 tuổi",
-            weight = "12.4 kg",
-            gender = "Đực",
-            iconRes = R.drawable.dog,
-            statusText = "Khỏe mạnh",
-            statusDetail = "Cân nặng 12.4 kg",
-            isFavorite = true,
-            temperature = "38.4°C",
-            activity = "8,240 bước",
-            diet = "Tốt • 2/2 bữa",
-            lastUpdated = "hôm nay",
-        ),
-        PetModel(
-            id = "2",
-            name = "Luna",
-            species = "Mèo",
-            breed = "Mèo Anh Lông Ngắn",
-            dateOfBirth = "20/08/2024",
-            age = "2 tuổi",
-            weight = "4.2 kg",
-            gender = "Cái",
-            iconRes = R.drawable.cat,
-            statusText = "Cần theo dõi",
-            statusDetail = "Ăn ít hơn bình thường",
-            isFavorite = false,
-            temperature = "38.9°C",
-            activity = "3,120 bước",
-            diet = "Ít • 1/2 bữa",
-            lastUpdated = "hôm qua",
-        ),
-        PetModel(
-            id = "3",
-            name = "Cậu Vàng",
-            species = "Chó",
-            breed = "Cún Poodle",
-            dateOfBirth = "10/01/2025",
-            age = "1.5 tuổi",
-            weight = "5.0 kg",
-            gender = "Đực",
-            iconRes = R.drawable.dog,
-            statusText = "Khỏe mạnh",
-            statusDetail = "Năng động",
-            isFavorite = false,
-            temperature = "38.2°C",
-            activity = "9,400 bước",
-            diet = "Tốt • 2/2 bữa",
-            lastUpdated = "hôm nay",
-        ),
-    )
-
-    private fun initialVaccinations() = listOf(
-        VaccinationModel(
-            id = "v1",
-            petId = "1",
-            title = "Dại",
-            dateTime = "15/09/2026",
-            status = "Đã tiêm",
-        ),
-        VaccinationModel(
-            id = "v2",
-            petId = "1",
-            title = "5 bệnh",
-            dateTime = "15/09/2027",
-            status = "Nhắc lại",
-        ),
-        VaccinationModel(
-            id = "v3",
-            petId = "1",
-            title = "Kennel Cough",
-            dateTime = "01/12/2026",
-            status = "Nhắc lại",
-        ),
-        VaccinationModel(
-            id = "v4",
-            petId = "2",
-            title = "Dại cho mèo",
-            dateTime = "10/08/2026",
-            status = "Đã tiêm",
-        ),
-        VaccinationModel(
-            id = "v5",
-            petId = "2",
-            title = "4 bệnh (FVRCP)",
-            dateTime = "20/07/2026",
-            status = "Đã tiêm",
-        ),
-        VaccinationModel(
-            id = "v6",
-            petId = "2",
-            title = "Bạch cầu FeLV",
-            dateTime = "15/11/2026",
-            status = "Nhắc lại",
-        ),
-        VaccinationModel(
-            id = "v7",
-            petId = "3",
-            title = "Tiêm Care & Parvo",
-            dateTime = "05/09/2026",
-            status = "Đã tiêm",
-        ),
-        VaccinationModel(
-            id = "v8",
-            petId = "3",
-            title = "Dại định kỳ",
-            dateTime = "10/10/2026",
-            status = "Nhắc lại",
-        ),
-    )
-
-    private fun initialWeightRecords() = listOf(
-        WeightRecordModel(
-            id = "w1",
-            petId = "1",
-            petName = "Momo",
-            weight = "12.4 kg",
-            dateTime = "01/09/2026",
-            status = "Ổn định",
-        ),
-        WeightRecordModel(
-            id = "w2",
-            petId = "1",
-            petName = "Momo",
-            weight = "12.2 kg",
-            dateTime = "15/08/2026",
-            status = "Ổn định",
-        ),
-        WeightRecordModel(
-            id = "w3",
-            petId = "1",
-            petName = "Momo",
-            weight = "11.8 kg",
-            dateTime = "01/08/2026",
-            status = "Bình thường",
-        ),
-        WeightRecordModel(
-            id = "w4",
-            petId = "2",
-            petName = "Luna",
-            weight = "4.2 kg",
-            dateTime = "01/09/2026",
-            status = "Ăn ít hơn",
-        ),
-        WeightRecordModel(
-            id = "w5",
-            petId = "2",
-            petName = "Luna",
-            weight = "4.5 kg",
-            dateTime = "15/08/2026",
-            status = "Ổn định",
-        ),
-        WeightRecordModel(
-            id = "w6",
-            petId = "3",
-            petName = "Cậu Vàng",
-            weight = "5.0 kg",
-            dateTime = "01/09/2026",
-            status = "Khỏe mạnh",
-        ),
-        WeightRecordModel(
-            id = "w7",
-            petId = "3",
-            petName = "Cậu Vàng",
-            weight = "4.8 kg",
-            dateTime = "10/08/2026",
-            status = "Đang lớn",
-        ),
-    )
-
-    private fun initialCheckupRecords() = listOf(
-        CheckupRecordModel(
-            id = "c1",
-            petId = "1",
-            petName = "Momo",
-            title = "Khám định kỳ & xét nghiệm máu",
-            doctorOrClinic = "BS. Nguyễn Văn Tuấn",
-            dateTime = "12/08/2026",
-            result = "Khỏe mạnh, thể trạng tốt",
-        ),
-        CheckupRecordModel(
-            id = "c2",
-            petId = "1",
-            petName = "Momo",
-            title = "Kiểm tra răng miệng & tim phổi",
-            doctorOrClinic = "Bệnh viện Thú y PetCare",
-            dateTime = "12/02/2026",
-            result = "Răng sạch, nhịp tim đều",
-        ),
-        CheckupRecordModel(
-            id = "c3",
-            petId = "2",
-            petName = "Luna",
-            title = "Khám tiêu hóa & kiểm tra lông da",
-            doctorOrClinic = "BS. Trần Thu Hà",
-            dateTime = "25/08/2026",
-            result = "Cần theo dõi men vi sinh",
-        ),
-        CheckupRecordModel(
-            id = "c4",
-            petId = "3",
-            petName = "Cậu Vàng",
-            title = "Khám tổng quát định kỳ 6 tháng",
-            doctorOrClinic = "Phòng khám thú y PetCare",
-            dateTime = "02/09/2026",
-            result = "Rất năng động & bình thường",
-        ),
-    )
-
-    private fun initialMedications() = listOf(
-        MedicationModel(
-            id = "m1",
-            petId = "1",
-            name = "Omega 3",
-            dosage = "1 viên",
-            scheduleTime = "08:00 • mỗi ngày",
-            quantity = "30 viên",
-            status = "Đang dùng",
-        ),
-        MedicationModel(
-            id = "m2",
-            petId = "1",
-            name = "Men tiêu hóa",
-            dosage = "1 gói",
-            scheduleTime = "20:00 • 7 ngày",
-            quantity = "14 gói",
-            status = "Đang dùng",
-        ),
-    )
-
-    private fun initialMedicalRecords() = listOf(
-        MedicalRecordEntryModel(
-            id = "r1",
-            petId = "1",
-            petName = "Momo",
-            dateTime = "26/9/2026-12h30",
-            activityType = "Bỏ ăn",
-            description = "10 cục",
-            emotion = "Mệt mỏi",
-        ),
-        MedicalRecordEntryModel(
-            id = "r2",
-            petId = "1",
-            petName = "Momo",
-            dateTime = "25/9/2026-16h30",
-            activityType = "Đi ngoài nhiều",
-            description = "được 250ml",
-            emotion = "Yếu ớt",
-        ),
-        MedicalRecordEntryModel(
-            id = "r3",
-            petId = "1",
-            petName = "Momo",
-            dateTime = "10/10/2026- 13h20",
-            activityType = "Xuất huyết đại tràng",
-            description = "Chết mất xác",
-            emotion = "Cấp cứu",
-        ),
-    )
-
-    private fun initialSchedules() = listOf(
-        ScheduleModel(
-            id = "s1",
-            title = "Bữa tối",
-            description = "Cho Momo ăn hạt và pate",
-            petId = "1",
-            petName = "Momo",
-            dateText = "12/10/2026",
-            timeText = "18:00",
-            timeOrDateLabel = "18:00",
-        ),
-        ScheduleModel(
-            id = "s2",
-            title = "Tiêm phòng",
-            description = "Tiêm ngừa dại định kỳ tại phòng khám",
-            petId = "2",
-            petName = "Luna",
-            dateText = "13/10/2026",
-            timeText = "09:00",
-            timeOrDateLabel = "Ngày mai",
-        ),
-        ScheduleModel(
-            id = "s3",
-            title = "Tắm và vệ sinh",
-            description = "Tắm sấy và cắt móng",
-            petId = "1",
-            petName = "Momo",
-            dateText = "17/10/2026",
-            timeText = "15:00",
-            timeOrDateLabel = "Thứ 7",
-        ),
-    )
 
     private fun initialPetPlaces() = listOf(
         PetPlaceModel(
@@ -837,18 +556,18 @@ private fun DocumentSnapshot.toPetModelSafe(): PetModel? = runCatching {
             name = getString("name") ?: "Thú cưng",
             species = getString("species") ?: "Chó",
             breed = getString("breed") ?: "",
-            dateOfBirth = getString("dateOfBirth") ?: "14/05/2023",
-            age = getString("age") ?: "3 tuổi",
-            weight = getString("weight") ?: "12.4 kg",
+            dateOfBirth = getString("dateOfBirth") ?: "",
+            age = getString("age") ?: "",
+            weight = getString("weight") ?: "",
             gender = getString("gender") ?: "Đực",
             iconRes = getLong("iconRes")?.toInt()?.takeIf { it != 0 } ?: R.drawable.dog,
-            statusText = getString("statusText") ?: "Khỏe mạnh",
-            statusDetail = getString("statusDetail") ?: "Cân nặng 12.4 kg",
+            statusText = getString("statusText") ?: "Bình thường",
+            statusDetail = getString("statusDetail") ?: "",
             isFavorite = getBoolean("isFavorite") ?: false,
-            temperature = getString("temperature") ?: "38.4°C",
-            activity = getString("activity") ?: "8,240 bước",
-            diet = getString("diet") ?: "Tốt • 2/2 bữa",
-            lastUpdated = getString("lastUpdated") ?: "hôm nay",
+            temperature = getString("temperature") ?: "",
+            activity = getString("activity") ?: "",
+            diet = getString("diet") ?: "",
+            lastUpdated = getString("lastUpdated") ?: "",
         )
     }.getOrNull()
 }
@@ -877,7 +596,7 @@ private fun DocumentSnapshot.toMedicationModelSafe(): MedicationModel? = runCatc
             name = getString("name") ?: "",
             dosage = getString("dosage") ?: "",
             scheduleTime = getString("scheduleTime") ?: "",
-            quantity = getString("quantity") ?: "30 viên",
+            quantity = getString("quantity") ?: "",
             status = getString("status") ?: "Đang dùng",
         )
     }.getOrNull()
@@ -924,7 +643,7 @@ private fun DocumentSnapshot.toCheckupRecordSafe(): CheckupRecordModel? = runCat
             petId = getString("petId") ?: "",
             petName = getString("petName") ?: "",
             title = getString("title") ?: "",
-            doctorOrClinic = getString("doctorOrClinic") ?: "Phòng khám thú y PetCare",
+            doctorOrClinic = getString("doctorOrClinic") ?: "",
             dateTime = getString("dateTime") ?: "",
             result = getString("result") ?: "Bình thường",
             status = getString("status") ?: "Hoàn thành",
@@ -940,8 +659,8 @@ private fun DocumentSnapshot.toScheduleModelSafe(): ScheduleModel? = runCatching
             id = id,
             title = getString("title") ?: "",
             description = getString("description") ?: "",
-            petId = getString("petId") ?: "1",
-            petName = getString("petName") ?: "Momo",
+            petId = getString("petId") ?: "",
+            petName = getString("petName") ?: "",
             dateText = getString("dateText") ?: "",
             timeText = getString("timeText") ?: "",
             timeOrDateLabel = getString("timeOrDateLabel") ?: "",
