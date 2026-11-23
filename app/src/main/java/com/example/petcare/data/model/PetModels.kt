@@ -18,6 +18,7 @@ data class PetModel(
     val diet: String = "",
     val lastUpdated: String = "",
 ) {
+    @get:com.google.firebase.firestore.Exclude
     val safeIconRes: Int
         get() = if (iconRes != 0) iconRes else com.example.petcare.R.drawable.dog
 }

@@ -60,7 +60,7 @@ fun EditPetScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val initialPet = remember(petId, uiState.pets) {
-        uiState.pets.find { it.id == petId } ?: uiState.selectedPet ?: PetModel(
+        uiState.pets.find { it.id == petId } ?: PetModel(
             id = petId,
             name = "",
             iconRes = R.drawable.cat,
@@ -184,7 +184,9 @@ fun EditPetScreen(
                 // Primary Button: Lưu thay đổi
                 Button(
                     onClick = {
-                        val updatedPet = initialPet.copy(
+                        val currentPet = uiState.pets.find { it.id == petId } ?: initialPet
+                        val updatedPet = currentPet.copy(
+                            id = petId,
                             name = name,
                             species = species,
                             breed = breed,
@@ -256,7 +258,7 @@ fun EditPetScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deletePet(initialPet.id)
+                        viewModel.deletePet(petId)
                         showDeleteConfirmDialog = false
                         onDeleted()
                     },

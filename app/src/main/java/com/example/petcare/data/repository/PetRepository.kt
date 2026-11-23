@@ -1,5 +1,6 @@
 package com.example.petcare.data.repository
 
+import android.util.Log
 import com.example.petcare.R
 import com.example.petcare.data.model.CheckupRecordModel
 import com.example.petcare.data.model.MedicalRecordEntryModel
@@ -39,6 +40,7 @@ data class AccountUser(
 )
 
 object PetRepository {
+    private const val TAG = "PetRepository"
     private val auth by lazy { FirebaseAuth.getInstance() }
     private val firestore by lazy { FirebaseFirestore.getInstance() }
     private var petsListener: ListenerRegistration? = null
@@ -159,7 +161,11 @@ object PetRepository {
 
         petsListener = userDoc.collection("pets")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null) {
+                    Log.e(TAG, "Lỗi lắng nghe pets từ Firestore: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
                 val remotePets = snapshot.documents.mapNotNull { doc ->
                     doc.toPetModelSafe()
                 }
@@ -175,42 +181,66 @@ object PetRepository {
 
         vaccinationsListener = userDoc.collection("vaccinations")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null) {
+                    Log.e(TAG, "Lỗi lắng nghe vaccinations từ Firestore: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { it.toVaccinationModelSafe() }
                 _vaccinations.value = items
             }
 
         medicationsListener = userDoc.collection("medications")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null) {
+                    Log.e(TAG, "Lỗi lắng nghe medications từ Firestore: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { it.toMedicationModelSafe() }
                 _medications.value = items
             }
 
         medicalRecordsListener = userDoc.collection("medicalRecords")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null) {
+                    Log.e(TAG, "Lỗi lắng nghe medicalRecords từ Firestore: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { it.toMedicalRecordSafe() }
                 _medicalRecords.value = items
             }
 
         weightRecordsListener = userDoc.collection("weightRecords")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null) {
+                    Log.e(TAG, "Lỗi lắng nghe weightRecords từ Firestore: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { it.toWeightRecordSafe() }
                 _weightRecords.value = items
             }
 
         checkupRecordsListener = userDoc.collection("checkupRecords")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null) {
+                    Log.e(TAG, "Lỗi lắng nghe checkupRecords từ Firestore: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { it.toCheckupRecordSafe() }
                 _checkupRecords.value = items
             }
 
         schedulesListener = userDoc.collection("schedules")
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null) return@addSnapshotListener
+                if (error != null) {
+                    Log.e(TAG, "Lỗi lắng nghe schedules từ Firestore: ${error.message}", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot == null) return@addSnapshotListener
                 val items = snapshot.documents.mapNotNull { it.toScheduleModelSafe() }
                 _schedules.value = items
             }
@@ -284,6 +314,9 @@ object PetRepository {
             avatarUri?.let { updates["avatarUri"] = it }
             if (updates.isNotEmpty()) {
                 firestore.collection("users").document(uid).update(updates)
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Lỗi cập nhật userProfile lên Firestore: ${e.message}", e)
+                    }
             }
         }
     }
@@ -328,6 +361,9 @@ object PetRepository {
                 .collection("pets")
                 .document(pet.id)
                 .set(pet)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi lưu pet (${pet.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -343,6 +379,9 @@ object PetRepository {
                 .collection("pets")
                 .document(id)
                 .delete()
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi xóa pet ($id) trên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -361,6 +400,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("vaccinations").document(vaccination.id).set(vaccination)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi thêm vaccination (${vaccination.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -373,6 +415,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("medications").document(medication.id).set(medication)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi thêm medication (${medication.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -385,6 +430,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("medicalRecords").document(record.id).set(record)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi thêm medicalRecord (${record.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -397,6 +445,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("schedules").document(schedule.id).set(schedule)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi thêm schedule (${schedule.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -413,6 +464,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("schedules").document(schedule.id).set(schedule)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi cập nhật schedule (${schedule.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -422,6 +476,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("schedules").document(id).delete()
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi xóa schedule ($id) trên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -434,6 +491,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("weightRecords").document(record.id).set(record)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi thêm weightRecord (${record.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 
@@ -446,6 +506,9 @@ object PetRepository {
             val uid = auth.currentUser?.uid ?: return@runCatching
             firestore.collection("users").document(uid)
                 .collection("checkupRecords").document(record.id).set(record)
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Lỗi thêm checkupRecord (${record.id}) lên Firestore: ${e.message}", e)
+                }
         }
     }
 

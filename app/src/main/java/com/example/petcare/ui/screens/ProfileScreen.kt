@@ -62,22 +62,44 @@ import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
+import androidx.compose.runtime.produceState
 import com.example.petcare.ui.viewmodel.ProfileViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 @Composable
 fun rememberBitmapFromUri(uriString: String?): ImageBitmap? {
     val context = LocalContext.current
-    return remember(uriString) {
-        if (uriString.isNullOrEmpty()) return@remember null
-        try {
-            val uri = Uri.parse(uriString)
-            context.contentResolver.openInputStream(uri)?.use { stream ->
-                BitmapFactory.decodeStream(stream)?.asImageBitmap()
-            }
-        } catch (_: Exception) {
-            null
+    val bitmapState = produceState<ImageBitmap?>(initialValue = null, key1 = uriString) {
+        if (uriString.isNullOrEmpty()) {
+            value = null
+            return@produceState
+        }
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                if (uriString.startsWith("http://", ignoreCase = true) ||
+                    uriString.startsWith("https://", ignoreCase = true)
+                ) {
+                    val conn = (URL(uriString).openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 8000
+                        readTimeout = 8000
+                        doInput = true
+                    }
+                    conn.inputStream.use { stream ->
+                        BitmapFactory.decodeStream(stream)?.asImageBitmap()
+                    }
+                } else {
+                    val uri = Uri.parse(uriString)
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        BitmapFactory.decodeStream(stream)?.asImageBitmap()
+                    }
+                }
+            }.getOrNull()
         }
     }
+    return bitmapState.value
 }
 
 @Composable
