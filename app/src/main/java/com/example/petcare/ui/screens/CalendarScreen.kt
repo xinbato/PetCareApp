@@ -99,20 +99,10 @@ fun CalendarScreen(
 
                 // Today Green Banner Card
                 TodayGreenBannerCard(
-                    todayCount = schedules.size
+                    todayCount = uiState.todaySchedules.size
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Section Title: Việc sắp tới
-                Text(
-                    text = "Việc sắp tới",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Schedule list
                 if (schedules.isEmpty()) {
@@ -129,14 +119,40 @@ fun CalendarScreen(
                         )
                     }
                 } else {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        schedules.forEach { schedule ->
-                            ScheduleCardItem(
-                                schedule = schedule,
-                                onClick = { onEditScheduleClick(schedule.id) }
-                            )
+                    if (uiState.todaySchedules.isNotEmpty()) {
+                        Text(
+                            text = "Việc hôm nay",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            uiState.todaySchedules.forEach { schedule ->
+                                ScheduleCardItem(
+                                    schedule = schedule,
+                                    onClick = { onEditScheduleClick(schedule.id) }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    if (uiState.upcomingSchedules.isNotEmpty()) {
+                        Text(
+                            text = "Việc sắp tới",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            uiState.upcomingSchedules.forEach { schedule ->
+                                ScheduleCardItem(
+                                    schedule = schedule,
+                                    onClick = { onEditScheduleClick(schedule.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -188,6 +204,27 @@ fun CalendarScreen(
 private fun TodayGreenBannerCard(
     todayCount: Int,
 ) {
+    val calendar = androidx.compose.runtime.remember { java.util.Calendar.getInstance() }
+    val monthYearText = androidx.compose.runtime.remember(calendar) {
+        val month = calendar.get(java.util.Calendar.MONTH) + 1
+        val year = calendar.get(java.util.Calendar.YEAR)
+        "THÁNG $month, $year"
+    }
+    val dayOfMonthText = androidx.compose.runtime.remember(calendar) {
+        calendar.get(java.util.Calendar.DAY_OF_MONTH).toString()
+    }
+    val dayOfWeekText = androidx.compose.runtime.remember(calendar) {
+        when (calendar.get(java.util.Calendar.DAY_OF_WEEK)) {
+            java.util.Calendar.MONDAY -> "Thứ Hai"
+            java.util.Calendar.TUESDAY -> "Thứ Ba"
+            java.util.Calendar.WEDNESDAY -> "Thứ Tư"
+            java.util.Calendar.THURSDAY -> "Thứ Năm"
+            java.util.Calendar.FRIDAY -> "Thứ Sáu"
+            java.util.Calendar.SATURDAY -> "Thứ Bảy"
+            else -> "Chủ Nhật"
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = GreenPrimary,
@@ -199,7 +236,7 @@ private fun TodayGreenBannerCard(
                 .padding(horizontal = 20.dp, vertical = 18.dp)
         ) {
             Text(
-                text = "THÁNG 10, 2026",
+                text = monthYearText,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White.copy(alpha = 0.9f),
@@ -217,14 +254,14 @@ private fun TodayGreenBannerCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "12",
+                        text = dayOfMonthText,
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Thứ Hai",
+                        text = dayOfWeekText,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White

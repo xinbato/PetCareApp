@@ -40,9 +40,18 @@ class CalendarViewModel(
         _isActionSuccess,
     ) { schedules, pets, selectedPetId, selectedScheduleId, isSuccess ->
         val selectedSchedule = schedules.find { it.id == selectedScheduleId }
+        val cal = java.util.Calendar.getInstance()
+        val todayFormatted = String.format(
+            java.util.Locale.getDefault(),
+            "%02d/%02d/%04d",
+            cal.get(java.util.Calendar.DAY_OF_MONTH),
+            cal.get(java.util.Calendar.MONTH) + 1,
+            cal.get(java.util.Calendar.YEAR)
+        )
         val today = schedules.filter {
-            it.timeOrDateLabel.contains("hôm nay", ignoreCase = true) ||
-                it.timeOrDateLabel.matches(Regex("\\d{1,2}:\\d{2}"))
+            it.dateText == todayFormatted ||
+                it.dateText.contains("hôm nay", ignoreCase = true) ||
+                it.timeOrDateLabel.contains("hôm nay", ignoreCase = true)
         }
         val upcoming = schedules.filterNot { today.contains(it) }
 
