@@ -1,5 +1,6 @@
 package com.example.petcare.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,10 +51,13 @@ fun NotificationReminderScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit = {},
 ) {
-    var isVaccineReminderOn by remember { mutableStateOf(true) }
-    var isMedicationReminderOn by remember { mutableStateOf(true) }
-    var isFeedingReminderOn by remember { mutableStateOf(true) }
-    var isNewsNotificationOn by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("pet_notifications_prefs", Context.MODE_PRIVATE) }
+
+    var isVaccineReminderOn by remember { mutableStateOf(prefs.getBoolean("KEY_VACCINE", true)) }
+    var isMedicationReminderOn by remember { mutableStateOf(prefs.getBoolean("KEY_MEDICATION", true)) }
+    var isFeedingReminderOn by remember { mutableStateOf(prefs.getBoolean("KEY_FEEDING", true)) }
+    var isNewsNotificationOn by remember { mutableStateOf(prefs.getBoolean("KEY_NEWS", false)) }
 
     Box(
         modifier = modifier
@@ -105,28 +110,40 @@ fun NotificationReminderScreen(
                     title = "Nhắc lịch tiêm phòng",
                     subtitle = "Thông báo trước 1 ngày đến hẹn tiêm",
                     checked = isVaccineReminderOn,
-                    onCheckedChange = { isVaccineReminderOn = it }
+                    onCheckedChange = {
+                        isVaccineReminderOn = it
+                        prefs.edit().putBoolean("KEY_VACCINE", it).apply()
+                    }
                 )
 
                 NotificationToggleCard(
                     title = "Nhắc lịch uống thuốc",
                     subtitle = "Thông báo đúng giờ cho bé uống thuốc",
                     checked = isMedicationReminderOn,
-                    onCheckedChange = { isMedicationReminderOn = it }
+                    onCheckedChange = {
+                        isMedicationReminderOn = it
+                        prefs.edit().putBoolean("KEY_MEDICATION", it).apply()
+                    }
                 )
 
                 NotificationToggleCard(
                     title = "Nhắc lịch ăn uống & vệ sinh",
                     subtitle = "Báo giờ cho ăn và tắm rửa",
                     checked = isFeedingReminderOn,
-                    onCheckedChange = { isFeedingReminderOn = it }
+                    onCheckedChange = {
+                        isFeedingReminderOn = it
+                        prefs.edit().putBoolean("KEY_FEEDING", it).apply()
+                    }
                 )
 
                 NotificationToggleCard(
                     title = "Thông báo tin tức & cập nhật",
                     subtitle = "Nhận mẹo chăm sóc thú cưng mới",
                     checked = isNewsNotificationOn,
-                    onCheckedChange = { isNewsNotificationOn = it }
+                    onCheckedChange = {
+                        isNewsNotificationOn = it
+                        prefs.edit().putBoolean("KEY_NEWS", it).apply()
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))

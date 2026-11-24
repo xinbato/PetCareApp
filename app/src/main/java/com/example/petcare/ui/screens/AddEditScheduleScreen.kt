@@ -59,6 +59,7 @@ import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.theme.TextPrimary
 import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.CalendarViewModel
+import com.example.petcare.utils.NotificationHelper
 import java.util.Calendar
 import java.util.Locale
 import java.util.UUID
@@ -180,7 +181,10 @@ fun AddEditScheduleScreen(
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(
                         onClick = {
-                            scheduleId?.let { viewModel.deleteSchedule(it) }
+                            scheduleId?.let {
+                                NotificationHelper.cancelAlarm(context, it)
+                                viewModel.deleteSchedule(it)
+                            }
                             onSaved()
                         }
                     ) {
@@ -504,6 +508,20 @@ fun AddEditScheduleScreen(
                         } else {
                             viewModel.addSchedule(finalSchedule)
                         }
+
+                        // Lập lịch báo thức hệ thống
+                        val triggerMillis = NotificationHelper.parseScheduleMillis(dateText, timeText)
+                        if (triggerMillis != null && triggerMillis > System.currentTimeMillis()) {
+                            val petLabel = if (selectedPetName.isNotBlank()) "bé $selectedPetName" else "thú cưng"
+                            NotificationHelper.scheduleAlarm(
+                                context = context,
+                                scheduleId = finalSchedule.id,
+                                title = "Lịch hẹn: $finalTitle",
+                                message = "Đã đến lịch: $finalTitle cho $petLabel lúc $timeText ($dateText)",
+                                triggerAtMillis = triggerMillis
+                            )
+                        }
+
                         onSaved()
                     },
                     modifier = Modifier
