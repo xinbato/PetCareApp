@@ -1,4 +1,5 @@
 package com.example.petcare.ui.screens
+import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,16 +40,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
+import com.example.petcare.ui.components.PetAvatar
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.HealthViewModel
 
 @Composable
@@ -70,7 +66,7 @@ fun HealthDetailScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -91,7 +87,7 @@ fun HealthDetailScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -101,12 +97,12 @@ fun HealthDetailScreen(
                         text = "Chi tiết sức khỏe",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Theo dõi chỉ số của $petDisplayName",
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -124,10 +120,10 @@ fun HealthDetailScreen(
                 // Top Pet Status Card
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                 ) {
                     Row(
                         modifier = Modifier
@@ -141,13 +137,14 @@ fun HealthDetailScreen(
                                 modifier = Modifier
                                     .size(52.dp)
                                     .clip(CircleShape)
-                                    .background(GreenLight),
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Image(
-                                    painter = painterResource(id = pet.safeIconRes),
+                                PetAvatar(
+                                    photoUri = pet.photoUri,
+                                    fallbackIconRes = pet.safeIconRes,
                                     contentDescription = petDisplayName,
-                                    modifier = Modifier.size(34.dp)
+                                    modifier = Modifier.fillMaxSize(),
                                 )
                             }
                             Spacer(modifier = Modifier.width(14.dp))
@@ -156,13 +153,13 @@ fun HealthDetailScreen(
                                     text = "$petDisplayName • ${pet.statusText.ifBlank { "Bình thường" }}",
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "Cập nhật gần nhất: ${pet.lastUpdated.ifBlank { "Chưa cập nhật" }}",
                                     fontSize = 13.sp,
-                                    color = TextSecondary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -202,11 +199,11 @@ fun HealthDetailScreen(
                 ) {
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         modifier = Modifier
                             .weight(1f)
                             .height(54.dp)
-                            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             .clickable { onVaccinationClick(pet.id) }
                     ) {
                         Box(
@@ -217,7 +214,7 @@ fun HealthDetailScreen(
                                 Icon(
                                     imageVector = PetCareIcons.Syringe,
                                     contentDescription = "Tiêm phòng",
-                                    tint = GreenPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -225,7 +222,7 @@ fun HealthDetailScreen(
                                     text = "Tiêm phòng",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -233,11 +230,11 @@ fun HealthDetailScreen(
 
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         modifier = Modifier
                             .weight(1f)
                             .height(54.dp)
-                            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             .clickable { onMedicationClick(pet.id) }
                     ) {
                         Box(
@@ -248,7 +245,7 @@ fun HealthDetailScreen(
                                 Icon(
                                     imageVector = PetCareIcons.Pill,
                                     contentDescription = "Thuốc",
-                                    tint = GreenPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -256,7 +253,7 @@ fun HealthDetailScreen(
                                     text = "Thuốc",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -266,11 +263,11 @@ fun HealthDetailScreen(
                 // Full-width button: Xem sổ bệnh
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .clickable { onMedicalRecordBookClick(pet.id) }
                 ) {
                     Box(
@@ -281,7 +278,7 @@ fun HealthDetailScreen(
                             text = "Xem sổ bệnh",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = GreenPrimary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -307,10 +304,10 @@ fun HealthMetricRowCard(
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
     ) {
         Column(
             modifier = Modifier
@@ -320,7 +317,7 @@ fun HealthMetricRowCard(
             Text(
                 text = label,
                 fontSize = 12.sp,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Normal
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -328,7 +325,7 @@ fun HealthMetricRowCard(
                 text = value,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

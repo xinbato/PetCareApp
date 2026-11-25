@@ -36,12 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
+import androidx.compose.material3.MaterialTheme
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.PetManagementViewModel
 
 @Composable
@@ -57,7 +53,7 @@ fun SelectPetToEditScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -78,7 +74,7 @@ fun SelectPetToEditScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -88,12 +84,12 @@ fun SelectPetToEditScreen(
                         text = "Chỉnh sửa thú cưng",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Chọn thú cưng cần chỉnh sửa",
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -112,11 +108,11 @@ fun SelectPetToEditScreen(
                 items(pets, key = { it.id }) { pet ->
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             .clickable { onPetSelected(pet.id) }
                     ) {
                         Row(
@@ -130,12 +126,12 @@ fun SelectPetToEditScreen(
                                 text = pet.name,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Icon(
                                 imageVector = PetCareIcons.Edit,
                                 contentDescription = "Chỉnh sửa ${pet.name}",
-                                tint = GreenPrimary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }

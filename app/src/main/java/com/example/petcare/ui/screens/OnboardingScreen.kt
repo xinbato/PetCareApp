@@ -36,24 +36,44 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.petcare.R
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
+import com.example.petcare.ui.viewmodel.AuthViewModel
 
 @Composable
 fun OnboardingScreen(
     modifier: Modifier = Modifier,
     onGetStartedClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
+    onGuestSuccessClick: () -> Unit = {},
+    authViewModel: AuthViewModel = viewModel(),
 ) {
-    Column(
+    val context = LocalContext.current
+    val authState by authViewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        authViewModel.tryGoogleAutoSignIn(context) {
+            onGuestSuccessClick()
+        }
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center,
+    ) {
+    Column(
+        modifier = Modifier
+            .widthIn(max = 560.dp)
+            .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -70,7 +90,7 @@ fun OnboardingScreen(
                 text = stringResource(R.string.onboarding_welcome_title),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -78,7 +98,7 @@ fun OnboardingScreen(
                 text = stringResource(R.string.onboarding_welcome_subtitle),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }
@@ -90,7 +110,7 @@ fun OnboardingScreen(
             modifier = Modifier
                 .size(width = 297.dp, height = 245.dp)
                 .clip(RoundedCornerShape(28.dp))
-                .background(GreenLight),
+                .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
             Image(
@@ -111,7 +131,7 @@ fun OnboardingScreen(
                 text = stringResource(R.string.onboarding_headline),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -119,7 +139,7 @@ fun OnboardingScreen(
                 text = stringResource(R.string.onboarding_body),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }
@@ -133,13 +153,14 @@ fun OnboardingScreen(
         ) {
             Button(
                 onClick = onGetStartedClick,
+                enabled = !authState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = GreenPrimary,
-                    contentColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
             ) {
                 Text(
@@ -151,24 +172,53 @@ fun OnboardingScreen(
 
             OutlinedButton(
                 onClick = onLoginClick,
+                enabled = !authState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
                 shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, BorderLight),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    contentColor = GreenPrimary,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
                 ),
             ) {
                 Text(
                     text = stringResource(R.string.btn_has_account),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = GreenPrimary,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            TextButton(
+                onClick = {
+                    authViewModel.signInAsGuest(
+                        onSuccess = { onGuestSuccessClick() },
+                    )
+                },
+                enabled = !authState.isLoading,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = "Dùng thử ngay với tài khoản Khách",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            authState.errorMessage?.let { err ->
+                Text(
+                    text = err,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
+    }
     }
 }
 

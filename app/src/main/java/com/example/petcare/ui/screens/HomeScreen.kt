@@ -56,7 +56,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.PetModel
 import com.example.petcare.data.model.ScheduleModel
+import com.example.petcare.ui.components.HomeSkeleton
+import com.example.petcare.ui.components.PetAvatar
+import com.example.petcare.ui.components.PetCareAdaptiveTabScaffold
+import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
+import com.example.petcare.ui.components.SmoothSkeletonWrapper
+import com.example.petcare.ui.viewmodel.SettingsViewModel
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.viewmodel.HomeUiState
 import com.example.petcare.ui.viewmodel.HomeViewModel
@@ -89,30 +95,44 @@ fun HomeScreen(
     onProfileTabClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var selectedBottomTab by remember { mutableIntStateOf(0) }
     val displayName = uiState.userName.ifBlank { userName.ifBlank { "Bạn" } }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding(),
+    PetCareAdaptiveTabScaffold(
+        currentTab = PetCareTab.HOME,
+        onTabSelected = { tab ->
+            when (tab) {
+                PetCareTab.HOME -> Unit
+                PetCareTab.HEALTH -> onHealthTabClick()
+                PetCareTab.CALENDAR -> onCalendarTabClick()
+                PetCareTab.MAP -> onMapTabClick()
+                PetCareTab.PROFILE -> onProfileTabClick()
+            }
+        },
+        modifier = modifier,
+    ) { innerPadding ->
+        SmoothSkeletonWrapper(
+            isLoading = uiState.isLoading && uiState.pets.isEmpty(),
+            skeleton = {
+                HomeSkeleton(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .statusBarsPadding(),
+                )
+            },
         ) {
-            HomeTopHeader(
-                userName = displayName,
-                onNotificationClick = { /* Notification click */ },
-            )
-
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .statusBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 16.dp),
             ) {
+                HomeTopHeader(
+                    userName = displayName,
+                    onNotificationClick = { onCalendarTabClick() },
+                )
+
                 MyPetsSection(
                     pets = uiState.pets,
                     selectedPetId = uiState.selectedPetId,
@@ -152,21 +172,6 @@ fun HomeScreen(
 
                 CareTipsSection()
             }
-
-            PetCareTabBar(
-                selectedTab = selectedBottomTab,
-                onTabSelected = { tabIndex ->
-                    selectedBottomTab = tabIndex
-                    when (tabIndex) {
-                        0 -> {}
-                        1 -> onHealthTabClick()
-                        2 -> onCalendarTabClick()
-                        3 -> onMapTabClick()
-                        4 -> onProfileTabClick()
-                    }
-                },
-                onAddPetClick = onAddPetClick,
-            )
         }
     }
 }
@@ -358,11 +363,11 @@ private fun PetCardItem(
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        painter = painterResource(id = pet.safeIconRes),
+                    PetAvatar(
+                        photoUri = pet.photoUri,
+                        fallbackIconRes = pet.safeIconRes,
                         contentDescription = pet.name,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 

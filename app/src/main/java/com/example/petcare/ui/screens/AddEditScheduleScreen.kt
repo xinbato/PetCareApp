@@ -51,13 +51,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.ScheduleModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.CalendarViewModel
 import com.example.petcare.utils.NotificationHelper
 import java.util.Calendar
@@ -135,7 +130,7 @@ fun AddEditScheduleScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -156,7 +151,7 @@ fun AddEditScheduleScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(30.dp)
                     )
                 }
@@ -166,14 +161,14 @@ fun AddEditScheduleScreen(
                         text = screenTitle,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = screenSubtitle,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Normal,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -212,8 +207,8 @@ fun AddEditScheduleScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White)
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .padding(20.dp)
                 ) {
                     Column {
@@ -221,7 +216,7 @@ fun AddEditScheduleScreen(
                             text = "Tiêu đề",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         BasicTextField(
@@ -229,7 +224,7 @@ fun AddEditScheduleScreen(
                             onValueChange = { title = it },
                             textStyle = TextStyle(
                                 fontSize = 15.sp,
-                                color = TextPrimary,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Normal
                             ),
                             decorationBox = { innerTextField ->
@@ -237,7 +232,7 @@ fun AddEditScheduleScreen(
                                     Text(
                                         text = "Tiêm ngừa",
                                         fontSize = 15.sp,
-                                        color = TextSecondary.copy(alpha = 0.6f)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                     )
                                 }
                                 innerTextField()
@@ -253,8 +248,8 @@ fun AddEditScheduleScreen(
                         .fillMaxWidth()
                         .height(110.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White)
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .padding(20.dp)
                 ) {
                     BasicTextField(
@@ -262,7 +257,7 @@ fun AddEditScheduleScreen(
                         onValueChange = { description = it },
                         textStyle = TextStyle(
                             fontSize = 15.sp,
-                            color = TextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Normal
                         ),
                         decorationBox = { innerTextField ->
@@ -270,7 +265,7 @@ fun AddEditScheduleScreen(
                                 Text(
                                     text = "Mô tả",
                                     fontSize = 15.sp,
-                                    color = TextSecondary.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                 )
                             }
                             innerTextField()
@@ -285,7 +280,7 @@ fun AddEditScheduleScreen(
                         text = "Áp dụng cho bé",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
@@ -299,10 +294,10 @@ fun AddEditScheduleScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(if (isSelected) GreenPrimary else Color.White)
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
                                     .border(
                                         1.dp,
-                                        if (isSelected) GreenPrimary else BorderLight,
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                         RoundedCornerShape(20.dp)
                                     )
                                     .clickable {
@@ -315,7 +310,7 @@ fun AddEditScheduleScreen(
                                     text = pet.name,
                                     fontSize = 13.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) Color.White else TextPrimary
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -347,7 +342,7 @@ fun AddEditScheduleScreen(
                                 Icon(
                                     imageVector = Icons.Default.DateRange,
                                     contentDescription = "Clock",
-                                    tint = TextPrimary,
+                                    tint = MaterialTheme.colorScheme.onBackground,
                                     modifier = Modifier.size(22.dp)
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -355,7 +350,7 @@ fun AddEditScheduleScreen(
                                     text = if (timeText.isNotEmpty()) timeText else "09:41 AM",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -372,8 +367,8 @@ fun AddEditScheduleScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(Color.White)
-                                    .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                                     .clickable { datePickerDialog.show() }
                                     .padding(12.dp),
                                 contentAlignment = Alignment.Center
@@ -382,14 +377,14 @@ fun AddEditScheduleScreen(
                                     Text(
                                         text = "Ngày",
                                         fontSize = 11.sp,
-                                        color = TextSecondary
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = dateText,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -399,8 +394,8 @@ fun AddEditScheduleScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(14.dp))
-                                    .background(Color.White)
-                                    .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                                     .clickable { timePickerDialog.show() }
                                     .padding(12.dp),
                                 contentAlignment = Alignment.Center
@@ -409,14 +404,14 @@ fun AddEditScheduleScreen(
                                     Text(
                                         text = "Giờ",
                                         fontSize = 11.sp,
-                                        color = TextSecondary
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = timeText,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -428,7 +423,7 @@ fun AddEditScheduleScreen(
                         Text(
                             text = "Nhãn hiển thị nhanh",
                             fontSize = 12.sp,
-                            color = TextSecondary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.align(Alignment.Start)
                         )
                         Spacer(modifier = Modifier.height(6.dp))
@@ -443,7 +438,7 @@ fun AddEditScheduleScreen(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(14.dp))
-                                        .background(if (isSelected) GreenPrimary else Color.White)
+                                        .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
                                         .clickable { timeOrDateLabel = label }
                                         .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
@@ -451,7 +446,7 @@ fun AddEditScheduleScreen(
                                         text = label,
                                         fontSize = 12.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) Color.White else TextPrimary
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -477,10 +472,10 @@ fun AddEditScheduleScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = TextPrimary,
-                        containerColor = Color.White
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight)
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Text(
                         text = "Hủy",
@@ -529,8 +524,8 @@ fun AddEditScheduleScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(24.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = GreenPrimary,
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Text(

@@ -39,15 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
 import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.components.PetCareTopAppBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.GreenPrimary
-import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.RedError
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.viewmodel.AuthViewModel
@@ -81,13 +77,13 @@ fun ForgotPasswordScreen(
     val helperColor = if (emailOrPhoneType == InputType.UNKNOWN && emailOrPhone.isNotBlank()) {
         RedError
     } else {
-        GreenPrimary
+        MaterialTheme.colorScheme.primary
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -146,15 +142,15 @@ fun ForgotPasswordScreen(
                 .height(54.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = GreenPrimary,
-                contentColor = Color.White,
-                disabledContainerColor = GreenPrimary.copy(alpha = 0.5f),
-                disabledContentColor = Color.White.copy(alpha = 0.7f),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
             ),
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     strokeWidth = 2.5.dp,
                     modifier = Modifier.size(24.dp)
                 )
@@ -174,7 +170,7 @@ fun ForgotPasswordScreen(
             text = stringResource(R.string.btn_back_to_login),
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = GreenPrimary,
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
@@ -190,13 +186,13 @@ fun ForgotPasswordScreen(
                     Text(
                         text = "Đã gửi liên kết khôi phục",
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 text = {
                     Text(
                         text = "Liên kết đặt lại mật khẩu đã được gửi đến email:\n$sentEmailTarget\n\nVui lòng mở hộp thư đến (kiểm tra cả mục Spam/Thư rác) và nhấn vào liên kết để tạo mật khẩu mới.",
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                         lineHeight = 20.sp
                     )
@@ -207,7 +203,7 @@ fun ForgotPasswordScreen(
                             showSuccessDialog = false
                             onBackToLoginClick()
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text(text = "Quay lại Đăng nhập", fontWeight = FontWeight.Bold)
                     }

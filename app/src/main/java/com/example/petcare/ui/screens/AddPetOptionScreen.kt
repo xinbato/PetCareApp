@@ -31,13 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
+import androidx.compose.material3.MaterialTheme
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 
 @Composable
 fun AddPetOptionScreen(
@@ -49,7 +44,7 @@ fun AddPetOptionScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -70,7 +65,7 @@ fun AddPetOptionScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -80,12 +75,12 @@ fun AddPetOptionScreen(
                         text = "Thêm thú cưng",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Chọn phương thức thêm thú cưng",
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -101,10 +96,10 @@ fun AddPetOptionScreen(
                 // Option 1: Nhập thủ công
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .clickable(onClick = onHandmadeClick)
                 ) {
                     Row(
@@ -116,13 +111,13 @@ fun AddPetOptionScreen(
                         Box(
                             modifier = Modifier
                                 .size(50.dp)
-                                .background(GreenLight, RoundedCornerShape(12.dp)),
+                                .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = PetCareIcons.Edit,
                                 contentDescription = "Thủ công",
-                                tint = GreenPrimary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(26.dp)
                             )
                         }
@@ -132,13 +127,13 @@ fun AddPetOptionScreen(
                                 text = "Nhập thông tin thủ công",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Tự điền tên, giống, ngày sinh, cân nặng",
                                 fontSize = 13.sp,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -147,10 +142,10 @@ fun AddPetOptionScreen(
                 // Option 2: Quét bằng camera
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .clickable(onClick = onCameraClick)
                 ) {
                     Row(
@@ -162,13 +157,13 @@ fun AddPetOptionScreen(
                         Box(
                             modifier = Modifier
                                 .size(50.dp)
-                                .background(GreenLight, RoundedCornerShape(12.dp)),
+                                .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = PetCareIcons.Camera,
                                 contentDescription = "Camera",
-                                tint = GreenPrimary,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(26.dp)
                             )
                         }
@@ -178,13 +173,13 @@ fun AddPetOptionScreen(
                                 text = "Quét qua Camera / Ảnh",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Nhận diện giống thú cưng tự động thông minh",
                                 fontSize = 13.sp,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }

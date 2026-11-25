@@ -44,12 +44,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.components.PetCareTopAppBar
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
 import com.example.petcare.ui.components.SocialLoginSection
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.AuthViewModel
 import com.example.petcare.utils.GoogleSignInHelper
 import com.example.petcare.utils.InputType
@@ -83,7 +82,7 @@ fun RegisterScreen(
     val usernameHelperColor = if (!isUsernameValid && username.isNotBlank()) {
         RedError
     } else {
-        GreenPrimary
+        MaterialTheme.colorScheme.primary
     }
 
     val emailOrPhoneType = remember(emailOrPhone) {
@@ -98,13 +97,13 @@ fun RegisterScreen(
     val emailOrPhoneHelperColor = if (emailOrPhoneType == InputType.UNKNOWN && emailOrPhone.isNotBlank()) {
         RedError
     } else {
-        GreenPrimary
+        MaterialTheme.colorScheme.primary
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -175,7 +174,7 @@ fun RegisterScreen(
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GreenPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .clickable { isPasswordVisible = !isPasswordVisible }
                             .padding(horizontal = 4.dp, vertical = 2.dp),
@@ -195,7 +194,7 @@ fun RegisterScreen(
             text = stringResource(R.string.terms_note),
             fontSize = 11.sp,
             fontWeight = FontWeight.Normal,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -241,8 +240,8 @@ fun RegisterScreen(
                 .height(54.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = GreenPrimary,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             ),
         ) {
             Text(

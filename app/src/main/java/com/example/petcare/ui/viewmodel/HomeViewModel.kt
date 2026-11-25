@@ -30,13 +30,14 @@ class HomeViewModel(
         repository.pets,
         repository.currentSelectedPetId,
         repository.schedules,
-    ) { userProfile, pets, selectedPetId, schedules ->
+        repository.isLoading,
+    ) { userProfile, pets, selectedPetId, schedules, loading ->
         HomeUiState(
             userName = userProfile.name,
             pets = pets,
             selectedPetId = selectedPetId.ifEmpty { pets.firstOrNull()?.id ?: "1" },
             schedules = schedules,
-            isLoading = false,
+            isLoading = loading,
         )
     }.stateIn(
         scope = viewModelScope,

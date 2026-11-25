@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -39,14 +41,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.components.PetCareTopAppBar
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import com.example.petcare.ui.components.SocialLoginSection
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 import com.example.petcare.ui.viewmodel.AuthViewModel
@@ -71,6 +74,7 @@ fun LoginScreen(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Input type detection logic — chỉ email mới được đăng nhập Firebase
     val detectedInputType = remember(emailOrPhone) {
@@ -88,13 +92,25 @@ fun LoginScreen(
     val helperColor = if (detectedInputType == InputType.UNKNOWN && emailOrPhone.isNotBlank()) {
         RedError
     } else {
-        GreenPrimary
+        MaterialTheme.colorScheme.primary
     }
 
-    Column(
+    LaunchedEffect(Unit) {
+        viewModel.tryGoogleAutoSignIn(context) { name ->
+            onLoginSuccessClick(name)
+        }
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center,
+    ) {
+    Column(
+        modifier = Modifier
+            .widthIn(max = 560.dp)
+            .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -141,7 +157,7 @@ fun LoginScreen(
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GreenPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .clickable { isPasswordVisible = !isPasswordVisible }
                             .padding(horizontal = 4.dp, vertical = 2.dp),
@@ -161,7 +177,7 @@ fun LoginScreen(
             text = stringResource(R.string.btn_forgot_password),
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = GreenPrimary,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .clickable { onForgotPasswordClick() }
                 .padding(vertical = 4.dp),
@@ -198,8 +214,8 @@ fun LoginScreen(
                     .height(54.dp),
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = GreenPrimary,
-                    contentColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
             ) {
                 Text(
@@ -215,17 +231,17 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(54.dp),
                 shape = RoundedCornerShape(18.dp),
-                border = BorderStroke(1.dp, BorderLight),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    contentColor = GreenPrimary,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
                 ),
             ) {
                 Text(
                     text = stringResource(R.string.btn_create_account),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = GreenPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -245,6 +261,28 @@ fun LoginScreen(
                 )
             }
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        androidx.compose.material3.TextButton(
+            onClick = {
+                inlineError = null
+                viewModel.signInAsGuest(
+                    onSuccess = onLoginSuccessClick,
+                    onError = { msg -> inlineError = msg }
+                )
+            },
+            enabled = !uiState.isLoading,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "Tiếp tục với vai trò Khách",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
     }
 }
 

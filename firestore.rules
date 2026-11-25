@@ -1,0 +1,619 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: usernames
+    // Document ID: lowercase username matching ^[a-z0-9._]{3,40}$
+    // Fields:
+    //   - userId: string (required, must match request.auth.uid)
+    //   - email: string (required, 3..120 chars)
+    //   - updatedAt: timestamp (required, <= request.time)
+    //
+    // Collection: users
+    // Document ID: Firebase Auth UID (1..128 chars, ^[a-zA-Z0-9_\-]+$)
+    // Fields (optional on partial/merge writes, strictly whitelisted):
+    //   - userId: string (optional, immutable once set, must equal userId)
+    //   - name: string (optional, <= 80 chars)
+    //   - email: string (optional, <= 120 chars)
+    //   - username: string (optional, <= 40 chars)
+    //   - phone: string (optional, <= 30 chars)
+    //   - dob: string (optional, <= 30 chars)
+    //   - address: string (optional, <= 200 chars)
+    //   - avatarUri: string (optional, <= 600 chars)
+    //   - headerBgColorHex: int (optional)
+    //   - headerBgUri: string (optional, <= 600 chars)
+    //   - createdAt: timestamp (immutable once set; legacy int millis preserved on merge/update)
+    //   - lastLogin: timestamp (legacy int millis preserved if unchanged on merge/update)
+    //   - updatedAt: timestamp (<= request.time)
+    //
+    // Subcollection: users/{userId}/pets/{petId}
+    // Document ID: 1..128 chars, ^[a-zA-Z0-9_\-]+$ (UUID)
+    // Required fields (23):
+    //   - userId (string, immutable, == userId)
+    //   - name (string, 1..60), species (string, <= 40), breed (string, <= 60)
+    //   - dateOfBirth (string, <= 30), age (string, <= 40), weight (string, <= 30)
+    //   - weightKg (number, 0..250), gender (string, <= 20), iconRes (int)
+    //   - photoUri (string, <= 600), color (string, <= 40), notes (string, <= 1000)
+    //   - statusText (string, <= 60), statusDetail (string, <= 300)
+    //   - isFavorite (bool), createdByAi (bool, immutable)
+    //   - temperature (string, <= 30), activity (string, <= 200), diet (string, <= 300)
+    //   - lastUpdated (string, <= 60)
+    //   - createdAt (timestamp, immutable), updatedAt (timestamp)
+    //
+    // Subcollection: users/{userId}/vaccinations/{vaccinationId}
+    // Required fields (13): userId, petId (immutable, existing pet on create),
+    //   petName, title, dateTime, status, scheduledDateMillis (int >= 0),
+    //   completed (bool), reminderEnabled (bool), reminderDaysBefore (int 0..30),
+    //   notes, createdAt (immutable timestamp), updatedAt (timestamp)
+    //
+    // Subcollection: users/{userId}/medications/{medicationId}
+    // Required fields (16): userId, petId (immutable, existing pet on create),
+    //   petName, name, dosage, scheduleTime, quantity, status,
+    //   reminderHour (int 0..23), reminderMinute (int 0..59),
+    //   endDateMillis (int >= 0), lastTakenDateKey, active (bool),
+    //   reminderEnabled (bool), createdAt (immutable timestamp), updatedAt (timestamp)
+    //
+    // Subcollection: users/{userId}/medicalRecords/{recordId}
+    // Required fields (11): userId, petId (immutable, existing pet on create),
+    //   petName, dateTime, activityType, description, photoUri, emotion,
+    //   recordDateMillis (int >= 0), createdAt (immutable timestamp), updatedAt (timestamp)
+    //
+    // Subcollection: users/{userId}/weightRecords/{recordId}
+    // Required fields (10): userId, petId (immutable, existing pet on create),
+    //   petName, weight, weightKg (number 0..250), dateTime,
+    //   recordedAtMillis (int >= 0), status, createdAt (immutable timestamp), updatedAt (timestamp)
+    //
+    // Subcollection: users/{userId}/checkupRecords/{recordId}
+    // Required fields (11): userId, petId (immutable, existing pet on create),
+    //   petName, title, doctorOrClinic, dateTime, result, status,
+    //   recordDateMillis (int >= 0), createdAt (immutable timestamp), updatedAt (timestamp)
+    //
+    // Subcollection: users/{userId}/schedules/{scheduleId}
+    // Required fields (13): userId (immutable), title, description,
+    //   petId ("" or existing petId), petName, dateText, timeText, timeOrDateLabel,
+    //   triggerAtMillis (int >= 0), reminderEnabled (bool), isCompleted (bool),
+    //   createdAt (immutable timestamp), updatedAt (timestamp)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Core Helper Functions
+    // ===============================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAuthenticated() {
+      return isSignedIn();
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string &&
+             id.size() >= 1 &&
+             id.size() <= 128 &&
+             id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUsername(username) {
+      return username is string &&
+             username.matches('^[a-z0-9._]{3,40}$');
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() &&
+             isValidId(userId) &&
+             request.auth.uid == userId;
+    }
+
+    function uidUnchanged() {
+      return !('userId' in incoming()) ||
+             incoming().userId == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('userId' in existing()) ||
+             ('userId' in incoming() && incoming().userId == existing().userId);
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isLegacyEpochMillis(val) {
+      return val is int && val >= 0 && val <= 9999999999999;
+    }
+
+    function isValidBoundString(data, field, minLen, maxLen) {
+      return !(field in data) ||
+             (data[field] is string &&
+              data[field].size() >= minLen &&
+              data[field].size() <= maxLen);
+    }
+
+    function petExists(userId, petId) {
+      return isValidId(petId) &&
+             exists(/databases/$(database)/documents/users/$(userId)/pets/$(petId));
+    }
+
+    // Ensures added keys are within schema, changed keys are within mutable fields,
+    // and existing schema fields cannot be deleted, while permitting cleanup of legacy extra keys.
+    function isValidFieldDiff(allFields, mutableFields) {
+      let diff = incoming().diff(existing());
+      return diff.addedKeys().hasOnly(allFields) &&
+             diff.changedKeys().hasOnly(mutableFields) &&
+             !diff.removedKeys().hasAny(allFields);
+    }
+
+    function isImmutableStringField(field, expectedOnBackfill) {
+      return (field in existing() &&
+              field in incoming() &&
+              incoming()[field] == existing()[field]) ||
+             (!(field in existing()) &&
+              (!(field in incoming()) || incoming()[field] == expectedOnBackfill));
+    }
+
+    function isImmutableOrBackfilledTimestamp(field) {
+      return (field in existing() &&
+              field in incoming() &&
+              incoming()[field] == existing()[field]) ||
+             (!(field in existing()) &&
+              (!(field in incoming()) || isValidTimestamp(incoming()[field])));
+    }
+
+    function isImmutableOrBackfilledBool(field) {
+      return (field in existing() &&
+              field in incoming() &&
+              incoming()[field] == existing()[field]) ||
+             (!(field in existing()) &&
+              (!(field in incoming()) || incoming()[field] is bool));
+    }
+
+    function isImmutableOrBackfilledPetId(userId) {
+      return ('petId' in existing() &&
+              'petId' in incoming() &&
+              incoming().petId == existing().petId) ||
+             (!('petId' in existing()) &&
+              (!('petId' in incoming()) || petExists(userId, incoming().petId)));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUsernameLookup(data) {
+      return data.keys().hasAll(['userId', 'email', 'updatedAt']) &&
+             data.keys().hasOnly(['userId', 'email', 'updatedAt']) &&
+             data.userId is string &&
+             data.userId == request.auth.uid &&
+             data.email is string &&
+             data.email.size() >= 3 &&
+             data.email.size() <= 120 &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function userProfileFields() {
+      return [
+        'userId', 'name', 'email', 'username', 'phone', 'dob', 'address',
+        'avatarUri', 'headerBgColorHex', 'headerBgUri',
+        'createdAt', 'lastLogin', 'updatedAt'
+      ];
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasOnly(userProfileFields()) &&
+             (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             isValidBoundString(data, 'name', 0, 80) &&
+             isValidBoundString(data, 'email', 0, 120) &&
+             isValidBoundString(data, 'username', 0, 40) &&
+             isValidBoundString(data, 'phone', 0, 30) &&
+             isValidBoundString(data, 'dob', 0, 30) &&
+             isValidBoundString(data, 'address', 0, 200) &&
+             isValidBoundString(data, 'avatarUri', 0, 600) &&
+             (!('headerBgColorHex' in data) || (data.headerBgColorHex is int)) &&
+             isValidBoundString(data, 'headerBgUri', 0, 600) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function petFields() {
+      return [
+        'userId', 'name', 'species', 'breed', 'dateOfBirth', 'age', 'weight',
+        'weightKg', 'gender', 'iconRes', 'photoUri', 'color', 'notes',
+        'statusText', 'statusDetail', 'isFavorite', 'createdByAi',
+        'temperature', 'activity', 'diet', 'lastUpdated', 'createdAt', 'updatedAt'
+      ];
+    }
+
+    function petMutableFields() {
+      return [
+        'name', 'species', 'breed', 'dateOfBirth', 'age', 'weight',
+        'weightKg', 'gender', 'iconRes', 'photoUri', 'color', 'notes',
+        'statusText', 'statusDetail', 'isFavorite',
+        'temperature', 'activity', 'diet', 'lastUpdated', 'updatedAt'
+      ];
+    }
+
+    function isValidPetData(data, userId) {
+      return (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             isValidBoundString(data, 'name', 1, 60) &&
+             isValidBoundString(data, 'species', 0, 40) &&
+             isValidBoundString(data, 'breed', 0, 60) &&
+             isValidBoundString(data, 'dateOfBirth', 0, 30) &&
+             isValidBoundString(data, 'age', 0, 40) &&
+             isValidBoundString(data, 'weight', 0, 30) &&
+             (!('weightKg' in data) || (data.weightKg is number && data.weightKg >= 0 && data.weightKg <= 250)) &&
+             isValidBoundString(data, 'gender', 0, 20) &&
+             (!('iconRes' in data) || (data.iconRes is int)) &&
+             isValidBoundString(data, 'photoUri', 0, 600) &&
+             isValidBoundString(data, 'color', 0, 40) &&
+             isValidBoundString(data, 'notes', 0, 1000) &&
+             isValidBoundString(data, 'statusText', 0, 60) &&
+             isValidBoundString(data, 'statusDetail', 0, 300) &&
+             (!('isFavorite' in data) || (data.isFavorite is bool)) &&
+             (!('createdByAi' in data) || (data.createdByAi is bool)) &&
+             isValidBoundString(data, 'temperature', 0, 30) &&
+             isValidBoundString(data, 'activity', 0, 200) &&
+             isValidBoundString(data, 'diet', 0, 300) &&
+             isValidBoundString(data, 'lastUpdated', 0, 60) &&
+             (!('createdAt' in data) || isValidTimestamp(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function vaccinationFields() {
+      return [
+        'userId', 'petId', 'petName', 'title', 'dateTime', 'status',
+        'scheduledDateMillis', 'completed', 'reminderEnabled',
+        'reminderDaysBefore', 'notes', 'createdAt', 'updatedAt'
+      ];
+    }
+
+    function vaccinationMutableFields() {
+      return [
+        'petName', 'title', 'dateTime', 'status',
+        'scheduledDateMillis', 'completed', 'reminderEnabled',
+        'reminderDaysBefore', 'notes', 'updatedAt'
+      ];
+    }
+
+    function isValidVaccinationData(data, userId) {
+      return (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             (!('petId' in data) || isValidId(data.petId)) &&
+             isValidBoundString(data, 'petName', 0, 60) &&
+             isValidBoundString(data, 'title', 1, 100) &&
+             isValidBoundString(data, 'dateTime', 0, 60) &&
+             isValidBoundString(data, 'status', 0, 40) &&
+             (!('scheduledDateMillis' in data) || (data.scheduledDateMillis is int && data.scheduledDateMillis >= 0)) &&
+             (!('completed' in data) || (data.completed is bool)) &&
+             (!('reminderEnabled' in data) || (data.reminderEnabled is bool)) &&
+             (!('reminderDaysBefore' in data) || (data.reminderDaysBefore is int && data.reminderDaysBefore >= 0 && data.reminderDaysBefore <= 30)) &&
+             isValidBoundString(data, 'notes', 0, 1000) &&
+             (!('createdAt' in data) || isValidTimestamp(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function medicationFields() {
+      return [
+        'userId', 'petId', 'petName', 'name', 'dosage', 'scheduleTime',
+        'quantity', 'status', 'reminderHour', 'reminderMinute',
+        'endDateMillis', 'lastTakenDateKey', 'active', 'reminderEnabled',
+        'createdAt', 'updatedAt'
+      ];
+    }
+
+    function medicationMutableFields() {
+      return [
+        'petName', 'name', 'dosage', 'scheduleTime',
+        'quantity', 'status', 'reminderHour', 'reminderMinute',
+        'endDateMillis', 'lastTakenDateKey', 'active', 'reminderEnabled',
+        'updatedAt'
+      ];
+    }
+
+    function isValidMedicationData(data, userId) {
+      return (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             (!('petId' in data) || isValidId(data.petId)) &&
+             isValidBoundString(data, 'petName', 0, 60) &&
+             isValidBoundString(data, 'name', 1, 100) &&
+             isValidBoundString(data, 'dosage', 0, 80) &&
+             isValidBoundString(data, 'scheduleTime', 0, 60) &&
+             isValidBoundString(data, 'quantity', 0, 60) &&
+             isValidBoundString(data, 'status', 0, 40) &&
+             (!('reminderHour' in data) || (data.reminderHour is int && data.reminderHour >= 0 && data.reminderHour <= 23)) &&
+             (!('reminderMinute' in data) || (data.reminderMinute is int && data.reminderMinute >= 0 && data.reminderMinute <= 59)) &&
+             (!('endDateMillis' in data) || (data.endDateMillis is int && data.endDateMillis >= 0)) &&
+             isValidBoundString(data, 'lastTakenDateKey', 0, 20) &&
+             (!('active' in data) || (data.active is bool)) &&
+             (!('reminderEnabled' in data) || (data.reminderEnabled is bool)) &&
+             (!('createdAt' in data) || isValidTimestamp(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function medicalRecordFields() {
+      return [
+        'userId', 'petId', 'petName', 'dateTime', 'activityType',
+        'description', 'photoUri', 'emotion', 'recordDateMillis',
+        'createdAt', 'updatedAt'
+      ];
+    }
+
+    function medicalRecordMutableFields() {
+      return [
+        'petName', 'dateTime', 'activityType',
+        'description', 'photoUri', 'emotion', 'recordDateMillis',
+        'updatedAt'
+      ];
+    }
+
+    function isValidMedicalRecordData(data, userId) {
+      return (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             (!('petId' in data) || isValidId(data.petId)) &&
+             isValidBoundString(data, 'petName', 0, 60) &&
+             isValidBoundString(data, 'dateTime', 0, 60) &&
+             isValidBoundString(data, 'activityType', 1, 60) &&
+             isValidBoundString(data, 'description', 0, 1500) &&
+             (!('photoUri' in data) || data.photoUri == null || (data.photoUri is string && data.photoUri.size() <= 600)) &&
+             isValidBoundString(data, 'emotion', 0, 40) &&
+             (!('recordDateMillis' in data) || (data.recordDateMillis is int && data.recordDateMillis >= 0)) &&
+             (!('createdAt' in data) || isValidTimestamp(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function weightRecordFields() {
+      return [
+        'userId', 'petId', 'petName', 'weight', 'weightKg',
+        'dateTime', 'recordedAtMillis', 'status', 'createdAt', 'updatedAt'
+      ];
+    }
+
+    function weightRecordMutableFields() {
+      return [
+        'petName', 'weight', 'weightKg',
+        'dateTime', 'recordedAtMillis', 'status', 'updatedAt'
+      ];
+    }
+
+    function isValidWeightRecordData(data, userId) {
+      return (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             (!('petId' in data) || isValidId(data.petId)) &&
+             isValidBoundString(data, 'petName', 0, 60) &&
+             isValidBoundString(data, 'weight', 1, 30) &&
+             (!('weightKg' in data) || (data.weightKg is number && data.weightKg >= 0 && data.weightKg <= 250)) &&
+             isValidBoundString(data, 'dateTime', 0, 60) &&
+             (!('recordedAtMillis' in data) || (data.recordedAtMillis is int && data.recordedAtMillis >= 0)) &&
+             isValidBoundString(data, 'status', 0, 40) &&
+             (!('createdAt' in data) || isValidTimestamp(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function checkupRecordFields() {
+      return [
+        'userId', 'petId', 'petName', 'title', 'doctorOrClinic',
+        'dateTime', 'result', 'status', 'recordDateMillis',
+        'createdAt', 'updatedAt'
+      ];
+    }
+
+    function checkupRecordMutableFields() {
+      return [
+        'petName', 'title', 'doctorOrClinic',
+        'dateTime', 'result', 'status', 'recordDateMillis',
+        'updatedAt'
+      ];
+    }
+
+    function isValidCheckupRecordData(data, userId) {
+      return (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             (!('petId' in data) || isValidId(data.petId)) &&
+             isValidBoundString(data, 'petName', 0, 60) &&
+             isValidBoundString(data, 'title', 1, 100) &&
+             isValidBoundString(data, 'doctorOrClinic', 0, 120) &&
+             isValidBoundString(data, 'dateTime', 0, 60) &&
+             isValidBoundString(data, 'result', 0, 500) &&
+             isValidBoundString(data, 'status', 0, 40) &&
+             (!('recordDateMillis' in data) || (data.recordDateMillis is int && data.recordDateMillis >= 0)) &&
+             (!('createdAt' in data) || isValidTimestamp(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function scheduleFields() {
+      return [
+        'userId', 'title', 'description', 'petId', 'petName',
+        'dateText', 'timeText', 'timeOrDateLabel', 'triggerAtMillis',
+        'reminderEnabled', 'isCompleted', 'createdAt', 'updatedAt'
+      ];
+    }
+
+    function scheduleMutableFields() {
+      return [
+        'title', 'description', 'petId', 'petName',
+        'dateText', 'timeText', 'timeOrDateLabel', 'triggerAtMillis',
+        'reminderEnabled', 'isCompleted', 'updatedAt'
+      ];
+    }
+
+    function isValidScheduleData(data, userId) {
+      return (!('userId' in data) || (data.userId is string && data.userId == userId)) &&
+             isValidBoundString(data, 'title', 1, 100) &&
+             isValidBoundString(data, 'description', 0, 1000) &&
+             (!('petId' in data) || data.petId == '' || isValidId(data.petId)) &&
+             isValidBoundString(data, 'petName', 0, 60) &&
+             isValidBoundString(data, 'dateText', 0, 40) &&
+             isValidBoundString(data, 'timeText', 0, 40) &&
+             isValidBoundString(data, 'timeOrDateLabel', 0, 60) &&
+             (!('triggerAtMillis' in data) || (data.triggerAtMillis is int && data.triggerAtMillis >= 0)) &&
+             (!('reminderEnabled' in data) || (data.reminderEnabled is bool)) &&
+             (!('isCompleted' in data) || (data.isCompleted is bool)) &&
+             (!('createdAt' in data) || isValidTimestamp(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidTimestamp(data.updatedAt));
+    }
+
+    function isValidLinkedRecordCreate(userId, docId, allFields) {
+      return isOwner(userId) &&
+             isValidId(docId) &&
+             incoming().keys().hasAll(allFields) &&
+             incoming().keys().hasOnly(allFields) &&
+             petExists(userId, incoming().petId);
+    }
+
+    function isValidLinkedRecordUpdate(userId, docId, allFields, mutableFields) {
+      return isOwner(userId) &&
+             isValidId(docId) &&
+             isValidFieldDiff(allFields, mutableFields) &&
+             isImmutableStringField('userId', userId) &&
+             isImmutableOrBackfilledPetId(userId) &&
+             isImmutableOrBackfilledTimestamp('createdAt');
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Public single-document lookup for username sign-in / password reset (no collection listing).
+    match /usernames/{username} {
+      allow get: if isValidUsername(username);
+      allow list: if false;
+      allow create: if isSignedIn() &&
+                       isValidUsername(username) &&
+                       isValidUsernameLookup(incoming());
+      allow update: if isSignedIn() &&
+                       isValidUsername(username) &&
+                       existing().userId == request.auth.uid &&
+                       isValidUsernameLookup(incoming());
+      allow delete: if isSignedIn() &&
+                       existing().userId == request.auth.uid;
+    }
+
+    // User profiles contain PII; strictly owner-only with no listing.
+    match /users/{userId} {
+      allow get, delete: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) &&
+                       uidUnchanged() &&
+                       isValidUserProfile(incoming(), userId) &&
+                       (!('createdAt' in incoming()) || isValidTimestamp(incoming().createdAt)) &&
+                       (!('lastLogin' in incoming()) || isValidTimestamp(incoming().lastLogin));
+      allow update: if isOwner(userId) &&
+                       uidNotModified() &&
+                       isValidUserProfile(incoming(), userId) &&
+                       (!('name' in existing()) || 'name' in incoming()) &&
+                       (!('email' in existing()) || 'email' in incoming()) &&
+                       (
+                         ('createdAt' in existing() &&
+                          'createdAt' in incoming() &&
+                          incoming().createdAt == existing().createdAt &&
+                          (isValidTimestamp(incoming().createdAt) || isLegacyEpochMillis(incoming().createdAt))) ||
+                         (!('createdAt' in existing()) &&
+                          (!('createdAt' in incoming()) || isValidTimestamp(incoming().createdAt)))
+                       ) &&
+                       (
+                         !('lastLogin' in incoming()) ||
+                         isValidTimestamp(incoming().lastLogin) ||
+                         ('lastLogin' in existing() &&
+                          incoming().lastLogin == existing().lastLogin &&
+                          isLegacyEpochMillis(incoming().lastLogin))
+                       );
+
+      match /pets/{petId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(petId) &&
+                         incoming().keys().hasAll(petFields()) &&
+                         incoming().keys().hasOnly(petFields()) &&
+                         isValidPetData(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(petId) &&
+                         isValidFieldDiff(petFields(), petMutableFields()) &&
+                         isImmutableStringField('userId', userId) &&
+                         isImmutableOrBackfilledTimestamp('createdAt') &&
+                         isImmutableOrBackfilledBool('createdByAi') &&
+                         isValidPetData(incoming(), userId);
+      }
+
+      match /vaccinations/{vaccinationId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isValidLinkedRecordCreate(userId, vaccinationId, vaccinationFields()) &&
+                         isValidVaccinationData(incoming(), userId);
+        allow update: if isValidLinkedRecordUpdate(userId, vaccinationId, vaccinationFields(), vaccinationMutableFields()) &&
+                         isValidVaccinationData(incoming(), userId);
+      }
+
+      match /medications/{medicationId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isValidLinkedRecordCreate(userId, medicationId, medicationFields()) &&
+                         isValidMedicationData(incoming(), userId);
+        allow update: if isValidLinkedRecordUpdate(userId, medicationId, medicationFields(), medicationMutableFields()) &&
+                         isValidMedicationData(incoming(), userId);
+      }
+
+      match /medicalRecords/{recordId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isValidLinkedRecordCreate(userId, recordId, medicalRecordFields()) &&
+                         incoming().photoUri is string &&
+                         isValidMedicalRecordData(incoming(), userId);
+        allow update: if isValidLinkedRecordUpdate(userId, recordId, medicalRecordFields(), medicalRecordMutableFields()) &&
+                         isValidMedicalRecordData(incoming(), userId) &&
+                         (
+                           !('photoUri' in incoming()) ||
+                           incoming().photoUri is string ||
+                           ('photoUri' in existing() && existing().photoUri == null && incoming().photoUri == null)
+                         );
+      }
+
+      match /weightRecords/{recordId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isValidLinkedRecordCreate(userId, recordId, weightRecordFields()) &&
+                         isValidWeightRecordData(incoming(), userId);
+        allow update: if isValidLinkedRecordUpdate(userId, recordId, weightRecordFields(), weightRecordMutableFields()) &&
+                         isValidWeightRecordData(incoming(), userId);
+      }
+
+      match /checkupRecords/{recordId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isValidLinkedRecordCreate(userId, recordId, checkupRecordFields()) &&
+                         isValidCheckupRecordData(incoming(), userId);
+        allow update: if isValidLinkedRecordUpdate(userId, recordId, checkupRecordFields(), checkupRecordMutableFields()) &&
+                         isValidCheckupRecordData(incoming(), userId);
+      }
+
+      match /schedules/{scheduleId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(scheduleId) &&
+                         incoming().keys().hasAll(scheduleFields()) &&
+                         incoming().keys().hasOnly(scheduleFields()) &&
+                         (incoming().petId == '' || petExists(userId, incoming().petId)) &&
+                         isValidScheduleData(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(scheduleId) &&
+                         isValidFieldDiff(scheduleFields(), scheduleMutableFields()) &&
+                         isImmutableStringField('userId', userId) &&
+                         isImmutableOrBackfilledTimestamp('createdAt') &&
+                         (
+                           !('petId' in incoming()) ||
+                           incoming().petId == '' ||
+                           ('petId' in existing() && incoming().petId == existing().petId) ||
+                           petExists(userId, incoming().petId)
+                         ) &&
+                         isValidScheduleData(incoming(), userId);
+      }
+    }
+
+    // Default deny for all other paths.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

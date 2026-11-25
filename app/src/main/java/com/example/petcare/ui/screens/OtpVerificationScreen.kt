@@ -1,4 +1,5 @@
 package com.example.petcare.ui.screens
+import androidx.compose.material3.MaterialTheme
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
@@ -45,12 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTopAppBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 
 @Composable
@@ -78,7 +74,7 @@ fun OtpVerificationScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -117,12 +113,12 @@ fun OtpVerificationScreen(
                         repeat(4) { index ->
                             val digit = otpCode.getOrNull(index)?.toString() ?: ""
                             val isFocusedBox = otpCode.length == index || (otpCode.length == 4 && index == 3)
-                            val borderColor = if (isFocusedBox || digit.isNotEmpty()) GreenPrimary else BorderLight
+                            val borderColor = if (isFocusedBox || digit.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
 
                             Box(
                                 modifier = Modifier
                                     .size(width = 64.dp, height = 64.dp)
-                                    .background(Color.White, RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
                                     .border(1.5.dp, borderColor, RoundedCornerShape(16.dp)),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -130,7 +126,7 @@ fun OtpVerificationScreen(
                                     text = digit,
                                     fontSize = 22.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     textAlign = TextAlign.Center,
                                 )
                             }
@@ -152,27 +148,27 @@ fun OtpVerificationScreen(
                 Text(
                     text = stringResource(R.string.otp_resend_prefix),
                     fontSize = 13.sp,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "00:${countdown.toString().padStart(2, '0')}",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = GreenPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             } else {
                 Text(
                     text = stringResource(R.string.otp_did_not_receive),
                     fontSize = 13.sp,
-                    color = TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = stringResource(R.string.btn_resend_otp),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = GreenPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable {
                         countdown = 60
                         isTimerRunning = true
@@ -193,10 +189,10 @@ fun OtpVerificationScreen(
                 .height(54.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = GreenPrimary,
-                contentColor = Color.White,
-                disabledContainerColor = GreenPrimary.copy(alpha = 0.5f),
-                disabledContentColor = Color.White.copy(alpha = 0.7f),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
             ),
         ) {
             Text(

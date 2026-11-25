@@ -44,13 +44,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.VaccinationModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import com.example.petcare.ui.components.PetAvatar
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.HealthViewModel
 
 @Composable
@@ -68,13 +67,17 @@ fun VaccinationScreen(
     val vaccinations = uiState.vaccinations
     val singlePet = if (!isAllPets) allPets.find { it.id == petId } ?: uiState.currentPet else null
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(colorScheme.background),
+        contentAlignment = Alignment.TopCenter,
     ) {
         Column(
             modifier = Modifier
+                .widthIn(max = 840.dp)
                 .fillMaxSize()
                 .statusBarsPadding()
         ) {
@@ -92,7 +95,7 @@ fun VaccinationScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = colorScheme.onBackground,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -102,12 +105,12 @@ fun VaccinationScreen(
                         text = "Tiêm phòng",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = colorScheme.onBackground
                     )
                     Text(
                         text = if (isAllPets) "Lịch sử và lịch nhắc vaccine của các bé" else "Lịch sử và lịch nhắc vaccine của ${singlePet?.name}",
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -128,21 +131,20 @@ fun VaccinationScreen(
                         item {
                             Card(
                                 shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                                    .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             ) {
                                 Text(
                                     text = "Chưa có thông tin thú cưng nào. Vui lòng thêm thú cưng để theo dõi lịch tiêm phòng.",
                                     fontSize = 14.sp,
-                                    color = TextSecondary,
+                                    color = colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(20.dp)
                                 )
                             }
                         }
                     } else {
-                        // Hiển thị lịch sử tiêm
                         allPets.forEach { pet ->
                             val petVaccinations = vaccinations.filter { it.petId == pet.id }
 
@@ -151,6 +153,7 @@ fun VaccinationScreen(
                                     petName = pet.name,
                                     species = pet.species,
                                     iconRes = pet.safeIconRes,
+                                    photoUri = pet.photoUri,
                                     count = petVaccinations.size
                                 )
                             }
@@ -159,23 +162,27 @@ fun VaccinationScreen(
                                 item(key = "empty_${pet.id}") {
                                     Card(
                                         shape = RoundedCornerShape(14.dp),
-                                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
+                                            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                                             .padding(vertical = 4.dp)
                                     ) {
                                         Text(
                                             text = "Chưa có lịch tiêm chủng cho ${pet.name}",
                                             fontSize = 13.sp,
-                                            color = TextSecondary,
+                                            color = colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(16.dp)
                                         )
                                     }
                                 }
                             } else {
                                 items(petVaccinations, key = { it.id }) { item ->
-                                    VaccinationItemCard(item = item)
+                                    VaccinationItemCard(
+                                        item = item,
+                                        onToggleCompleted = { viewModel.toggleVaccinationCompleted(item) },
+                                        onDelete = { viewModel.deleteVaccination(item.id) },
+                                    )
                                 }
                             }
 
@@ -185,28 +192,31 @@ fun VaccinationScreen(
                         }
                     }
                 } else {
-                    // Xem của riêng 1 bé
                     val petVaccinations = vaccinations.filter { it.petId == singlePet?.id }
                     if (petVaccinations.isEmpty()) {
                         item {
                             Card(
                                 shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                                    .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             ) {
                                 Text(
                                     text = "Chưa có lịch tiêm chủng cho ${singlePet?.name ?: "bé"}.",
                                     fontSize = 14.sp,
-                                    color = TextSecondary,
+                                    color = colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(20.dp)
                                 )
                             }
                         }
                     } else {
                         items(petVaccinations, key = { it.id }) { item ->
-                            VaccinationItemCard(item = item)
+                            VaccinationItemCard(
+                                item = item,
+                                onToggleCompleted = { viewModel.toggleVaccinationCompleted(item) },
+                                onDelete = { viewModel.deleteVaccination(item.id) },
+                            )
                         }
                     }
                 }
@@ -224,20 +234,19 @@ fun VaccinationScreen(
                         .padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Button 1: + Thêm mũi tiêm
                     Button(
                         onClick = { onAddVaccinationClick(singlePet?.id ?: uiState.selectedPetId) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
                         shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = PetCareIcons.Plus,
                                 contentDescription = "Thêm",
-                                tint = Color.White,
+                                tint = colorScheme.onPrimary,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -245,19 +254,18 @@ fun VaccinationScreen(
                                 text = "Thêm mũi tiêm",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color.White
+                                color = colorScheme.onPrimary
                             )
                         }
                     }
 
-                    // Button 2: Xem trong lịch
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
-                            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                             .clickable(onClick = onViewInCalendarClick)
                     ) {
                         Box(
@@ -268,7 +276,7 @@ fun VaccinationScreen(
                                 text = "Xem trong lịch",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = GreenPrimary
+                                color = colorScheme.primary
                             )
                         }
                     }
@@ -285,7 +293,9 @@ fun PetVaccinationSectionHeader(
     count: Int,
     modifier: Modifier = Modifier,
     species: String = "",
+    photoUri: String = "",
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -298,13 +308,14 @@ fun PetVaccinationSectionHeader(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(GreenLight),
+                    .background(colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = if (iconRes != 0) iconRes else com.example.petcare.R.drawable.dog),
+                PetAvatar(
+                    photoUri = photoUri,
+                    fallbackIconRes = iconRes,
                     contentDescription = petName,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
             Spacer(modifier = Modifier.width(10.dp))
@@ -312,21 +323,21 @@ fun PetVaccinationSectionHeader(
                 text = petName,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = colorScheme.onBackground
             )
         }
 
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(GreenLight)
+                .background(colorScheme.primaryContainer)
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Text(
                 text = "$count mũi tiêm",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = GreenPrimary
+                color = colorScheme.primary
             )
         }
     }
@@ -335,20 +346,24 @@ fun PetVaccinationSectionHeader(
 @Composable
 fun VaccinationItemCard(
     item: VaccinationModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onToggleCompleted: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val isDone = item.completed || item.status == "Đã tiêm"
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -356,49 +371,71 @@ fun VaccinationItemCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(GreenLight),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = PetCareIcons.Syringe,
-                        contentDescription = item.title,
-                        tint = GreenPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                if (onToggleCompleted != null) {
+                    IconButton(onClick = onToggleCompleted, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = if (isDone) androidx.compose.material.icons.Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Default.RadioButtonUnchecked,
+                            contentDescription = if (isDone) "Đã tiêm" else "Đánh dấu đã tiêm",
+                            tint = if (isDone) colorScheme.primary else colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = PetCareIcons.Syringe,
+                            contentDescription = item.title,
+                            tint = colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(14.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
                         text = item.title,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = item.dateTime,
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (item.status == "Đã tiêm") GreenLight else MaterialTheme.colorScheme.tertiaryContainer)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = item.status,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (item.status == "Đã tiêm") GreenPrimary else MaterialTheme.colorScheme.tertiary
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isDone) colorScheme.primaryContainer else colorScheme.tertiaryContainer)
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = item.status,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDone) colorScheme.primary else colorScheme.tertiary
+                    )
+                }
+                if (onDelete != null) {
+                    IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.DeleteOutline,
+                            contentDescription = "Xóa",
+                            tint = colorScheme.error,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
             }
         }
     }

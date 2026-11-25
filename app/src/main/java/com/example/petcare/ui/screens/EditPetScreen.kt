@@ -45,9 +45,23 @@ import com.example.petcare.R
 import com.example.petcare.data.model.PetModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.example.petcare.ui.components.PetAvatar
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.viewmodel.PetManagementViewModel
+import com.example.petcare.utils.DateUtils
+import com.example.petcare.utils.PetPhotoStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun EditPetScreen(
@@ -58,6 +72,8 @@ fun EditPetScreen(
     onSaved: () -> Unit = {},
     onDeleted: () -> Unit = {},
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val initialPet = remember(petId, uiState.pets) {
         uiState.pets.find { it.id == petId } ?: PetModel(
@@ -73,7 +89,23 @@ fun EditPetScreen(
     var dateOfBirth by remember(initialPet.id, initialPet.dateOfBirth) { mutableStateOf(initialPet.dateOfBirth) }
     var weight by remember(initialPet.id, initialPet.weight) { mutableStateOf(initialPet.weight) }
     var gender by remember(initialPet.id, initialPet.gender) { mutableStateOf(initialPet.gender) }
-    var iconRes by remember(initialPet.id, initialPet.iconRes) { mutableIntStateOf(initialPet.iconRes) }
+    var iconRes by remember(initialPet.id, initialPet.safeIconRes) { mutableIntStateOf(initialPet.safeIconRes) }
+    var photoUri by remember(initialPet.id, initialPet.photoUri) { mutableStateOf(initialPet.photoUri) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                val savedPath = withContext(Dispatchers.IO) {
+                    PetPhotoStorage.copyUriToInternalStorage(context, uri).orEmpty()
+                }
+                if (savedPath.isNotBlank()) {
+                    photoUri = savedPath
+                }
+            }
+        }
+    }
 
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
@@ -81,9 +113,11 @@ fun EditPetScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter,
     ) {
         Column(
             modifier = Modifier
+                .widthIn(max = 840.dp)
                 .fillMaxSize()
                 .statusBarsPadding(),
         ) {
@@ -130,6 +164,36 @@ fun EditPetScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    PetAvatar(
+                        photoUri = photoUri,
+                        fallbackIconRes = iconRes,
+                        contentDescription = name,
+                        modifier = Modifier
+                            .size(92.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            photoPickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(
+                            text = if (photoUri.isBlank()) "Thêm ảnh thú cưng" else "Đổi ảnh thú cưng",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
 
                 // Field 1: Tên thú cưng
                 PetCareTextField(
@@ -185,6 +249,7 @@ fun EditPetScreen(
                 Button(
                     onClick = {
                         val currentPet = uiState.pets.find { it.id == petId } ?: initialPet
+                        val parsedKg = DateUtils.parseWeightKg(weight)
                         val updatedPet = currentPet.copy(
                             id = petId,
                             name = name,
@@ -192,8 +257,10 @@ fun EditPetScreen(
                             breed = breed,
                             dateOfBirth = dateOfBirth,
                             weight = weight,
+                            weightKg = if (parsedKg > 0.0) parsedKg else currentPet.weightKg,
                             gender = gender,
                             iconRes = iconRes,
+                            photoUri = photoUri,
                             statusDetail = "Cân nặng $weight",
                         )
                         viewModel.savePet(updatedPet)
@@ -258,7 +325,7 @@ fun EditPetScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deletePet(petId)
+                        viewModel.deletePet(petId, context)
                         showDeleteConfirmDialog = false
                         onDeleted()
                     },

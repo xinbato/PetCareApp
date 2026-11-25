@@ -44,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,13 +67,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.R
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
+import com.example.petcare.ui.components.PetAvatar
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.ProfileViewModel
+import com.example.petcare.utils.PetPhotoStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 
@@ -84,6 +85,7 @@ fun UserProfileDetailScreen(
     onBackClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
     onPetClick: (String) -> Unit = {},
+    onLogoutClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val userProfile = uiState.userProfile
@@ -99,21 +101,37 @@ fun UserProfileDetailScreen(
 
     val avatarBitmap = rememberBitmapFromUri(userProfile.avatarUri)
     val coverBitmap = rememberBitmapFromUri(userProfile.headerBgUri)
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
-    // Activity Result Launchers for Gallery selection
+    // Activity Result Launchers for Gallery selection (copied to internal storage for persistence)
     val avatarPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            viewModel.updateUserProfile(avatarUri = it.toString())
+        uri?.let { picked ->
+            coroutineScope.launch {
+                val savedUri = withContext(Dispatchers.IO) {
+                    PetPhotoStorage.copyUriToInternalStorage(context, picked)
+                }
+                if (!savedUri.isNullOrBlank()) {
+                    viewModel.updateUserProfile(avatarUri = savedUri)
+                }
+            }
         }
     }
 
     val coverPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            viewModel.updateUserProfile(headerBgUri = it.toString())
+        uri?.let { picked ->
+            coroutineScope.launch {
+                val savedUri = withContext(Dispatchers.IO) {
+                    PetPhotoStorage.copyUriToInternalStorage(context, picked)
+                }
+                if (!savedUri.isNullOrBlank()) {
+                    viewModel.updateUserProfile(headerBgUri = savedUri)
+                }
+            }
         }
     }
 
@@ -122,7 +140,7 @@ fun UserProfileDetailScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -185,7 +203,7 @@ fun UserProfileDetailScreen(
                         modifier = Modifier
                             .size(110.dp)
                             .clip(CircleShape)
-                            .background(Color.White)
+                            .background(MaterialTheme.colorScheme.surface)
                             .border(3.dp, Color.White, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -196,7 +214,9 @@ fun UserProfileDetailScreen(
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
                         ) {
-                            val avatarRes = userProfile.avatarRes
+                            val avatarRes = userProfile.avatarRes?.takeIf {
+                                it == R.drawable.dog || it == R.drawable.cat || it == R.drawable.rabbit
+                            }
                             if (avatarBitmap != null) {
                                 Image(
                                     bitmap = avatarBitmap,
@@ -215,7 +235,7 @@ fun UserProfileDetailScreen(
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Avatar",
-                                    tint = GreenPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(60.dp)
                                 )
                             }
@@ -228,8 +248,8 @@ fun UserProfileDetailScreen(
                             .align(Alignment.BottomEnd)
                             .size(36.dp)
                             .clip(CircleShape)
-                            .background(Color.White)
-                            .border(1.dp, BorderLight, CircleShape)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                             .clickable {
                                 // Show choice popup asking to change Avatar or Cover
                                 showEditChoiceDialog = true
@@ -239,7 +259,7 @@ fun UserProfileDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Sửa ảnh đại diện hoặc ảnh bìa",
-                            tint = TextPrimary,
+                            tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -257,7 +277,7 @@ fun UserProfileDetailScreen(
                     text = userProfile.name,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -265,7 +285,7 @@ fun UserProfileDetailScreen(
                     fontSize = 14.sp,
                     fontStyle = FontStyle.Italic,
                     textDecoration = TextDecoration.Underline,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -281,15 +301,15 @@ fun UserProfileDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White)
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .padding(horizontal = 20.dp, vertical = 18.dp)
                 ) {
                     Text(
                         text = "Số lượng thú cưng: ${pets.size}",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Normal,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -306,8 +326,8 @@ fun UserProfileDetailScreen(
                                 .weight(1f)
                                 .height(130.dp)
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(Color.White)
-                                .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp))
                                 .clickable { onPetClick(pet.id) }
                                 .padding(16.dp),
                             contentAlignment = Alignment.Center
@@ -316,17 +336,18 @@ fun UserProfileDetailScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Image(
-                                    painter = painterResource(id = pet.safeIconRes),
+                                PetAvatar(
+                                    photoUri = pet.photoUri,
+                                    fallbackIconRes = pet.safeIconRes,
                                     contentDescription = pet.name,
-                                    modifier = Modifier.size(52.dp)
+                                    modifier = Modifier.size(52.dp).clip(CircleShape),
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Text(
                                     text = pet.name,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -343,8 +364,8 @@ fun UserProfileDetailScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = GreenPrimary,
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Text(
@@ -367,7 +388,7 @@ fun UserProfileDetailScreen(
                         text = "Chỉnh sửa hình ảnh",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 text = {
@@ -378,7 +399,7 @@ fun UserProfileDetailScreen(
                         Text(
                             text = "Bạn muốn thay đổi ảnh đại diện hay thay đổi ảnh bìa?",
                             fontSize = 14.sp,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(4.dp))
 
@@ -393,8 +414,8 @@ fun UserProfileDetailScreen(
                                 .height(48.dp),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = GreenPrimary,
-                                contentColor = Color.White
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
                             Text(
@@ -416,7 +437,7 @@ fun UserProfileDetailScreen(
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = Color.White
+                                contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
                             Text(
@@ -433,7 +454,7 @@ fun UserProfileDetailScreen(
                         onClick = { showEditChoiceDialog = false },
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Hủy", color = TextPrimary)
+                        Text("Hủy", color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             )
@@ -460,12 +481,12 @@ fun UserProfileDetailScreen(
                                 .fillMaxWidth()
                                 .height(48.dp),
                             shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("🖼️ Chọn ảnh từ thư viện thiết bị", fontWeight = FontWeight.Bold)
+                            Text("Chọn ảnh từ thư viện thiết bị", fontWeight = FontWeight.Bold)
                         }
 
-                        Text("— Hoặc chọn ảnh mẫu có sẵn —", fontSize = 12.sp, color = TextSecondary)
+                        Text("— Hoặc chọn ảnh mẫu có sẵn —", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                         // Sample Preset Avatars
                         Row(
@@ -478,7 +499,7 @@ fun UserProfileDetailScreen(
                                     .size(56.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.tertiaryContainer)
-                                    .border(2.dp, GreenPrimary, CircleShape)
+                                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                                     .clickable {
                                         viewModel.updateUserProfile(avatarRes = R.drawable.dog)
                                         showAvatarPicker = false
@@ -498,7 +519,7 @@ fun UserProfileDetailScreen(
                                     .size(56.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.secondaryContainer)
-                                    .border(2.dp, GreenPrimary, CircleShape)
+                                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                                     .clickable {
                                         viewModel.updateUserProfile(avatarRes = R.drawable.cat)
                                         showAvatarPicker = false
@@ -518,9 +539,9 @@ fun UserProfileDetailScreen(
                                     .size(56.dp)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .border(2.dp, BorderLight, CircleShape)
+                                    .border(2.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                                     .clickable {
-                                        viewModel.updateUserProfile(avatarUri = null, avatarRes = null)
+                                        viewModel.updateUserProfile(clearAvatar = true)
                                         showAvatarPicker = false
                                     },
                                 contentAlignment = Alignment.Center
@@ -528,7 +549,7 @@ fun UserProfileDetailScreen(
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Mặc định",
-                                    tint = GreenPrimary,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -538,7 +559,7 @@ fun UserProfileDetailScreen(
                 confirmButton = {},
                 dismissButton = {
                     OutlinedButton(onClick = { showAvatarPicker = false }, shape = RoundedCornerShape(12.dp)) {
-                        Text("Để sau", color = TextPrimary)
+                        Text("Để sau", color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             )
@@ -566,10 +587,10 @@ fun UserProfileDetailScreen(
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("🖼️ Chọn ảnh bìa từ thư viện", fontWeight = FontWeight.Bold)
+                            Text("Chọn ảnh bìa từ thư viện", fontWeight = FontWeight.Bold)
                         }
 
-                        Text("— Hoặc chọn màu nền bìa —", fontSize = 12.sp, color = TextSecondary)
+                        Text("— Hoặc chọn màu nền bìa —", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                         val colors = listOf(
                             0xFF338C63 to "Xanh lá (Mặc định)",
@@ -603,7 +624,7 @@ fun UserProfileDetailScreen(
                 confirmButton = {},
                 dismissButton = {
                     OutlinedButton(onClick = { showCoverPicker = false }, shape = RoundedCornerShape(12.dp)) {
-                        Text("Để sau", color = TextPrimary)
+                        Text("Để sau", color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             )
@@ -614,7 +635,7 @@ fun UserProfileDetailScreen(
             ModalBottomSheet(
                 onDismissRequest = { showAccountBottomSheet = false },
                 sheetState = sheetState,
-                containerColor = GreenPrimary,
+                containerColor = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             ) {
                 AccountSwitchSheetContent(
@@ -628,7 +649,11 @@ fun UserProfileDetailScreen(
                             viewModel.addAccount(newName)
                             showAccountBottomSheet = false
                         }
-                    }
+                    },
+                    onLogoutClick = {
+                        showAccountBottomSheet = false
+                        onLogoutClick()
+                    },
                 )
             }
         }
@@ -639,7 +664,8 @@ fun UserProfileDetailScreen(
 private fun AccountSwitchSheetContent(
     accounts: List<com.example.petcare.data.repository.AccountUser>,
     onSelectAccount: (String) -> Unit,
-    onAddNewAccount: (String) -> Unit
+    onAddNewAccount: (String) -> Unit,
+    onLogoutClick: () -> Unit = {},
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var newAccountName by remember { mutableStateOf("") }
@@ -680,7 +706,7 @@ private fun AccountSwitchSheetContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .clickable { onSelectAccount(account.id) }
                         .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
@@ -693,14 +719,14 @@ private fun AccountSwitchSheetContent(
                             Text(
                                 text = "Tài khoản ${index + 1}",
                                 fontSize = 12.sp,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = account.name,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
@@ -710,7 +736,7 @@ private fun AccountSwitchSheetContent(
                                 fontSize = 13.sp,
                                 fontStyle = FontStyle.Italic,
                                 textDecoration = TextDecoration.Underline,
-                                color = TextSecondary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -729,7 +755,7 @@ private fun AccountSwitchSheetContent(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(12.dp)
                 ) {
                     BasicTextField(
@@ -738,7 +764,7 @@ private fun AccountSwitchSheetContent(
                         modifier = Modifier.fillMaxWidth(),
                         decorationBox = { inner ->
                             if (newAccountName.isEmpty()) {
-                                Text("Nhập tên tài khoản mới", color = TextSecondary)
+                                Text("Nhập tên tài khoản mới", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             inner()
                         }
@@ -750,7 +776,7 @@ private fun AccountSwitchSheetContent(
                         onAddNewAccount(newAccountName)
                         showAddDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = GreenPrimary)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text("Lưu", fontWeight = FontWeight.Bold)
                 }
@@ -764,8 +790,8 @@ private fun AccountSwitchSheetContent(
                     .height(50.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = TextPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
                 Text(
@@ -774,6 +800,24 @@ private fun AccountSwitchSheetContent(
                     fontWeight = FontWeight.SemiBold
                 )
             }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedButton(
+            onClick = onLogoutClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.7f)),
+        ) {
+            Text(
+                text = "Đăng xuất & đổi tài khoản khác",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -23,8 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.petcare.R
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 
 val KeyboardArrowLeftIcon: ImageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft
 
@@ -43,7 +42,7 @@ fun PetCareTopAppBar(
             Icon(
                 imageVector = KeyboardArrowLeftIcon,
                 contentDescription = stringResource(R.string.cd_back_button),
-                tint = TextPrimary,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(36.dp),
             )
         }
@@ -54,7 +53,7 @@ fun PetCareTopAppBar(
                 text = title,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.onBackground,
             )
         }
 
@@ -64,7 +63,7 @@ fun PetCareTopAppBar(
                 text = subtitle,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

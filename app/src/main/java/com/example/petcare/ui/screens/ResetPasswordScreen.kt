@@ -1,4 +1,5 @@
 package com.example.petcare.ui.screens
+import androidx.compose.material3.MaterialTheme
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
@@ -38,8 +39,6 @@ import androidx.compose.ui.unit.sp
 import com.example.petcare.R
 import com.example.petcare.ui.components.PetCareTextField
 import com.example.petcare.ui.components.PetCareTopAppBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.theme.RedError
 
@@ -72,13 +71,13 @@ fun ResetPasswordScreen(
     val confirmHelperColor = if (!isPasswordMatching && confirmPassword.isNotEmpty()) {
         RedError
     } else {
-        GreenPrimary
+        MaterialTheme.colorScheme.primary
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
@@ -103,7 +102,7 @@ fun ResetPasswordScreen(
                 label = stringResource(R.string.label_new_password),
                 placeholder = stringResource(R.string.placeholder_new_password),
                 helperText = passwordHelperText,
-                helperColor = if (isPasswordValid) GreenPrimary else RedError,
+                helperColor = if (isPasswordValid) MaterialTheme.colorScheme.primary else RedError,
                 visualTransformation = if (isNewPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     Text(
@@ -114,7 +113,7 @@ fun ResetPasswordScreen(
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GreenPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .clickable { isNewPasswordVisible = !isNewPasswordVisible }
                             .padding(horizontal = 4.dp, vertical = 2.dp),
@@ -143,7 +142,7 @@ fun ResetPasswordScreen(
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = GreenPrimary,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
                             .clickable { isConfirmPasswordVisible = !isConfirmPasswordVisible }
                             .padding(horizontal = 4.dp, vertical = 2.dp),
@@ -167,10 +166,10 @@ fun ResetPasswordScreen(
                 .height(54.dp),
             shape = RoundedCornerShape(18.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = GreenPrimary,
-                contentColor = Color.White,
-                disabledContainerColor = GreenPrimary.copy(alpha = 0.5f),
-                disabledContentColor = Color.White.copy(alpha = 0.7f),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
             ),
         ) {
             Text(

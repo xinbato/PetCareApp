@@ -21,12 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 
 @Composable
 fun PetCareTextField(
@@ -36,18 +34,20 @@ fun PetCareTextField(
     modifier: Modifier = Modifier,
     placeholder: String = "",
     helperText: String? = null,
-    helperColor: Color = TextSecondary,
+    helperColor: Color = Color.Unspecified,
     trailingIcon: (@Composable () -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val resolvedHelperColor = if (helperColor != Color.Unspecified) helperColor else colorScheme.onSurfaceVariant
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(58.dp)
-                .background(Color.White, RoundedCornerShape(14.dp))
-                .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
+                .background(colorScheme.surface, RoundedCornerShape(14.dp))
+                .border(1.dp, colorScheme.outline, RoundedCornerShape(14.dp))
                 .padding(horizontal = 15.dp, vertical = 8.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
@@ -67,14 +67,14 @@ fun PetCareTextField(
                             text = label,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Normal,
-                            color = TextSecondary,
+                            color = colorScheme.onSurfaceVariant,
                         )
                         if (helperText != null) {
                             Text(
                                 text = helperText,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = helperColor,
+                                color = resolvedHelperColor,
                             )
                         }
                     }
@@ -85,7 +85,7 @@ fun PetCareTextField(
                         textStyle = TextStyle(
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
+                            color = colorScheme.onSurface,
                         ),
                         singleLine = true,
                         visualTransformation = visualTransformation,
@@ -96,7 +96,7 @@ fun PetCareTextField(
                                     text = placeholder,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Normal,
-                                    color = TextSecondary.copy(alpha = 0.5f),
+                                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                                 )
                             }
                             innerTextField()

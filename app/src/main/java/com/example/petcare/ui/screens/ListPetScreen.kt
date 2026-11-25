@@ -42,15 +42,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.PetModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
+import com.example.petcare.ui.components.PetAvatar
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.petcare.ui.components.PetCareAdaptiveTabScaffold
 import com.example.petcare.ui.components.PetCareTab
-import com.example.petcare.ui.components.PetCareTabBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
+import com.example.petcare.ui.components.PetsSkeleton
+import com.example.petcare.ui.components.SmoothSkeletonWrapper
+import com.example.petcare.ui.viewmodel.SettingsViewModel
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.PetManagementViewModel
 
 @Composable
@@ -66,146 +75,212 @@ fun ListPetScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pets = uiState.pets
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedSpeciesFilter by remember { mutableStateOf("Tất cả") }
+    val colorScheme = MaterialTheme.colorScheme
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = onBackClick,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = KeyboardArrowLeftIcon,
-                            contentDescription = "Quay lại",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = "Danh sách thú cưng",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = "Danh sách thú cưng của bạn",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = TextSecondary
-                        )
-                    }
-                }
-
-                // Chỉnh sửa pill button
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(GreenPrimary)
-                        .clickable {
-                            onEditPetClick()
-                        }
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Chỉnh sửa",
-                        color = Color.White,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+    val filteredPets = remember(pets, searchQuery, selectedSpeciesFilter) {
+        val q = searchQuery.trim()
+        pets.filter { pet ->
+            val matchesQuery = q.isEmpty() ||
+                pet.name.contains(q, ignoreCase = true) ||
+                pet.breed.contains(q, ignoreCase = true) ||
+                pet.species.contains(q, ignoreCase = true)
+            val matchesSpecies = when (selectedSpeciesFilter) {
+                "Tất cả" -> true
+                "Chó" -> pet.species.contains("Chó", ignoreCase = true)
+                "Mèo" -> pet.species.contains("Mèo", ignoreCase = true)
+                else -> !pet.species.contains("Chó", ignoreCase = true) &&
+                    !pet.species.contains("Mèo", ignoreCase = true)
             }
+            matchesQuery && matchesSpecies
+        }
+    }
 
-            // Pet list
-            LazyColumn(
+    PetCareAdaptiveTabScaffold(
+        currentTab = currentTab,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+    ) { innerPadding ->
+        SmoothSkeletonWrapper(
+            isLoading = uiState.isLoading && pets.isEmpty(),
+            skeleton = {
+                PetsSkeleton(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .statusBarsPadding(),
+                )
+            },
+        ) {
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .statusBarsPadding(),
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(6.dp))
-                }
-
-                items(pets, key = { it.id }) { pet ->
-                    PetListItemCard(
-                        pet = pet,
-                        onClick = {
-                            viewModel.selectPet(pet.id)
-                            onPetClick(pet)
-                        },
-                        onToggleFavorite = {
-                            viewModel.toggleFavorite(pet.id)
-                        }
-                    )
-                }
-
-                // Add pet card button
-                item {
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(84.dp)
-                            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
-                            .clickable(onClick = onAddPetClick)
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                        IconButton(
+                            onClick = onBackClick,
+                            modifier = Modifier.size(36.dp),
                         ) {
                             Icon(
-                                imageVector = PetCareIcons.Plus,
-                                contentDescription = "Thêm thú cưng",
-                                tint = TextPrimary,
-                                modifier = Modifier.size(28.dp)
+                                imageVector = KeyboardArrowLeftIcon,
+                                contentDescription = "Quay lại",
+                                tint = colorScheme.onBackground,
+                                modifier = Modifier.size(28.dp),
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
                             Text(
-                                text = "Thêm thú cưng",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = GreenPrimary
+                                text = "Danh sách thú cưng",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colorScheme.onBackground,
+                            )
+                            Text(
+                                text = "Danh sách thú cưng của bạn",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    // Edit pill button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(colorScheme.primary)
+                            .clickable {
+                                onEditPetClick()
+                            }
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Chỉnh sửa",
+                            color = colorScheme.onPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+
+                // Search & Species Filter
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Tìm theo tên, giống hoặc loài...") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                                contentDescription = "Tìm kiếm",
+                            )
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf("Tất cả", "Chó", "Mèo", "Khác").forEach { sp ->
+                            val selected = selectedSpeciesFilter == sp
+                            FilterChip(
+                                selected = selected,
+                                onClick = { selectedSpeciesFilter = sp },
+                                label = { Text(sp, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = colorScheme.primaryContainer,
+                                    selectedLabelColor = colorScheme.onPrimaryContainer,
+                                ),
                             )
                         }
                     }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Pet list
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    items(filteredPets, key = { it.id }) { pet ->
+                        PetListItemCard(
+                            pet = pet,
+                            onClick = {
+                                viewModel.selectPet(pet.id)
+                                onPetClick(pet)
+                            },
+                            onToggleFavorite = {
+                                viewModel.toggleFavorite(pet.id)
+                            },
+                        )
+                    }
+
+                    // Add pet card button
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(84.dp)
+                                .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                                .clickable(onClick = onAddPetClick),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 20.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                            ) {
+                                Icon(
+                                    imageVector = PetCareIcons.Plus,
+                                    contentDescription = "Thêm thú cưng",
+                                    tint = colorScheme.onSurface,
+                                    modifier = Modifier.size(28.dp),
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Thêm thú cưng",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colorScheme.primary,
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
-
-            // Bottom Navigation Bar docked
-            PetCareTabBar(
-                selectedTab = currentTab.ordinal,
-                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) },
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
@@ -215,40 +290,41 @@ fun PetListItemCard(
     pet: PetModel,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
+            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             ) {
-                // Avatar
                 Box(
                     modifier = Modifier
                         .size(54.dp)
                         .clip(CircleShape)
-                        .background(GreenLight),
-                    contentAlignment = Alignment.Center
+                        .background(colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Image(
-                        painter = painterResource(id = pet.safeIconRes),
+                    PetAvatar(
+                        photoUri = pet.photoUri,
+                        fallbackIconRes = pet.safeIconRes,
                         contentDescription = pet.name,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 
@@ -259,20 +335,22 @@ fun PetListItemCard(
                         text = pet.name,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = pet.statusText,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (pet.statusText == "Khỏe mạnh") GreenPrimary else MaterialTheme.colorScheme.error
+                        color = if (pet.statusText == "Khỏe mạnh") colorScheme.primary else colorScheme.error,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = pet.statusDetail.ifEmpty { "Cân nặng ${pet.weight}" },
                         fontSize = 12.sp,
-                        color = TextSecondary
+                        color = colorScheme.onSurfaceVariant,
                     )
                 }
             }

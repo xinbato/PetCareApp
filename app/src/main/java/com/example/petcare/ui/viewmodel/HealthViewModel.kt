@@ -56,7 +56,8 @@ class HealthViewModel(
         ) { vaccs, meds, medRecs, weightRecs, checkups ->
             HealthDataBundle(vaccs, meds, medRecs, weightRecs, checkups)
         },
-    ) { pets, selectedId, filterId, bundle ->
+        repository.isLoading,
+    ) { pets, selectedId, filterId, bundle, loading ->
         val currentPet = pets.find { it.id == selectedId } ?: pets.firstOrNull()
         HealthUiState(
             selectedPetId = selectedId,
@@ -68,7 +69,7 @@ class HealthViewModel(
             weightRecords = bundle.weightRecords,
             checkupRecords = bundle.checkupRecords,
             filterPetId = filterId,
-            isLoading = false,
+            isLoading = loading,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -95,7 +96,24 @@ class HealthViewModel(
     }
 
     fun addVaccination(vaccination: VaccinationModel) {
-        repository.addVaccination(vaccination)
+        val resolvedName = vaccination.petName.ifBlank {
+            uiState.value.pets.find { it.id == vaccination.petId }?.name.orEmpty()
+        }
+        val parsedMillis = if (vaccination.scheduledDateMillis > 0L) {
+            vaccination.scheduledDateMillis
+        } else {
+            com.example.petcare.utils.DateUtils.parseDateMillis(vaccination.dateTime)
+                ?: System.currentTimeMillis()
+        }
+        val completed = vaccination.completed ||
+            vaccination.status.equals("Đã tiêm", ignoreCase = true)
+        repository.addVaccination(
+            vaccination.copy(
+                petName = resolvedName,
+                scheduledDateMillis = parsedMillis,
+                completed = completed,
+            )
+        )
     }
 
     fun addVaccination(
@@ -105,18 +123,38 @@ class HealthViewModel(
         petId: String? = null,
     ) {
         val targetPetId = petId ?: uiState.value.selectedPetId
+        val resolvedName = uiState.value.pets.find { it.id == targetPetId }?.name.orEmpty()
+        val parsedMillis = com.example.petcare.utils.DateUtils.parseDateMillis(dateTime)
+            ?: System.currentTimeMillis()
+        val completed = status.equals("Đã tiêm", ignoreCase = true)
         val item = VaccinationModel(
             id = "v_${System.currentTimeMillis()}",
             petId = targetPetId,
+            petName = resolvedName,
             title = title.trim(),
             dateTime = dateTime.trim(),
             status = status.trim(),
+            scheduledDateMillis = parsedMillis,
+            completed = completed,
+            reminderEnabled = !completed,
         )
         repository.addVaccination(item)
     }
 
     fun addMedication(medication: MedicationModel) {
-        repository.addMedication(medication)
+        val resolvedName = medication.petName.ifBlank {
+            uiState.value.pets.find { it.id == medication.petId }?.name.orEmpty()
+        }
+        val (hour, minute) = com.example.petcare.utils.NotificationHelper.parseHourMinute(
+            medication.scheduleTime
+        ) ?: (medication.reminderHour.toInt() to medication.reminderMinute.toInt())
+        repository.addMedication(
+            medication.copy(
+                petName = resolvedName,
+                reminderHour = hour.toLong(),
+                reminderMinute = minute.toLong(),
+            )
+        )
     }
 
     fun addMedication(
@@ -128,16 +166,65 @@ class HealthViewModel(
         petId: String? = null,
     ) {
         val targetPetId = petId ?: uiState.value.selectedPetId
+        val resolvedName = uiState.value.pets.find { it.id == targetPetId }?.name.orEmpty()
+        val (hour, minute) = com.example.petcare.utils.NotificationHelper.parseHourMinute(scheduleTime)
+            ?: (8 to 0)
+        val active = !status.equals("Đã xong", ignoreCase = true)
         val item = MedicationModel(
             id = "m_${System.currentTimeMillis()}",
             petId = targetPetId,
+            petName = resolvedName,
             name = name.trim(),
             dosage = dosage.trim(),
             scheduleTime = scheduleTime.trim(),
             quantity = quantity.trim(),
             status = status.trim(),
+            reminderHour = hour.toLong(),
+            reminderMinute = minute.toLong(),
+            active = active,
+            reminderEnabled = active,
         )
         repository.addMedication(item)
+    }
+
+    fun toggleVaccinationCompleted(vaccination: VaccinationModel) {
+        repository.toggleVaccinationCompleted(vaccination)
+    }
+
+    fun deleteVaccination(vaccinationId: String) {
+        repository.deleteVaccination(vaccinationId)
+    }
+
+    fun toggleMedicationTakenToday(medication: MedicationModel) {
+        repository.toggleMedicationTakenToday(medication)
+    }
+
+    fun deleteMedication(medicationId: String) {
+        repository.deleteMedication(medicationId)
+    }
+
+    fun addWeightRecord(record: WeightRecordModel) {
+        val resolvedName = record.petName.ifBlank {
+            uiState.value.pets.find { it.id == record.petId }?.name.orEmpty()
+        }
+        val parsedKg = if (record.weightKg > 0.0) {
+            record.weightKg
+        } else {
+            com.example.petcare.utils.DateUtils.parseWeightKg(record.weight)
+        }
+        repository.addWeightRecord(
+            record.copy(
+                petName = resolvedName,
+                weightKg = parsedKg,
+            )
+        )
+    }
+
+    fun addCheckupRecord(record: CheckupRecordModel) {
+        val resolvedName = record.petName.ifBlank {
+            uiState.value.pets.find { it.id == record.petId }?.name.orEmpty()
+        }
+        repository.addCheckupRecord(record.copy(petName = resolvedName))
     }
 
     fun addMedicalRecord(record: MedicalRecordEntryModel) {

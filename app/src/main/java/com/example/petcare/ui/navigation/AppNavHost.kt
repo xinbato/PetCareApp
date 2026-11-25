@@ -59,12 +59,21 @@ fun NavHostController.navigateToTab(tab: PetCareTab) {
         PetCareTab.MAP -> AppRoute.Map.route
         PetCareTab.PROFILE -> AppRoute.Profile.route
     }
+    if (tab == PetCareTab.HOME) {
+        navigate(route) {
+            popUpTo(AppRoute.Home.route) { inclusive = true }
+            launchSingleTop = true
+        }
+        return
+    }
+    val preserveHealthSubState = tab != PetCareTab.HEALTH ||
+        currentBackStackEntry?.destination?.route == AppRoute.Health.route
     navigate(route) {
-        popUpTo(graph.findStartDestination().id) {
-            saveState = true
+        popUpTo(AppRoute.Home.route) {
+            saveState = preserveHealthSubState
         }
         launchSingleTop = true
-        restoreState = true
+        restoreState = preserveHealthSubState
     }
 }
 
@@ -72,6 +81,7 @@ fun NavHostController.navigateToTab(tab: PetCareTab) {
 fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    settingsViewModel: com.example.petcare.ui.viewmodel.SettingsViewModel = viewModel(),
     startDestination: String = remember {
         val user = runCatching { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser }.getOrNull()
         if (user != null) AppRoute.Home.route else AppRoute.Onboarding.route
@@ -97,7 +107,12 @@ fun AppNavHost(
             OnboardingScreen(
                 modifier = Modifier.fillMaxSize(),
                 onGetStartedClick = { navController.navigate(AppRoute.Register.route) },
-                onLoginClick = { navController.navigate(AppRoute.Login.route) }
+                onLoginClick = { navController.navigate(AppRoute.Login.route) },
+                onGuestSuccessClick = {
+                    navController.navigate(AppRoute.Home.route) {
+                        popUpTo(AppRoute.Onboarding.route) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -191,7 +206,9 @@ fun AppNavHost(
         composable(AppRoute.AddPetCamera.route) {
             AddPetCameraScreen(
                 modifier = Modifier.fillMaxSize(),
+                settingsViewModel = settingsViewModel,
                 onBackClick = { navController.popBackStack() },
+                onPetSaved = { navController.popBackStack() },
                 onScannedProceed = { species, breed, weight ->
                     navController.navigate(
                         AppRoute.AddPetHandmade.createRoute(
@@ -392,6 +409,7 @@ fun AppNavHost(
         composable(AppRoute.WeightHistory.route) {
             WeightHistoryScreen(
                 modifier = Modifier.fillMaxSize(),
+                settingsViewModel = settingsViewModel,
                 onBackClick = { navController.popBackStack() }
             )
         }
@@ -445,11 +463,21 @@ fun AppNavHost(
         }
 
         composable(AppRoute.UserProfileDetail.route) {
+            val authViewModel: AuthViewModel = viewModel()
+            val context = androidx.compose.ui.platform.LocalContext.current
             UserProfileDetailScreen(
                 modifier = Modifier.fillMaxSize(),
                 onBackClick = { navController.popBackStack() },
                 onSettingsClick = { navController.navigate(AppRoute.Settings.route) },
-                onPetClick = { petId -> navController.navigate(AppRoute.HealthDetail.createRoute(petId)) }
+                onPetClick = { petId -> navController.navigate(AppRoute.HealthDetail.createRoute(petId)) },
+                onLogoutClick = {
+                    authViewModel.logout(context) {
+                        loggedInUserName = ""
+                        navController.navigate(AppRoute.Onboarding.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
             )
         }
 
@@ -463,21 +491,30 @@ fun AppNavHost(
 
         composable(AppRoute.Settings.route) {
             val authViewModel: AuthViewModel = viewModel()
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val navigateToSignedOut: () -> Unit = {
+                loggedInUserName = ""
+                navController.navigate(AppRoute.Onboarding.route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
             SettingsScreen(
                 modifier = Modifier.fillMaxSize(),
+                settingsViewModel = settingsViewModel,
                 onBackClick = { navController.popBackStack() },
+                onNotificationRemindersClick = { navController.navigate(AppRoute.NotificationReminders.route) },
                 onSwitchAccountClick = { navController.navigate(AppRoute.UserProfileDetail.route) },
                 onLogoutClick = {
-                    authViewModel.logout()
-                    navController.navigate(AppRoute.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    authViewModel.logout(context, onLoggedOut = navigateToSignedOut)
                 },
                 onDeleteAccountClick = {
                     authViewModel.deleteAccount(
-                        onSuccess = {
-                            navController.navigate(AppRoute.Login.route) {
-                                popUpTo(0) { inclusive = true }
+                        context = context,
+                        onSuccess = navigateToSignedOut,
+                        onError = { err ->
+                            android.widget.Toast.makeText(context, err, android.widget.Toast.LENGTH_LONG).show()
+                            if (err.contains("đăng nhập lại", ignoreCase = true)) {
+                                authViewModel.logout(context, onLoggedOut = navigateToSignedOut)
                             }
                         }
                     )
@@ -496,6 +533,7 @@ fun AppNavHost(
         composable(AppRoute.NotificationReminders.route) {
             NotificationReminderScreen(
                 modifier = Modifier.fillMaxSize(),
+                settingsViewModel = settingsViewModel,
                 onBackClick = { navController.popBackStack() }
             )
         }
@@ -503,6 +541,7 @@ fun AppNavHost(
         composable(AppRoute.Map.route) {
             MapScreen(
                 modifier = Modifier.fillMaxSize(),
+                settingsViewModel = settingsViewModel,
                 onTabSelected = { tab -> navController.navigateToTab(tab) }
             )
         }

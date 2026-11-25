@@ -22,16 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.petcare.R
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 
 @Composable
 fun SocialLoginSection(
@@ -40,6 +37,7 @@ fun SocialLoginSection(
     onGoogleClick: () -> Unit = {},
     onYahooClick: (() -> Unit)? = null,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     var showYahooDialog by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -47,7 +45,7 @@ fun SocialLoginSection(
             text = stringResource(R.string.or_divider),
             fontSize = 12.sp,
             fontWeight = FontWeight.Normal,
-            color = TextSecondary,
+            color = colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -65,12 +63,12 @@ fun SocialLoginSection(
                     .weight(1f)
                     .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, BorderLight),
+                border = BorderStroke(1.dp, colorScheme.outline),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    disabledContainerColor = Color.White.copy(alpha = 0.6f),
-                    contentColor = TextPrimary,
-                    disabledContentColor = TextPrimary.copy(alpha = 0.5f),
+                    containerColor = colorScheme.surface,
+                    disabledContainerColor = colorScheme.surface.copy(alpha = 0.6f),
+                    contentColor = colorScheme.onSurface,
+                    disabledContentColor = colorScheme.onSurface.copy(alpha = 0.5f),
                 ),
             ) {
                 Text(
@@ -93,12 +91,12 @@ fun SocialLoginSection(
                     .weight(1f)
                     .height(50.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, BorderLight),
+                border = BorderStroke(1.dp, colorScheme.outline),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    disabledContainerColor = Color.White.copy(alpha = 0.6f),
-                    contentColor = TextPrimary,
-                    disabledContentColor = TextPrimary.copy(alpha = 0.5f),
+                    containerColor = colorScheme.surface,
+                    disabledContainerColor = colorScheme.surface.copy(alpha = 0.6f),
+                    contentColor = colorScheme.onSurface,
+                    disabledContentColor = colorScheme.onSurface.copy(alpha = 0.5f),
                 ),
             ) {
                 Text(
@@ -118,11 +116,11 @@ fun SocialLoginSection(
             confirmButton = {
                 Button(
                     onClick = { showYahooDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                 ) {
                     Text("Đã hiểu")
                 }
-            }
+            },
         )
     }
 }

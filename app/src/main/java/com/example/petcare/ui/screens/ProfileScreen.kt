@@ -2,6 +2,7 @@ package com.example.petcare.ui.screens
 
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,16 +55,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.example.petcare.R
+import com.example.petcare.data.model.resolvePetIconRes
+import com.example.petcare.ui.components.PetCareAdaptiveTabScaffold
 import com.example.petcare.ui.components.PetCareTab
-import com.example.petcare.ui.components.PetCareTabBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
+import com.example.petcare.ui.components.ProfileSkeleton
+import com.example.petcare.ui.components.SmoothSkeletonWrapper
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import androidx.compose.runtime.produceState
+import com.example.petcare.ui.viewmodel.AuthViewModel
 import com.example.petcare.ui.viewmodel.ProfileViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -90,6 +100,8 @@ fun rememberBitmapFromUri(uriString: String?): ImageBitmap? {
                     conn.inputStream.use { stream ->
                         BitmapFactory.decodeStream(stream)?.asImageBitmap()
                     }
+                } else if (uriString.startsWith("/")) {
+                    BitmapFactory.decodeFile(uriString)?.asImageBitmap()
                 } else {
                     val uri = Uri.parse(uriString)
                     context.contentResolver.openInputStream(uri)?.use { stream ->
@@ -106,6 +118,7 @@ fun rememberBitmapFromUri(uriString: String?): ImageBitmap? {
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel(),
     onUserProfileDetailClick: () -> Unit = {},
     onPersonalInfoClick: () -> Unit = {},
     onNotificationRemindersClick: () -> Unit = {},
@@ -117,22 +130,45 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val userProfile = uiState.userProfile
     val petCount = uiState.petCount
+    val colorScheme = MaterialTheme.colorScheme
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+    val context = LocalContext.current
+    val avatarBitmap = rememberBitmapFromUri(userProfile.avatarUri)
+    val avatarRes = userProfile.avatarRes?.let { resolvePetIconRes(it) }
+        ?.takeIf { userProfile.avatarRes == R.drawable.dog || userProfile.avatarRes == R.drawable.cat || userProfile.avatarRes == R.drawable.rabbit }
+    val firebaseUser = remember(userProfile.email, userProfile.name, userProfile.isAnonymous) {
+        runCatching { FirebaseAuth.getInstance().currentUser }.getOrNull()
+    }
+    var isGuestUser by remember(firebaseUser?.uid, userProfile.isAnonymous) {
+        mutableStateOf(firebaseUser?.isAnonymous == true || userProfile.isAnonymous)
+    }
+    var showUpgradeDialog by remember { mutableStateOf(false) }
+    var upgradeFullName by remember(userProfile.name) { mutableStateOf(userProfile.name.takeUnless { it == "Khách" }.orEmpty()) }
+    var upgradeEmail by remember { mutableStateOf("") }
+    var upgradePassword by remember { mutableStateOf("") }
+    var upgradeConfirm by remember { mutableStateOf("") }
+    var upgradeError by remember { mutableStateOf<String?>(null) }
+
+    PetCareAdaptiveTabScaffold(
+        currentTab = PetCareTab.PROFILE,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+    ) { innerPadding ->
+        SmoothSkeletonWrapper(
+            isLoading = uiState.isLoading && uiState.myPets.isEmpty(),
+            skeleton = {
+                ProfileSkeleton(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .statusBarsPadding(),
+                )
+            },
         ) {
-            // Scrollable Content Area
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .statusBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
             ) {
@@ -143,7 +179,7 @@ fun ProfileScreen(
                     text = "Tôi",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = colorScheme.onBackground
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -153,7 +189,7 @@ fun ProfileScreen(
                     text = "Quản lý tài khoản và cài đặt",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
-                    color = TextSecondary
+                    color = colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -164,7 +200,7 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
                         .clickable { onUserProfileDetailClick() },
-                    color = GreenPrimary,
+                    color = colorScheme.primary,
                     shape = RoundedCornerShape(20.dp)
                 ) {
                     Row(
@@ -173,86 +209,130 @@ fun ProfileScreen(
                             .padding(20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Circle Avatar
                         Box(
                             modifier = Modifier
                                 .size(64.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                .background(colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Avatar",
-                                tint = GreenPrimary,
-                                modifier = Modifier.size(36.dp)
-                            )
+                            when {
+                                avatarBitmap != null -> Image(
+                                    bitmap = avatarBitmap,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                )
+                                avatarRes != null -> Image(
+                                    painter = painterResource(id = avatarRes),
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier.size(40.dp),
+                                )
+                                else -> Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Avatar",
+                                    tint = colorScheme.primary,
+                                    modifier = Modifier.size(36.dp),
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.width(16.dp))
 
                         Column {
                             Text(
-                                text = userProfile.name,
+                                text = userProfile.name.ifBlank { if (isGuestUser) "Tài khoản Khách" else "Người dùng" },
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = colorScheme.onPrimary
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "$petCount thú cưng • ${userProfile.memberSince}",
+                                text = "$petCount thú cưng • ${if (isGuestUser) "Khách dùng thử" else userProfile.memberSince}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Normal,
-                                color = Color.White.copy(alpha = 0.9f)
+                                color = colorScheme.onPrimary.copy(alpha = 0.9f)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                if (isGuestUser) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, colorScheme.primary.copy(alpha = 0.4f), RoundedCornerShape(16.dp)),
+                        color = colorScheme.primaryContainer.copy(alpha = 0.55f),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = "Bạn đang dùng tài khoản Khách",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colorScheme.onSurface,
+                            )
+                            Text(
+                                text = "Liên kết Email để lưu dữ liệu an toàn và đồng bộ trên nhiều thiết bị.",
+                                fontSize = 13.sp,
+                                color = colorScheme.onSurfaceVariant,
+                            )
+                            Button(
+                                onClick = {
+                                    upgradeError = null
+                                    showUpgradeDialog = true
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
+                                shape = RoundedCornerShape(12.dp),
+                            ) {
+                                Text("Liên kết Email ngay", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
 
-                // Options List matching Image 1
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Column(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Option 1: Thông tin cá nhân
                     ProfileMenuItem(
                         icon = Icons.Default.Person,
-                        iconTint = MaterialTheme.colorScheme.primary,
+                        iconTint = colorScheme.primary,
                         title = "Thông tin cá nhân",
                         onClick = onPersonalInfoClick
                     )
 
-                    // Option 2: Thông báo & nhắc lịch
                     ProfileMenuItem(
                         icon = Icons.Default.Notifications,
-                        iconTint = MaterialTheme.colorScheme.secondary,
+                        iconTint = colorScheme.primary,
                         title = "Thông báo & nhắc lịch",
                         onClick = onNotificationRemindersClick
                     )
 
-                    // Option 3: Cài đặt
                     ProfileMenuItem(
                         icon = Icons.Default.Settings,
-                        iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        iconTint = colorScheme.onSurfaceVariant,
                         title = "Cài đặt",
                         onClick = onSettingsClick
                     )
 
-                    // Option 4: Trợ giúp & hỗ trợ
                     ProfileMenuItem(
                         icon = Icons.AutoMirrored.Filled.HelpOutline,
-                        iconTint = MaterialTheme.colorScheme.error,
+                        iconTint = colorScheme.error,
                         title = "Trợ giúp & hỗ trợ",
                         onClick = onHelpSupportClick
                     )
 
-                    // Option 5: Thú cưng của tôi
                     ProfileMenuItem(
                         icon = Icons.Default.Pets,
-                        iconTint = MaterialTheme.colorScheme.primary,
+                        iconTint = colorScheme.primary,
                         title = "Thú cưng của tôi",
-                        titleColor = MaterialTheme.colorScheme.primary,
+                        titleColor = colorScheme.primary,
                         showChevron = false,
                         onClick = onMyPetsClick
                     )
@@ -260,13 +340,81 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(30.dp))
             }
-
-            // Bottom Navigation Bar
-            PetCareTabBar(
-                selectedTab = PetCareTab.PROFILE.ordinal,
-                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) }
-            )
         }
+    }
+
+    if (showUpgradeDialog) {
+        AlertDialog(
+            onDismissRequest = { showUpgradeDialog = false },
+            title = { Text("Liên kết tài khoản Email", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = upgradeFullName,
+                        onValueChange = { upgradeFullName = it },
+                        label = { Text("Họ và tên") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = upgradeEmail,
+                        onValueChange = { upgradeEmail = it },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = upgradePassword,
+                        onValueChange = { upgradePassword = it },
+                        label = { Text("Mật khẩu (>= 6 ký tự)") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = upgradeConfirm,
+                        onValueChange = { upgradeConfirm = it },
+                        label = { Text("Xác nhận mật khẩu") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    upgradeError?.let { err ->
+                        Text(
+                            text = err,
+                            color = colorScheme.error,
+                            fontSize = 12.sp,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        authViewModel.linkGuestToEmail(
+                            fullName = upgradeFullName,
+                            email = upgradeEmail,
+                            password = upgradePassword,
+                            confirmPassword = upgradeConfirm,
+                            onSuccess = {
+                                isGuestUser = false
+                                showUpgradeDialog = false
+                                Toast.makeText(context, "Đã liên kết tài khoản Email.", Toast.LENGTH_SHORT).show()
+                            },
+                            onError = { msg -> upgradeError = msg },
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
+                ) {
+                    Text("Liên kết")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showUpgradeDialog = false }) {
+                    Text("Hủy")
+                }
+            },
+        )
     }
 }
 
@@ -275,16 +423,18 @@ private fun ProfileMenuItem(
     icon: ImageVector,
     iconTint: Color,
     title: String,
-    titleColor: Color = TextPrimary,
+    titleColor: Color = Color.Unspecified,
     showChevron: Boolean = true,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val resolvedTitleColor = if (titleColor != Color.Unspecified) titleColor else colorScheme.onSurface
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            .background(Color.White)
-            .border(1.dp, BorderLight, RoundedCornerShape(18.dp))
+            .background(colorScheme.surface)
+            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(18.dp))
             .clickable { onClick() }
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
@@ -305,7 +455,7 @@ private fun ProfileMenuItem(
                 text = title,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = titleColor,
+                color = resolvedTitleColor,
                 modifier = Modifier.weight(1f)
             )
 
@@ -313,7 +463,7 @@ private fun ProfileMenuItem(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = TextSecondary,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }

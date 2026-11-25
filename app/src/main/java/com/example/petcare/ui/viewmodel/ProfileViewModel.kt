@@ -30,12 +30,13 @@ class ProfileViewModel(
         repository.userProfile,
         repository.accounts,
         repository.pets,
-    ) { userProfile, accounts, pets ->
+        repository.isLoading,
+    ) { userProfile, accounts, pets, loading ->
         ProfileUiState(
             userProfile = userProfile,
             accounts = accounts,
             myPets = pets,
-            isLoading = false,
+            isLoading = loading,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -69,6 +70,8 @@ class ProfileViewModel(
         avatarRes: Int? = null,
         headerBgColorHex: Long? = null,
         headerBgUri: String? = null,
+        clearAvatar: Boolean = false,
+        clearHeaderBgUri: Boolean = false,
     ) {
         viewModelScope.launch {
             repository.updateUserProfile(
@@ -81,6 +84,8 @@ class ProfileViewModel(
                 avatarRes = avatarRes,
                 headerBgColorHex = headerBgColorHex,
                 headerBgUri = headerBgUri,
+                clearAvatar = clearAvatar,
+                clearHeaderBgUri = clearHeaderBgUri,
             )
         }
     }
@@ -95,6 +100,8 @@ class ProfileViewModel(
         avatarRes: Int? = null,
         headerBgColorHex: Long? = null,
         headerBgUri: String? = null,
+        clearAvatar: Boolean = false,
+        clearHeaderBgUri: Boolean = false,
     ) = updateProfile(
         name = name,
         email = email,
@@ -105,5 +112,7 @@ class ProfileViewModel(
         avatarRes = avatarRes,
         headerBgColorHex = headerBgColorHex,
         headerBgUri = headerBgUri,
+        clearAvatar = clearAvatar,
+        clearHeaderBgUri = clearHeaderBgUri,
     )
 }

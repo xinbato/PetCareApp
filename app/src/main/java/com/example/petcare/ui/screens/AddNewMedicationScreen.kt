@@ -1,4 +1,5 @@
 package com.example.petcare.ui.screens
+import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,13 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.MedicationModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.HealthViewModel
 import java.util.UUID
 @Composable
@@ -72,7 +67,7 @@ fun AddNewMedicationScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -93,7 +88,7 @@ fun AddNewMedicationScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -102,7 +97,7 @@ fun AddNewMedicationScreen(
                     text = "Thêm mới",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -135,10 +130,10 @@ fun AddNewMedicationScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(if (isSelected) GreenLight else Color.White)
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
                                     .border(
                                         1.dp,
-                                        if (isSelected) GreenPrimary else BorderLight,
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                         RoundedCornerShape(16.dp)
                                     )
                                     .clickable { medicationType = med }
@@ -149,7 +144,7 @@ fun AddNewMedicationScreen(
                                     text = med,
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) GreenPrimary else TextPrimary
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -175,10 +170,10 @@ fun AddNewMedicationScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(if (isSelected) GreenLight else Color.White)
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
                                     .border(
                                         1.dp,
-                                        if (isSelected) GreenPrimary else BorderLight,
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                         RoundedCornerShape(16.dp)
                                     )
                                     .clickable { dateTime = sc }
@@ -189,7 +184,7 @@ fun AddNewMedicationScreen(
                                     text = sc,
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) GreenPrimary else TextPrimary
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -215,10 +210,10 @@ fun AddNewMedicationScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(if (isSelected) GreenLight else Color.White)
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
                                     .border(
                                         1.dp,
-                                        if (isSelected) GreenPrimary else BorderLight,
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                         RoundedCornerShape(16.dp)
                                     )
                                     .clickable { quantity = qty }
@@ -229,7 +224,7 @@ fun AddNewMedicationScreen(
                                     text = qty,
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) GreenPrimary else TextPrimary
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -255,10 +250,10 @@ fun AddNewMedicationScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(if (isSelected) GreenLight else Color.White)
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
                                     .border(
                                         1.dp,
-                                        if (isSelected) GreenPrimary else BorderLight,
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                                         RoundedCornerShape(16.dp)
                                     )
                                     .clickable { status = st }
@@ -269,7 +264,7 @@ fun AddNewMedicationScreen(
                                     text = st,
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) GreenPrimary else TextPrimary
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -309,14 +304,14 @@ fun AddNewMedicationScreen(
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = medicationType.isNotBlank() || true
                 ) {
                     Text(
                         text = "Lưu",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -336,8 +331,8 @@ fun FigmaCardTextField(
         modifier = modifier
             .fillMaxWidth()
             .height(54.dp)
-            .background(Color.White, RoundedCornerShape(16.dp))
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -352,7 +347,7 @@ fun FigmaCardTextField(
                 textStyle = TextStyle(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
                 singleLine = true,
                 decorationBox = { innerTextField ->
@@ -361,7 +356,7 @@ fun FigmaCardTextField(
                             text = placeholder,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Normal,
-                            color = TextSecondary.copy(alpha = 0.8f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
                     }
                     innerTextField()

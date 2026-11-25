@@ -1,5 +1,6 @@
 package com.example.petcare.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -10,10 +11,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -40,12 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.ProfileViewModel
 
 @Composable
@@ -55,6 +55,7 @@ fun PersonalInfoScreen(
     onBackClick: () -> Unit = {},
     onSaved: () -> Unit = {},
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val userProfile = uiState.userProfile
 
@@ -75,12 +76,14 @@ fun PersonalInfoScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
         ) {
             // Header: "< Thông tin cá nhân" matching Image 3
             Row(
@@ -96,7 +99,7 @@ fun PersonalInfoScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -105,7 +108,7 @@ fun PersonalInfoScreen(
                     text = "Thông tin cá nhân",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -165,13 +168,19 @@ fun PersonalInfoScreen(
             ) {
                 Button(
                     onClick = {
+                        val trimmedName = fullName.trim()
+                        if (trimmedName.isEmpty()) {
+                            Toast.makeText(context, "Vui lòng nhập họ và tên.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
                         viewModel.updateUserProfile(
-                            name = fullName.ifBlank { "User" },
-                            email = email,
-                            phone = phone,
-                            dob = dob,
-                            address = address
+                            name = trimmedName,
+                            email = email.trim(),
+                            phone = phone.trim(),
+                            dob = dob.trim(),
+                            address = address.trim(),
                         )
+                        Toast.makeText(context, "Đã lưu thông tin cá nhân.", Toast.LENGTH_SHORT).show()
                         onSaved()
                     },
                     modifier = Modifier
@@ -179,8 +188,8 @@ fun PersonalInfoScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = GreenPrimary,
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Text(
@@ -205,8 +214,8 @@ private fun InfoInputField(
             .fillMaxWidth()
             .height(58.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -216,7 +225,7 @@ private fun InfoInputField(
             textStyle = TextStyle(
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Normal,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             ),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -225,7 +234,7 @@ private fun InfoInputField(
                     Text(
                         text = placeholder,
                         fontSize = 15.sp,
-                        color = TextSecondary.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
                 innerTextField()

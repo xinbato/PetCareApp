@@ -38,14 +38,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.MedicationModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.MaterialTheme
 import com.example.petcare.ui.components.PetCareIcons
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.HealthViewModel
+import com.example.petcare.utils.DateUtils
 
 @Composable
 fun MedicationScreen(
@@ -59,14 +61,17 @@ fun MedicationScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pet = uiState.pets.find { it.id == petId } ?: uiState.currentPet ?: viewModel.getSelectedPet()
     val medications = uiState.medications.filter { it.petId == pet.id }
+    val colorScheme = MaterialTheme.colorScheme
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(colorScheme.background),
+        contentAlignment = Alignment.TopCenter,
     ) {
         Column(
             modifier = Modifier
+                .widthIn(max = 840.dp)
                 .fillMaxSize()
                 .statusBarsPadding()
         ) {
@@ -84,7 +89,7 @@ fun MedicationScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -94,12 +99,12 @@ fun MedicationScreen(
                         text = "Thuốc",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Theo dõi thuốc và liều dùng",
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -119,22 +124,26 @@ fun MedicationScreen(
                     item {
                         Card(
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         ) {
                             Text(
                                 text = "Chưa có đơn thuốc nào cho ${pet.name.ifBlank { "bé" }}. Nhấn 'Thêm lịch thuốc' để thêm mới.",
                                 fontSize = 14.sp,
-                                color = TextSecondary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(20.dp)
                             )
                         }
                     }
                 } else {
                     items(medications, key = { it.id }) { item ->
-                        MedicationItemCard(item = item)
+                        MedicationItemCard(
+                            item = item,
+                            onToggleTakenToday = { viewModel.toggleMedicationTakenToday(item) },
+                            onDelete = { viewModel.deleteMedication(item.id) },
+                        )
                     }
                 }
 
@@ -157,13 +166,13 @@ fun MedicationScreen(
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = PetCareIcons.Plus,
                             contentDescription = "Thêm",
-                            tint = Color.White,
+                            tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -171,7 +180,7 @@ fun MedicationScreen(
                             text = "Thêm lịch thuốc",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -179,11 +188,11 @@ fun MedicationScreen(
                 // Button 2: Xem trong lịch
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .clickable(onClick = onViewInCalendarClick)
                 ) {
                     Box(
@@ -194,7 +203,7 @@ fun MedicationScreen(
                             text = "Xem trong lịch",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = GreenPrimary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -206,41 +215,71 @@ fun MedicationScreen(
 @Composable
 fun MedicationItemCard(
     item: MedicationModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onToggleTakenToday: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val takenToday = item.lastTakenDateKey == DateUtils.todayKey()
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = PetCareIcons.Pill,
-                contentDescription = item.name,
-                tint = GreenPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
+            if (onToggleTakenToday != null) {
+                IconButton(onClick = onToggleTakenToday, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        imageVector = if (takenToday) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                        contentDescription = if (takenToday) "Đã uống hôm nay" else "Đánh dấu đã uống hôm nay",
+                        tint = if (takenToday) colorScheme.primary else colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = PetCareIcons.Pill,
+                    contentDescription = item.name,
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "${item.dosage} • ${item.scheduleTime}",
                     fontSize = 13.sp,
-                    color = TextSecondary
+                    color = colorScheme.onSurfaceVariant
                 )
+                Text(
+                    text = if (takenToday) "Đã uống hôm nay" else item.status,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (takenToday) colorScheme.primary else colorScheme.onSurfaceVariant,
+                )
+            }
+            if (onDelete != null) {
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteOutline,
+                        contentDescription = "Xóa",
+                        tint = colorScheme.error,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
         }
     }

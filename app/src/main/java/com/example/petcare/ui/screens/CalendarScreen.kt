@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,14 +37,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.ScheduleModel
+import com.example.petcare.ui.components.PetCareAdaptiveTabScaffold
 import com.example.petcare.ui.components.PetCareTab
-import com.example.petcare.ui.components.PetCareTabBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
+import com.example.petcare.ui.components.ScheduleSkeleton
+import com.example.petcare.ui.components.SmoothSkeletonWrapper
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.CalendarViewModel
 
 @Composable
@@ -56,22 +54,57 @@ fun CalendarScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val schedules = uiState.schedules
+    val colorScheme = MaterialTheme.colorScheme
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+    PetCareAdaptiveTabScaffold(
+        currentTab = PetCareTab.CALENDAR,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+        floatingActionButton = {
+            Surface(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50.dp))
+                    .clickable { onAddScheduleClick() },
+                color = MaterialTheme.colorScheme.primary,
+                shadowElevation = 6.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Thêm lịch",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Thêm",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        },
+    ) { innerPadding ->
+        SmoothSkeletonWrapper(
+            isLoading = uiState.isLoading && schedules.isEmpty(),
+            skeleton = {
+                ScheduleSkeleton(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .statusBarsPadding(),
+                )
+            },
         ) {
-            // Main content area
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .statusBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
             ) {
@@ -82,7 +115,7 @@ fun CalendarScreen(
                     text = "Lịch chăm sóc",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -92,7 +125,7 @@ fun CalendarScreen(
                     text = "Tất cả lịch nhắc quan trọng",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -115,7 +148,7 @@ fun CalendarScreen(
                         Text(
                             text = "Chưa có lịch nhắc nào. Hãy nhấn + Thêm để tạo mới!",
                             fontSize = 14.sp,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 } else {
@@ -124,7 +157,7 @@ fun CalendarScreen(
                             text = "Việc hôm nay",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -143,7 +176,7 @@ fun CalendarScreen(
                             text = "Việc sắp tới",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -157,44 +190,7 @@ fun CalendarScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(90.dp)) // Space for FAB & TabBar
-            }
-
-            // Bottom Navigation Bar
-            PetCareTabBar(
-                selectedTab = PetCareTab.CALENDAR.ordinal,
-                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) }
-            )
-        }
-
-        // Floating Action Button (+ Thêm) matching Image 1
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 80.dp)
-                .clip(RoundedCornerShape(50.dp))
-                .clickable { onAddScheduleClick() },
-            color = GreenPrimary,
-            shadowElevation = 6.dp
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Thêm lịch",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Thêm",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Spacer(modifier = Modifier.height(90.dp))
             }
         }
     }
@@ -227,7 +223,7 @@ private fun TodayGreenBannerCard(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = GreenPrimary,
+        color = MaterialTheme.colorScheme.primary,
         shape = RoundedCornerShape(20.dp)
     ) {
         Column(
@@ -239,7 +235,7 @@ private fun TodayGreenBannerCard(
                 text = monthYearText,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White.copy(alpha = 0.9f),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
                 letterSpacing = 0.5.sp
             )
 
@@ -257,14 +253,14 @@ private fun TodayGreenBannerCard(
                         text = dayOfMonthText,
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = dayOfWeekText,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
 
@@ -272,7 +268,7 @@ private fun TodayGreenBannerCard(
                     text = "$todayCount việc hôm nay",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Normal,
-                    color = Color.White.copy(alpha = 0.95f)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.95f)
                 )
             }
         }
@@ -288,8 +284,8 @@ private fun ScheduleCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
-            .background(Color.White)
-            .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp))
             .clickable { onClick() }
             .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
@@ -302,7 +298,7 @@ private fun ScheduleCardItem(
                 text = schedule.timeOrDateLabel,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = GreenPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.width(90.dp)
             )
 
@@ -316,14 +312,14 @@ private fun ScheduleCardItem(
                     text = schedule.title,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = schedule.petName,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Normal,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

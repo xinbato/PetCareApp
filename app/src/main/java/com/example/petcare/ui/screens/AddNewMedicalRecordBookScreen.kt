@@ -1,4 +1,5 @@
 package com.example.petcare.ui.screens
+import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,12 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.MedicalRecordEntryModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
 import com.example.petcare.ui.components.PetCareIcons
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.HealthViewModel
 import java.util.UUID
 
@@ -87,7 +83,7 @@ fun AddNewMedicalRecordBookScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -108,7 +104,7 @@ fun AddNewMedicalRecordBookScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -117,7 +113,7 @@ fun AddNewMedicalRecordBookScreen(
                     text = "Thêm mới",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -164,8 +160,8 @@ fun AddNewMedicalRecordBookScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp)
-                        .background(Color.White, RoundedCornerShape(16.dp))
-                        .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         .clickable { photoAttached = !photoAttached }
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.CenterStart
@@ -178,13 +174,13 @@ fun AddNewMedicalRecordBookScreen(
                         Text(
                             text = if (photoAttached) "Đã đính kèm ảnh" else "Ảnh / video",
                             fontSize = 15.sp,
-                            color = if (photoAttached) GreenPrimary else TextSecondary.copy(alpha = 0.8f),
+                            color = if (photoAttached) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                             fontWeight = if (photoAttached) FontWeight.SemiBold else FontWeight.Normal
                         )
                         Icon(
                             imageVector = if (photoAttached) PetCareIcons.Check else PetCareIcons.Camera,
                             contentDescription = "Ảnh",
-                            tint = if (photoAttached) GreenPrimary else TextSecondary,
+                            tint = if (photoAttached) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -231,14 +227,14 @@ fun AddNewMedicalRecordBookScreen(
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = true
                 ) {
                     Text(
                         text = "Lưu",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

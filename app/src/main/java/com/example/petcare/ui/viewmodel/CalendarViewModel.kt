@@ -32,13 +32,21 @@ class CalendarViewModel(
     private val _isActionSuccess = MutableStateFlow(false)
     private val _errorMessage = MutableStateFlow<String?>(null)
 
+    private val metaState = combine(
+        _selectedScheduleId,
+        _isActionSuccess,
+        repository.isLoading,
+    ) { selectedScheduleId, isSuccess, loading ->
+        Triple(selectedScheduleId, isSuccess, loading)
+    }
+
     val uiState: StateFlow<CalendarUiState> = combine(
         repository.schedules,
         repository.pets,
         repository.currentSelectedPetId,
-        _selectedScheduleId,
-        _isActionSuccess,
-    ) { schedules, pets, selectedPetId, selectedScheduleId, isSuccess ->
+        metaState,
+    ) { schedules, pets, selectedPetId, meta ->
+        val (selectedScheduleId, isSuccess, loading) = meta
         val selectedSchedule = schedules.find { it.id == selectedScheduleId }
         val cal = java.util.Calendar.getInstance()
         val todayFormatted = String.format(
@@ -62,7 +70,7 @@ class CalendarViewModel(
             selectedSchedule = selectedSchedule,
             selectedPetId = selectedPetId,
             pets = pets,
-            isLoading = false,
+            isLoading = loading,
             isActionSuccess = isSuccess,
             errorMessage = _errorMessage.value,
         )

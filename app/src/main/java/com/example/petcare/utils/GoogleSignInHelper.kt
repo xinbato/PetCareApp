@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.util.Log
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -12,11 +13,17 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.example.petcare.R
 import com.example.petcare.ui.viewmodel.AuthViewModel
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 object GoogleSignInHelper {
+    private const val TAG = "GoogleSignInHelper"
+
+    @Volatile
+    var suppressAutoSignIn: Boolean = false
 
     private fun Context.findActivity(): Activity? {
         var current = this
@@ -27,6 +34,48 @@ object GoogleSignInHelper {
         return null
     }
 
+    private fun resolveServerClientId(context: Context): String? {
+        return runCatching {
+            context.getString(R.string.default_web_client_id)
+        }.getOrNull()?.ifBlank { null }
+    }
+
+    suspend fun attemptAutoSignIn(context: Context): String? {
+        if (suppressAutoSignIn) return null
+        val clientId = resolveServerClientId(context) ?: return null
+        val targetContext = context.findActivity() ?: context
+        return try {
+            val googleIdOption = GetGoogleIdOption.Builder()
+                .setFilterByAuthorizedAccounts(true)
+                .setServerClientId(clientId)
+                .setAutoSelectEnabled(true)
+                .build()
+            val request = GetCredentialRequest.Builder()
+                .addCredentialOption(googleIdOption)
+                .build()
+            val result = CredentialManager.create(targetContext).getCredential(targetContext, request)
+            val cred = result.credential
+            if (cred is CustomCredential && cred.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                GoogleIdTokenCredential.createFrom(cred.data).idToken
+            } else {
+                null
+            }
+        } catch (_: NoCredentialException) {
+            null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    suspend fun clearCredentialState(context: Context) {
+        runCatching {
+            CredentialManager.create(context.applicationContext)
+                .clearCredentialState(ClearCredentialStateRequest())
+        }
+    }
+
     fun launchGoogleSignIn(
         context: Context,
         coroutineScope: CoroutineScope,
@@ -34,22 +83,18 @@ object GoogleSignInHelper {
         onSuccess: (String) -> Unit = {},
         onError: (String) -> Unit = {},
     ) {
+        suppressAutoSignIn = false
         val targetContext = context.findActivity() ?: context
-
-        val serverClientId = runCatching {
-            context.getString(R.string.default_web_client_id)
-        }.getOrNull()?.ifEmpty { null }
-            ?: "128631296492-1q8qcofdj7cjochg47vt2geenomobk0p.apps.googleusercontent.com"
+        val serverClientId = resolveServerClientId(context)
+        if (serverClientId == null) {
+            onError("Thiếu cấu hình đăng nhập Google (default_web_client_id).")
+            return
+        }
 
         val credentialManager = CredentialManager.create(targetContext)
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(serverClientId)
-            .setAutoSelectEnabled(false)
-            .build()
-
+        val signInOption = GetSignInWithGoogleOption.Builder(serverClientId = serverClientId).build()
         val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
+            .addCredentialOption(signInOption)
             .build()
 
         coroutineScope.launch {
@@ -66,23 +111,25 @@ object GoogleSignInHelper {
                         onError = onError,
                     )
                 } else {
-                    val msg = "Không nhận được chứng chỉ Google hợp lệ"
-                    Log.w("GoogleSignInHelper", msg)
+                    val msg = "Không nhận được chứng chỉ Google hợp lệ."
+                    Log.w(TAG, msg)
                     onError(msg)
                 }
-            } catch (e: GetCredentialCancellationException) {
-                Log.d("GoogleSignInHelper", "Người dùng đã hủy chọn tài khoản Google")
+            } catch (_: GetCredentialCancellationException) {
+                Log.d(TAG, "Google Sign-In cancelled by user")
             } catch (e: NoCredentialException) {
-                val msg = "Không tìm thấy tài khoản Google trên thiết bị. Vui lòng thêm tài khoản Google trong Cài đặt (Settings) của máy hoặc đăng nhập bằng Email / Mật khẩu."
-                Log.w("GoogleSignInHelper", msg, e)
+                val msg = "Không tìm thấy tài khoản Google trên thiết bị. Vui lòng thêm tài khoản Google trong Cài đặt hoặc đăng nhập bằng Email."
+                Log.w(TAG, msg, e)
                 onError(msg)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 val errorMsg = if (e.message?.contains("No credentials", ignoreCase = true) == true) {
-                    "Không tìm thấy tài khoản Google trên thiết bị. Vui lòng thêm tài khoản Google trong Cài đặt (Settings) của máy hoặc đăng nhập bằng Email / Mật khẩu."
+                    "Không tìm thấy tài khoản Google trên thiết bị. Vui lòng thêm tài khoản Google trong Cài đặt hoặc đăng nhập bằng Email."
                 } else {
                     e.localizedMessage ?: "Đăng nhập Google thất bại"
                 }
-                Log.e("GoogleSignInHelper", "Google Sign-in error: $errorMsg", e)
+                Log.e(TAG, "[ERROR] Google Sign-In error: $errorMsg", e)
                 onError(errorMsg)
             }
         }

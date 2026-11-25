@@ -40,14 +40,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.CheckupRecordModel
 import com.example.petcare.ui.components.KeyboardArrowLeftIcon
+import com.example.petcare.ui.components.PetAvatar
 import com.example.petcare.ui.components.PetCareIcons
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenLight
-import com.example.petcare.ui.theme.GreenPrimary
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.HealthViewModel
 
 @Composable
@@ -64,7 +59,7 @@ fun CheckupHistoryScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundLight)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -85,7 +80,7 @@ fun CheckupHistoryScreen(
                     Icon(
                         imageVector = KeyboardArrowLeftIcon,
                         contentDescription = "Quay lại",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -95,12 +90,12 @@ fun CheckupHistoryScreen(
                         text = "Khám định kỳ",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "Lịch sử khám tổng quát & định kỳ của các bé",
                         fontSize = 13.sp,
-                        color = TextSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -120,15 +115,15 @@ fun CheckupHistoryScreen(
                     item {
                         Card(
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
                         ) {
                             Text(
                                 text = "Chưa có thông tin thú cưng nào. Vui lòng thêm thú cưng để theo dõi lịch sử khám định kỳ.",
                                 fontSize = 14.sp,
-                                color = TextSecondary,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(20.dp)
                             )
                         }
@@ -150,13 +145,14 @@ fun CheckupHistoryScreen(
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
-                                        .background(GreenLight),
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Image(
-                                        painter = painterResource(id = pet.safeIconRes),
+                                    PetAvatar(
+                                        photoUri = pet.photoUri,
+                                        fallbackIconRes = pet.safeIconRes,
                                         contentDescription = pet.name,
-                                        modifier = Modifier.size(22.dp)
+                                        modifier = Modifier.fillMaxSize(),
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -164,21 +160,21 @@ fun CheckupHistoryScreen(
                                     text = pet.name,
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
 
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(GreenLight)
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = "${petRecords.size} lần khám",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = GreenPrimary
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -188,15 +184,15 @@ fun CheckupHistoryScreen(
                         item(key = "empty_${pet.id}") {
                             Card(
                                 shape = RoundedCornerShape(14.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                             ) {
                                 Text(
                                     text = "Chưa có ghi chép khám định kỳ cho ${pet.name}",
                                     fontSize = 13.sp,
-                                    color = TextSecondary,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(16.dp)
                                 )
                             }
@@ -228,11 +224,11 @@ fun CheckupRecordItemCard(
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
     ) {
         Column(
             modifier = Modifier
@@ -252,13 +248,13 @@ fun CheckupRecordItemCard(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(GreenLight),
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = PetCareIcons.Stethoscope,
                             contentDescription = "Khám",
-                            tint = GreenPrimary,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -268,13 +264,13 @@ fun CheckupRecordItemCard(
                             text = item.title,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "${item.doctorOrClinic} • ${item.dateTime}",
                             fontSize = 12.sp,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -282,14 +278,14 @@ fun CheckupRecordItemCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(GreenLight)
+                        .background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = item.status,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = GreenPrimary
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -306,7 +302,7 @@ fun CheckupRecordItemCard(
                 Text(
                     text = "Kết quả: ${item.result}",
                     fontSize = 13.sp,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Medium
                 )
             }

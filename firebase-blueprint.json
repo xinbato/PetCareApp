@@ -1,0 +1,252 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile document.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "name": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "description": "Account email" },
+        "username": { "type": "string", "description": "Optional lowercase handle" },
+        "phone": { "type": "string", "description": "Phone number" },
+        "dob": { "type": "string", "description": "Date of birth" },
+        "address": { "type": "string", "description": "Address" },
+        "avatarUri": { "type": "string", "description": "Avatar URI" },
+        "headerBgColorHex": { "type": "integer", "description": "Profile banner color ARGB hex" },
+        "headerBgUri": { "type": "string", "description": "Profile banner image URI" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update server timestamp" }
+      },
+      "required": ["name", "email"]
+    },
+    "UsernameLookup": {
+      "title": "UsernameLookup",
+      "description": "Public single-document lookup mapping lowercase username to login email.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "email": { "type": "string", "description": "Account email" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update server timestamp" }
+      },
+      "required": ["userId", "email", "updatedAt"]
+    },
+    "Pet": {
+      "title": "Pet",
+      "description": "Pet profile owned by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "name": { "type": "string", "description": "Pet display name" },
+        "species": { "type": "string", "description": "Pet species label" },
+        "breed": { "type": "string", "description": "Pet breed" },
+        "dateOfBirth": { "type": "string", "description": "Date of birth text" },
+        "age": { "type": "string", "description": "Age display label" },
+        "weight": { "type": "string", "description": "Weight display label" },
+        "weightKg": { "type": "number", "description": "Numeric weight in kg" },
+        "gender": { "type": "string", "description": "Pet gender label" },
+        "iconRes": { "type": "integer", "description": "Fallback drawable resource ID" },
+        "photoUri": { "type": "string", "description": "Local internal pet photo URI" },
+        "color": { "type": "string", "description": "Coat or fur color" },
+        "notes": { "type": "string", "description": "Care notes or allergies" },
+        "statusText": { "type": "string", "description": "Health summary status" },
+        "statusDetail": { "type": "string", "description": "Health detail summary" },
+        "isFavorite": { "type": "boolean", "description": "Favorite flag" },
+        "createdByAi": { "type": "boolean", "description": "Created via AI scanner" },
+        "temperature": { "type": "string", "description": "Body temperature text" },
+        "activity": { "type": "string", "description": "Activity summary" },
+        "diet": { "type": "string", "description": "Diet notes" },
+        "lastUpdated": { "type": "string", "description": "Human-readable update text" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update server timestamp" }
+      },
+      "required": [
+        "userId", "name", "species", "breed", "dateOfBirth", "age", "weight", "weightKg",
+        "gender", "iconRes", "photoUri", "color", "notes", "statusText", "statusDetail",
+        "isFavorite", "createdByAi", "temperature", "activity", "diet", "lastUpdated",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "Vaccination": {
+      "title": "Vaccination",
+      "description": "Pet vaccination record and booster reminder.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "petId": { "type": "string" },
+        "petName": { "type": "string" },
+        "title": { "type": "string" },
+        "dateTime": { "type": "string" },
+        "status": { "type": "string" },
+        "scheduledDateMillis": { "type": "integer" },
+        "completed": { "type": "boolean" },
+        "reminderEnabled": { "type": "boolean" },
+        "reminderDaysBefore": { "type": "integer" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "petId", "petName", "title", "dateTime", "status",
+        "scheduledDateMillis", "completed", "reminderEnabled", "reminderDaysBefore",
+        "notes", "createdAt", "updatedAt"
+      ]
+    },
+    "Medication": {
+      "title": "Medication",
+      "description": "Pet medication schedule and daily dose tracking.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "petId": { "type": "string" },
+        "petName": { "type": "string" },
+        "name": { "type": "string" },
+        "dosage": { "type": "string" },
+        "scheduleTime": { "type": "string" },
+        "quantity": { "type": "string" },
+        "status": { "type": "string" },
+        "reminderHour": { "type": "integer" },
+        "reminderMinute": { "type": "integer" },
+        "endDateMillis": { "type": "integer" },
+        "lastTakenDateKey": { "type": "string" },
+        "active": { "type": "boolean" },
+        "reminderEnabled": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "petId", "petName", "name", "dosage", "scheduleTime",
+        "quantity", "status", "reminderHour", "reminderMinute", "endDateMillis",
+        "lastTakenDateKey", "active", "reminderEnabled", "createdAt", "updatedAt"
+      ]
+    },
+    "MedicalRecord": {
+      "title": "MedicalRecord",
+      "description": "Medical diary entry linked to a pet.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "petId": { "type": "string" },
+        "petName": { "type": "string" },
+        "dateTime": { "type": "string" },
+        "activityType": { "type": "string" },
+        "description": { "type": "string" },
+        "photoUri": { "type": "string" },
+        "emotion": { "type": "string" },
+        "recordDateMillis": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "petId", "petName", "dateTime", "activityType",
+        "description", "photoUri", "emotion", "recordDateMillis", "createdAt", "updatedAt"
+      ]
+    },
+    "WeightRecord": {
+      "title": "WeightRecord",
+      "description": "Pet weight tracking record.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "petId": { "type": "string" },
+        "petName": { "type": "string" },
+        "weight": { "type": "string" },
+        "weightKg": { "type": "number" },
+        "dateTime": { "type": "string" },
+        "recordedAtMillis": { "type": "integer" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "petId", "petName", "weight", "weightKg",
+        "dateTime", "recordedAtMillis", "status", "createdAt", "updatedAt"
+      ]
+    },
+    "CheckupRecord": {
+      "title": "CheckupRecord",
+      "description": "Veterinary checkup record linked to a pet.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "petId": { "type": "string" },
+        "petName": { "type": "string" },
+        "title": { "type": "string" },
+        "doctorOrClinic": { "type": "string" },
+        "dateTime": { "type": "string" },
+        "result": { "type": "string" },
+        "status": { "type": "string" },
+        "recordDateMillis": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "petId", "petName", "title", "doctorOrClinic",
+        "dateTime", "result", "status", "recordDateMillis", "createdAt", "updatedAt"
+      ]
+    },
+    "Schedule": {
+      "title": "Schedule",
+      "description": "General care task or appointment reminder.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "petId": { "type": "string" },
+        "petName": { "type": "string" },
+        "dateText": { "type": "string" },
+        "timeText": { "type": "string" },
+        "timeOrDateLabel": { "type": "string" },
+        "triggerAtMillis": { "type": "integer" },
+        "reminderEnabled": { "type": "boolean" },
+        "isCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "title", "description", "petId", "petName",
+        "dateText", "timeText", "timeOrDateLabel", "triggerAtMillis",
+        "reminderEnabled", "isCompleted", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document"
+    },
+    "/usernames/{username}": {
+      "schema": { "$ref": "#/entities/UsernameLookup" },
+      "description": "Username to email lookup for sign-in"
+    },
+    "/users/{userId}/pets/{petId}": {
+      "schema": { "$ref": "#/entities/Pet" },
+      "description": "User-owned pet profiles"
+    },
+    "/users/{userId}/vaccinations/{vaccinationId}": {
+      "schema": { "$ref": "#/entities/Vaccination" },
+      "description": "User-owned pet vaccinations"
+    },
+    "/users/{userId}/medications/{medicationId}": {
+      "schema": { "$ref": "#/entities/Medication" },
+      "description": "User-owned pet medications"
+    },
+    "/users/{userId}/medicalRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/MedicalRecord" },
+      "description": "User-owned pet medical diary records"
+    },
+    "/users/{userId}/weightRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/WeightRecord" },
+      "description": "User-owned pet weight history"
+    },
+    "/users/{userId}/checkupRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/CheckupRecord" },
+      "description": "User-owned pet checkup history"
+    },
+    "/users/{userId}/schedules/{scheduleId}": {
+      "schema": { "$ref": "#/entities/Schedule" },
+      "description": "User-owned care schedules"
+    }
+  }
+}

@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -36,15 +37,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.petcare.data.model.PetModel
+import com.example.petcare.ui.components.HealthSkeleton
+import com.example.petcare.ui.components.PetAvatar
+import com.example.petcare.ui.components.PetCareAdaptiveTabScaffold
 import com.example.petcare.ui.components.PetCareIcons
 import com.example.petcare.ui.components.PetCareTab
-import com.example.petcare.ui.components.PetCareTabBar
-import com.example.petcare.ui.theme.BackgroundLight
-import com.example.petcare.ui.theme.BorderLight
-import com.example.petcare.ui.theme.GreenPrimary
+import com.example.petcare.ui.components.SmoothSkeletonWrapper
 import com.example.petcare.ui.theme.PetCareTheme
-import com.example.petcare.ui.theme.TextPrimary
-import com.example.petcare.ui.theme.TextSecondary
 import com.example.petcare.ui.viewmodel.HealthViewModel
 
 data class HealthHistoryItem(
@@ -64,6 +63,7 @@ fun HealthScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pets = uiState.pets
+    val colorScheme = MaterialTheme.colorScheme
 
     val lastVaccineDate = uiState.vaccinations.firstOrNull()?.dateTime?.ifBlank { null } ?: "Chưa có bản ghi"
     val lastWeightInfo = uiState.weightRecords.firstOrNull()?.let { "${it.weight} • ${it.dateTime}" } ?: "Chưa có bản ghi"
@@ -75,107 +75,109 @@ fun HealthScreen(
         HealthHistoryItem("h3", "Khám định kỳ", lastCheckupDate, PetCareIcons.Stethoscope),
     )
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+    PetCareAdaptiveTabScaffold(
+        currentTab = PetCareTab.HEALTH,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+    ) { innerPadding ->
+        SmoothSkeletonWrapper(
+            isLoading = uiState.isLoading && pets.isEmpty(),
+            skeleton = {
+                HealthSkeleton(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .statusBarsPadding(),
+                )
+            },
         ) {
-            // Header
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .statusBarsPadding()
             ) {
-                Text(
-                    text = "Sức khỏe",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Theo dõi sức khỏe của từng bé",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = TextSecondary
-                )
-            }
+                // Header
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
+                    Text(
+                        text = "Sức khỏe",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Theo dõi sức khỏe của từng bé",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                }
 
-            // Scrollable Content
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                // Danh sách thú cưng hiện có
-                if (pets.isEmpty()) {
-                    item {
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
-                        ) {
-                            Text(
-                                text = "Chưa có thông tin thú cưng nào. Vui lòng thêm thú cưng để theo dõi sức khỏe.",
-                                fontSize = 14.sp,
-                                color = TextSecondary,
-                                modifier = Modifier.padding(20.dp)
+                // Scrollable Content
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    if (pets.isEmpty()) {
+                        item {
+                            Card(
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                            ) {
+                                Text(
+                                    text = "Chưa có thông tin thú cưng nào. Vui lòng thêm thú cưng để theo dõi sức khỏe.",
+                                    fontSize = 14.sp,
+                                    color = colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(20.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        items(pets, key = { it.id }) { pet ->
+                            HealthPetCard(
+                                pet = pet,
+                                onClick = {
+                                    viewModel.selectPet(pet.id)
+                                    onPetClick(pet)
+                                }
                             )
                         }
                     }
-                } else {
-                    items(pets, key = { it.id }) { pet ->
-                        HealthPetCard(
-                            pet = pet,
+
+                    item {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "Lịch sử sức khỏe",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                    }
+
+                    items(healthHistoryList, key = { it.id }) { item ->
+                        HealthHistoryCard(
+                            item = item,
                             onClick = {
-                                viewModel.selectPet(pet.id)
-                                onPetClick(pet)
+                                onHistoryItemClick?.invoke(item)
                             }
                         )
                     }
-                }
 
-                // Tiêu đề Lịch sử sức khỏe
-                item {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "Lịch sử sức khỏe",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                }
-
-                // Danh sách các mục Lịch sử sức khỏe
-                items(healthHistoryList, key = { it.id }) { item ->
-                    HealthHistoryCard(
-                        item = item,
-                        onClick = {
-                            onHistoryItemClick?.invoke(item)
-                        }
-                    )
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
-
-            // Bottom Navigation Bar chuẩn Figma với tab Sức khỏe active
-            PetCareTabBar(
-                selectedTab = PetCareTab.HEALTH.ordinal,
-                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) },
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
@@ -185,39 +187,58 @@ fun HealthPetCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
+            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                text = pet.name,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = pet.statusText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (pet.statusText == "Khỏe mạnh") GreenPrimary else MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = pet.statusDetail.ifEmpty { "Cân nặng ${pet.weight}" },
-                fontSize = 13.sp,
-                color = TextSecondary
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                PetAvatar(
+                    photoUri = pet.photoUri,
+                    fallbackIconRes = pet.safeIconRes,
+                    contentDescription = pet.name,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = pet.name,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = pet.statusText,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (pet.statusText == "Khỏe mạnh") colorScheme.primary else colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = pet.statusDetail.ifEmpty { "Cân nặng ${pet.weight}" },
+                    fontSize = 13.sp,
+                    color = colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -227,13 +248,14 @@ fun HealthHistoryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, BorderLight, RoundedCornerShape(16.dp))
+            .border(1.dp, colorScheme.outlineVariant, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
     ) {
         Row(
@@ -249,7 +271,7 @@ fun HealthHistoryCard(
                 Icon(
                     imageVector = item.icon,
                     contentDescription = item.title,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(modifier = Modifier.width(14.dp))
@@ -257,13 +279,13 @@ fun HealthHistoryCard(
                     text = item.title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = colorScheme.onSurface
                 )
             }
             Text(
                 text = item.date,
                 fontSize = 13.sp,
-                color = TextSecondary
+                color = colorScheme.onSurfaceVariant
             )
         }
     }

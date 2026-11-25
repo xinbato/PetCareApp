@@ -1,12 +1,11 @@
-## This is a template file for local environment configurations.
-## Copy this file to 'local.properties' and fill in your actual keys.
-## 'local.properties' is gitignored and will NEVER be pushed to Git.
+## This file must *NOT* be checked into Version Control Systems.
+## Copy this file to 'local.properties' and fill in your actual local settings.
 
 # Path to your Android SDK (Required)
 # sdk.dir=C\:\\Users\\YourUsername\\AppData\\Local\\Android\\Sdk
 
-# Google AI Studio API Key for Pet Scanner (Free tier from https://aistudio.google.com/app/apikey)
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
-
-# Google Maps Platform API Key (Optional for maps)
+# Google Maps Platform API Key (Required only for Map tile rendering; List view works via OpenStreetMap)
 MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY_HERE
+
+# AI Pet Scanner uses Firebase AI Logic + Firebase App Check (no static GEMINI_API_KEY in client APK).
+# Enable Firebase AI Logic and App Check in Firebase Console for project petcareapp-fa54c.

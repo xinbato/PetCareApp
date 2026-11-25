@@ -1,8 +1,11 @@
 package com.example.petcare.ui.screens
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -68,15 +71,33 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.petcare.data.model.PetPlaceModel
+import com.example.petcare.data.model.resolvePetIconRes
+import com.example.petcare.ui.components.NearbySkeleton
+import com.example.petcare.ui.components.PetCareAdaptiveTabScaffold
 import com.example.petcare.ui.components.PetCareTab
 import com.example.petcare.ui.components.PetCareTabBar
+import com.example.petcare.ui.components.SmoothSkeletonWrapper
 import com.example.petcare.ui.theme.PetCareTheme
 import com.example.petcare.ui.viewmodel.MapViewModel
+import com.example.petcare.ui.viewmodel.SettingsViewModel
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
@@ -88,43 +109,153 @@ import com.google.maps.android.compose.rememberCameraPositionState
 fun MapScreen(
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(),
+    settingsViewModel: SettingsViewModel = viewModel(),
     onTabSelected: (PetCareTab) -> Unit = {},
 ) {
     var isMapView by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var areaSearchInput by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("Tất cả") }
     var selectedPlaceId by remember { mutableStateOf<String?>(null) }
-    var currentLocationText by remember { mutableStateOf("Quận 3, TP.HCM") }
     var showLocationDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsState()
     val places = uiState.places
+    val currentLocationText = uiState.locationLabel
+    val fusedClient = remember(context) { LocationServices.getFusedLocationProviderClient(context) }
 
     var hasLocationPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION,
-            ) == PackageManager.PERMISSION_GRANTED,
+            ) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                ) == PackageManager.PERMISSION_GRANTED,
         )
+    }
+
+    fun fallbackSystemLocation(): Location? {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!fineGranted && !coarseGranted) return null
+        val lm = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return null
+        val candidates = listOfNotNull(
+            if (fineGranted) runCatching { lm.getLastKnownLocation(LocationManager.GPS_PROVIDER) }.getOrNull() else null,
+            runCatching { lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER) }.getOrNull(),
+        )
+        return candidates.maxByOrNull { it.time }
+    }
+
+    fun fetchCurrentGpsAndReload(radius: Int = settings.defaultSearchRadiusMeters) {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!fineGranted && !coarseGranted) return
+
+        val lm = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        if (lm != null && !LocationManagerCompat.isLocationEnabled(lm)) {
+            viewModel.reportLocationError("Vui lòng bật Vị trí (GPS) trên điện thoại hoặc tìm theo tên khu vực.")
+            return
+        }
+
+        val tokenSource = CancellationTokenSource()
+        val priority = if (fineGranted) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY
+
+        fun tryFallbackOrReport() {
+            fusedClient.lastLocation
+                .addOnSuccessListener { last ->
+                    val resolved = last ?: fallbackSystemLocation()
+                    if (resolved != null) {
+                        viewModel.loadNearbyFromCoordinates(
+                            lat = resolved.latitude,
+                            lon = resolved.longitude,
+                            label = "Vị trí gần nhất (GPS)",
+                            radiusMeters = radius,
+                        )
+                    } else {
+                        viewModel.reportLocationError("Không thể lấy tọa độ GPS. Hãy kiểm tra tín hiệu GPS hoặc tìm theo tên khu vực.")
+                    }
+                }
+                .addOnFailureListener {
+                    val resolved = fallbackSystemLocation()
+                    if (resolved != null) {
+                        viewModel.loadNearbyFromCoordinates(
+                            lat = resolved.latitude,
+                            lon = resolved.longitude,
+                            label = "Vị trí gần nhất (GPS)",
+                            radiusMeters = radius,
+                        )
+                    } else {
+                        viewModel.reportLocationError("Không thể lấy tọa độ GPS. Hãy tìm theo tên khu vực.")
+                    }
+                }
+        }
+
+        runCatching {
+            fusedClient.getCurrentLocation(priority, tokenSource.token)
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        viewModel.loadNearbyFromCoordinates(
+                            lat = location.latitude,
+                            lon = location.longitude,
+                            label = "Vị trí hiện tại (GPS)",
+                            radiusMeters = radius,
+                        )
+                    } else {
+                        tryFallbackOrReport()
+                    }
+                }
+                .addOnFailureListener {
+                    tryFallbackOrReport()
+                }
+        }.onFailure {
+            tryFallbackOrReport()
+        }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
-        hasLocationPermission = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        hasLocationPermission = granted
+        if (granted) {
+            fetchCurrentGpsAndReload(settings.defaultSearchRadiusMeters)
+        }
     }
 
     LaunchedEffect(Unit) {
-        if (!hasLocationPermission) {
+        if (hasLocationPermission) {
+            fetchCurrentGpsAndReload(settings.defaultSearchRadiusMeters)
+        } else {
             permissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                 ),
             )
+        }
+    }
+
+    LaunchedEffect(settings.defaultSearchRadiusMeters) {
+        if (uiState.selectedRadiusMeters != settings.defaultSearchRadiusMeters) {
+            viewModel.changeRadius(settings.defaultSearchRadiusMeters)
         }
     }
 
@@ -138,57 +269,132 @@ fun MapScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding(),
-        ) {
-            // Main Top Header Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text(
-                        text = "Bản đồ",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Tất cả cơ sở thú y gần nhất",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                // Toggle Mode Button (List mode <-> Map mode)
-                Box(
+    PetCareAdaptiveTabScaffold(
+        currentTab = PetCareTab.MAP,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+    ) { innerPadding ->
+        SmoothSkeletonWrapper(
+            isLoading = uiState.isLoading && places.isEmpty(),
+            skeleton = {
+                NearbySkeleton(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                        .clickable { isMapView = !isMapView },
-                    contentAlignment = Alignment.Center,
+                        .padding(innerPadding)
+                        .statusBarsPadding(),
+                )
+            },
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(MaterialTheme.colorScheme.background),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding(),
                 ) {
-                    Icon(
-                        imageVector = if (isMapView) Icons.AutoMirrored.Filled.FormatListBulleted else Icons.Default.LocationOn,
-                        contentDescription = if (isMapView) "Xem danh sách" else "Xem bản đồ",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
+                    // Main Top Header Bar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Bản đồ",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${filteredPlaces.size} cơ sở gần $currentLocationText (${uiState.selectedRadiusMeters / 1000} km)",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                                    .clickable {
+                                        if (hasLocationPermission) {
+                                            fetchCurrentGpsAndReload(uiState.selectedRadiusMeters)
+                                        } else {
+                                            permissionLauncher.launch(
+                                                arrayOf(
+                                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                                ),
+                                            )
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MyLocation,
+                                    contentDescription = "Vị trí GPS",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                                    .clickable { isMapView = !isMapView },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = if (isMapView) Icons.AutoMirrored.Filled.FormatListBulleted else Icons.Default.LocationOn,
+                                    contentDescription = if (isMapView) "Xem danh sách" else "Xem bản đồ",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    uiState.errorMessage?.let { err ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 4.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.errorContainer)
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = err,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontSize = 12.sp,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Đóng",
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clickable { viewModel.clearError() },
+                            )
+                        }
+                    }
 
             // Body Content depending on mode
             if (!isMapView) {
@@ -422,50 +628,93 @@ fun MapScreen(
                 }
             }
 
-            // Bottom Navigation Bar
-            PetCareTabBar(
-                selectedTab = PetCareTab.MAP.ordinal,
-                onTabSelected = { index -> onTabSelected(PetCareTab.entries[index]) },
-            )
-        }
+                } // close Column inside Box
+            }
 
-        // Location Change Dialog
-        if (showLocationDialog) {
-            AlertDialog(
-                onDismissRequest = { showLocationDialog = false },
-                title = { Text("Chọn khu vực", fontWeight = FontWeight.Bold) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        listOf("Quận 1, TP.HCM", "Quận 3, TP.HCM", "Quận 10, TP.HCM", "Bình Thạnh, TP.HCM", "Thủ Đức, TP.HCM").forEach { loc ->
-                            Box(
+            // Location Change & Search Dialog
+            if (showLocationDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLocationDialog = false },
+                    title = { Text("Chọn hoặc tìm khu vực", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                OutlinedTextField(
+                                    value = areaSearchInput,
+                                    onValueChange = { areaSearchInput = it },
+                                    modifier = Modifier.weight(1f),
+                                    placeholder = { Text("Nhập quận, thành phố...") },
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(12.dp),
+                                )
+                                Button(
+                                    onClick = {
+                                        if (areaSearchInput.isNotBlank()) {
+                                            viewModel.searchByAreaName(areaSearchInput)
+                                            showLocationDialog = false
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                    shape = RoundedCornerShape(12.dp),
+                                ) {
+                                    Text("Tìm", fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (currentLocationText == loc) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface)
-                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        currentLocationText = loc
-                                        showLocationDialog = false
-                                    }
-                                    .padding(14.dp),
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                Text(
-                                    text = loc,
-                                    fontSize = 14.sp,
-                                    fontWeight = if (currentLocationText == loc) FontWeight.Bold else FontWeight.Normal,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
+                                listOf(3000 to "3 km", 5000 to "5 km", 10000 to "10 km").forEach { (r, label) ->
+                                    FilterChip(
+                                        selected = uiState.selectedRadiusMeters == r,
+                                        onClick = { viewModel.changeRadius(r) },
+                                        label = { Text(label, fontSize = 12.sp) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        ),
+                                    )
+                                }
+                            }
+
+                            listOf("Quận 1, TP.HCM", "Quận 3, TP.HCM", "Hà Nội", "Đà Nẵng", "Thủ Đức, TP.HCM").forEach { loc ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (currentLocationText == loc) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface)
+                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            viewModel.searchByAreaName(loc)
+                                            showLocationDialog = false
+                                        }
+                                        .padding(12.dp),
+                                ) {
+                                    Text(
+                                        text = loc,
+                                        fontSize = 14.sp,
+                                        fontWeight = if (currentLocationText == loc) FontWeight.Bold else FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
                             }
                         }
-                    }
-                },
-                confirmButton = {},
-                dismissButton = {
-                    OutlinedButton(onClick = { showLocationDialog = false }) {
-                        Text("Đóng")
-                    }
-                },
-            )
+                    },
+                    confirmButton = {},
+                    dismissButton = {
+                        OutlinedButton(onClick = { showLocationDialog = false }) {
+                            Text("Đóng")
+                        }
+                    },
+                )
+            }
         }
     }
 }
@@ -753,7 +1002,7 @@ private fun FeaturedPlaceCard(
             .clickable { onClick() },
     ) {
         Image(
-            painter = painterResource(id = place.imageRes),
+            painter = painterResource(id = resolvePetIconRes(place.imageRes)),
             contentDescription = place.name,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -840,7 +1089,7 @@ private fun NearbyPlaceCard(
                     .height(110.dp),
             ) {
                 Image(
-                    painter = painterResource(id = place.imageRes),
+                    painter = painterResource(id = resolvePetIconRes(place.imageRes)),
                     contentDescription = place.name,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
